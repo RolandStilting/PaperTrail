@@ -106,7 +106,7 @@ Finish and test one phase before starting the next. Commit in small, working ste
 ## Open questions (ask the user, don't assume)
 
 - How well does the on-device model handle Dutch? Test early; sender rules are the fallback.
-- Which devices does the user have (Apple Intelligence support)?
+- ~~Which devices does the user have?~~ Answered 2026-11-22: MacBook Pro M4 Max and iPhone 17 Pro Max, both with Apple Intelligence support. No iPad mentioned yet; keep the iPad layout working, but it is untested on hardware.
 - One "To pay" list or one per owner? (Default: one list.)
 - Direct-debit bills: a "check the debit" reminder, or none?
 - Keep the original email next to the PDF?
