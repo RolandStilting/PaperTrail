@@ -24,6 +24,11 @@ public struct FilingPlan: Sendable, Hashable {
     public var folderComponents: [String]
     public var fileName: String
 
+    public init(folderComponents: [String], fileName: String) {
+        self.folderComponents = folderComponents
+        self.fileName = fileName
+    }
+
     public var relativePath: String {
         ArchivePaths.relativePath(components: folderComponents, fileName: fileName)
     }
