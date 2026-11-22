@@ -24,7 +24,7 @@
 	<string>Paper Trail uses the camera to scan receipts, invoices and letters.</string>
 	<key>NSUbiquitousContainers</key>
 	<dict>
-		<key>iCloud.com.example.papertrail</key>
+		<key>iCloud.nl.rolandstilting.papertrail</key>
 		<dict>
 			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
 			<true/>

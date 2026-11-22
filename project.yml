@@ -1,7 +1,7 @@
 name: PaperTrail
 
 options:
-  bundleIdPrefix: com.example
+  bundleIdPrefix: nl.rolandstilting
   createIntermediateGroups: true
   deploymentTarget:
     iOS: "26.0"
@@ -21,7 +21,7 @@ settings:
     # The bundle ID. The iCloud container is iCloud.<bundle ID>; it is derived automatically
     # everywhere except the NSUbiquitousContainers key below (Xcode does not expand keys).
     # Change both together; ICloudContainerConfigTests fails if they differ.
-    PAPERTRAIL_BUNDLE_ID: com.example.papertrail
+    PAPERTRAIL_BUNDLE_ID: nl.rolandstilting.papertrail
 
 packages:
   PaperTrailKit:
@@ -44,7 +44,7 @@ targets:
         PTICloudContainerIdentifier: iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)
         NSUbiquitousContainers:
           # Must be iCloud.<PAPERTRAIL_BUNDLE_ID>, written out in full.
-          iCloud.com.example.papertrail:
+          iCloud.nl.rolandstilting.papertrail:
             NSUbiquitousContainerIsDocumentScopePublic: true
             NSUbiquitousContainerName: Paper Trail
             NSUbiquitousContainerSupportedFolderLevels: Any
