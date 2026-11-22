@@ -23,13 +23,15 @@ nonisolated enum ArchiveLocationError: LocalizedError {
 /// Resolves the archive root in the app's iCloud container. iCloud Drive shows the
 /// container's `Documents` folder as "Paper Trail" (see `NSUbiquitousContainers` in Info.plist).
 nonisolated struct ICloudArchiveLocation: ArchiveLocating {
-    static let containerIdentifier = "iCloud.com.example.papertrail"
+    /// `iCloud.<bundle ID>`, written into Info.plist at build time from `PAPERTRAIL_BUNDLE_ID`.
+    static let containerIdentifier: String? = Bundle.main.object(forInfoDictionaryKey: "PTICloudContainerIdentifier") as? String
 
     @concurrent
     func resolveRoot() async throws -> ArchiveRoot {
         let fileManager = FileManager.default
         // Must not run on the main thread: the first call can take a while.
-        if let container = fileManager.url(forUbiquityContainerIdentifier: Self.containerIdentifier) {
+        if let identifier = Self.containerIdentifier,
+           let container = fileManager.url(forUbiquityContainerIdentifier: identifier) {
             let documents = container.appending(path: "Documents", directoryHint: .isDirectory)
             try fileManager.createDirectory(at: documents, withIntermediateDirectories: true)
             return ArchiveRoot(url: documents, isLocalFallback: false)

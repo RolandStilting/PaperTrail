@@ -34,6 +34,8 @@
 			<string>Any</string>
 		</dict>
 	</dict>
+	<key>PTICloudContainerIdentifier</key>
+	<string>iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

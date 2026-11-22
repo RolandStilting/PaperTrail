@@ -74,7 +74,7 @@ Before saying a change is done, run `swift test` and build the app for both iOS 
 ## Things the user does by hand
 
 Claude Code can't do these. Ask the user when one is needed:
-- Signing in with the Apple Developer account, picking the team, and setting the bundle identifier (placeholder: `com.example.papertrail`; iCloud container `iCloud.com.example.papertrail`).
+- Signing in with the Apple Developer account, picking the team, and setting the bundle identifier (placeholder: `com.example.papertrail`; iCloud container `iCloud.com.example.papertrail`). Set `DEVELOPMENT_TEAM` and `PAPERTRAIL_BUNDLE_ID` in `project.yml`, plus the literal `NSUbiquitousContainers` key there; everything else derives the container ID from the bundle ID.
 - Enabling capabilities in Xcode if XcodeGen can't (iCloud Documents, CloudKit, App Groups for the Share Extension).
 - Running on real iPhone and iPad devices. Camera scanning and Reminders/iCloud sync must be tested there.
 

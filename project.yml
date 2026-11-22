@@ -16,8 +16,12 @@ settings:
     LOCALIZATION_PREFERS_STRING_CATALOGS: YES
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
-    # Set your team in Xcode (Signing & Capabilities); it is not stored here.
+    # Your Apple Developer Team ID (Membership details on developer.apple.com).
     DEVELOPMENT_TEAM: ""
+    # The bundle ID. The iCloud container is iCloud.<bundle ID>; it is derived automatically
+    # everywhere except the NSUbiquitousContainers key below (Xcode does not expand keys).
+    # Change both together; ICloudContainerConfigTests fails if they differ.
+    PAPERTRAIL_BUNDLE_ID: com.example.papertrail
 
 packages:
   PaperTrailKit:
@@ -37,14 +41,16 @@ targets:
         CFBundleDisplayName: Paper Trail
         NSCameraUsageDescription: Paper Trail uses the camera to scan receipts, invoices and letters.
         UIBackgroundModes: [remote-notification]
+        PTICloudContainerIdentifier: iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)
         NSUbiquitousContainers:
+          # Must be iCloud.<PAPERTRAIL_BUNDLE_ID>, written out in full.
           iCloud.com.example.papertrail:
             NSUbiquitousContainerIsDocumentScopePublic: true
             NSUbiquitousContainerName: Paper Trail
             NSUbiquitousContainerSupportedFolderLevels: Any
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.papertrail
+        PRODUCT_BUNDLE_IDENTIFIER: $(PAPERTRAIL_BUNDLE_ID)
         PRODUCT_NAME: Paper Trail
         PRODUCT_MODULE_NAME: PaperTrail
         GENERATE_INFOPLIST_FILE: YES
@@ -68,7 +74,7 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
-        PRODUCT_BUNDLE_IDENTIFIER: com.example.papertrail.tests
+        PRODUCT_BUNDLE_IDENTIFIER: $(PAPERTRAIL_BUNDLE_ID).tests
         TEST_HOST[sdk=iphone*]: "$(BUILT_PRODUCTS_DIR)/Paper Trail.app/Paper Trail"
         TEST_HOST[sdk=macosx*]: "$(BUILT_PRODUCTS_DIR)/Paper Trail.app/Contents/MacOS/Paper Trail"
         BUNDLE_LOADER: "$(TEST_HOST)"
