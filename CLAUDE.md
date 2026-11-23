@@ -74,7 +74,7 @@ Before saying a change is done, run `swift test` and build the app for both iOS 
 ## Things the user does by hand
 
 Claude Code can't do these. Ask the user when one is needed:
-- Signing in with the Apple Developer account, picking the team, and setting the bundle identifier (placeholder: `com.example.papertrail`; iCloud container `iCloud.com.example.papertrail`).
+- Signing in with the Apple Developer account, picking the team, and setting the bundle identifier (placeholder: `com.example.papertrail`; iCloud container `iCloud.com.example.papertrail`). Set `DEVELOPMENT_TEAM` and `PAPERTRAIL_BUNDLE_ID` in `project.yml`, plus the literal `NSUbiquitousContainers` key there; everything else derives the container ID from the bundle ID.
 - Enabling capabilities in Xcode if XcodeGen can't (iCloud Documents, CloudKit, App Groups for the Share Extension).
 - Running on real iPhone and iPad devices. Camera scanning and Reminders/iCloud sync must be tested there.
 
@@ -94,8 +94,8 @@ Claude Code can't do these. Ask the user when one is needed:
 
 ## Build phases
 
-1. **Capture and file:** project setup, iCloud container, settings for owners and categories, camera scan, OCR, manual filing with the naming rules. ← start here
-2. **Smart proposals:** on-device classification, review screen, learned rules, duplicate check (content hash + sender/amount/invoice number).
+1. **Capture and file:** project setup, iCloud container, settings for owners and categories, camera scan, OCR, manual filing with the naming rules. ✅ Done 2026-11-23: tested on MacBook Pro and iPhone 17 Pro Max, including two-way sync, name collisions, multi-page scans, Mac PDF import and offline filing.
+2. **Smart proposals:** ← next. Start with a Dutch/English extraction test of the on-device model on synthetic documents. on-device classification, review screen, learned rules, duplicate check (content hash + sender/amount/invoice number).
 3. **More ways in:** Share Extension, watched Inbox folder, Mac drag and drop.
 4. **Bills in Reminders:** create reminder (title `Pay <Sender> · € <amount>`, due date, notes with IBAN/reference/file path, URL back into the app), listen for completion, open-bills overview, copy buttons.
 5. **Email:** Mac menu-bar helper, IMAP fetching, HTML email to PDF.
@@ -106,7 +106,7 @@ Finish and test one phase before starting the next. Commit in small, working ste
 ## Open questions (ask the user, don't assume)
 
 - How well does the on-device model handle Dutch? Test early; sender rules are the fallback.
-- Which devices does the user have (Apple Intelligence support)?
+- ~~Which devices does the user have?~~ Answered 2026-11-22: MacBook Pro M4 Max and iPhone 17 Pro Max, both with Apple Intelligence support. No iPad mentioned yet; keep the iPad layout working, but it is untested on hardware.
 - One "To pay" list or one per owner? (Default: one list.)
 - Direct-debit bills: a "check the debit" reminder, or none?
 - Keep the original email next to the PDF?

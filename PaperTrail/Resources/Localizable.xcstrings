@@ -1,0 +1,170 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "\"%@\" is not a PDF or image. Paper Trail can import PDFs and images." : {
+
+    },
+    "\"%@\" was written but could not be verified. The document was not removed from its source. Check iCloud Drive and try again." : {
+
+    },
+    "%@ – %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ – %2$@"
+          }
+        }
+      }
+    },
+    "Add" : {
+
+    },
+    "Add category" : {
+
+    },
+    "Add owner" : {
+
+    },
+    "At most 6 words" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Categories" : {
+
+    },
+    "Category" : {
+
+    },
+    "Category name" : {
+
+    },
+    "Choose an owner and a category." : {
+
+    },
+    "Could not file the document" : {
+
+    },
+    "Could not find a free file name for \"%@\". Change the description and try again." : {
+
+    },
+    "Could not read \"%@\". Make sure the file is downloaded and not damaged, then try again." : {
+
+    },
+    "Could not save \"%@\": %@. Check that iCloud Drive has free space and try again." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not save \"%1$@\": %2$@. Check that iCloud Drive has free space and try again."
+          }
+        }
+      }
+    },
+    "Date on document" : {
+
+    },
+    "Description" : {
+
+    },
+    "Details" : {
+
+    },
+    "Document date" : {
+
+    },
+    "e.g. Acme Energy" : {
+
+    },
+    "Each owner gets a top-level folder. Renaming only affects documents filed afterwards." : {
+
+    },
+    "File" : {
+
+    },
+    "File document" : {
+
+    },
+    "File name" : {
+
+    },
+    "Folders inside each owner's year folder." : {
+
+    },
+    "iCloud Drive is not available. Sign in to iCloud and turn on iCloud Drive for Paper Trail in Settings, then try again." : {
+
+    },
+    "iCloud Drive is not available. This debug build is saving to a local folder." : {
+
+    },
+    "Import file…" : {
+
+    },
+    "No documents yet" : {
+
+    },
+    "No text found" : {
+
+    },
+    "OK" : {
+
+    },
+    "Owner" : {
+
+    },
+    "Owner name" : {
+
+    },
+    "Owners" : {
+
+    },
+    "Paper Trail" : {
+
+    },
+    "Preparing document…" : {
+
+    },
+    "Received" : {
+
+    },
+    "Recognised text" : {
+
+    },
+    "Recognising text…" : {
+
+    },
+    "Save" : {
+
+    },
+    "Scan document" : {
+
+    },
+    "Scan or import a receipt, invoice or letter to file it." : {
+
+    },
+    "Scanning failed: %@. Try again." : {
+
+    },
+    "Sender" : {
+
+    },
+    "Settings" : {
+
+    },
+    "Show text" : {
+
+    },
+    "Something went wrong" : {
+
+    },
+    "Text recognition failed. You can still file the document." : {
+
+    },
+    "Where" : {
+
+    }
+  },
+  "version" : "1.0"
+}
