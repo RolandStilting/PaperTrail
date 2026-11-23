@@ -45,6 +45,8 @@ struct FilingView: View {
     @State private var appliedRule: SenderRule?
     /// The sender the model suggested, remembered as an alias when a rule is learned.
     @State private var suggestedSender = ""
+    /// Set when the document looks like one already filed; the user decides whether to file anyway.
+    @State private var duplicate: DuplicateMatch?
 
     @State private var extractedText: String?
     @State private var ocrFailed = false
@@ -170,7 +172,7 @@ struct FilingView: View {
                 if isFiling {
                     ProgressView()
                 } else {
-                    Button("File") { Task { await file() } }
+                    Button("File") { Task { await checkAndFile() } }
                         .disabled(previewPath == nil)
                 }
             }
@@ -179,6 +181,12 @@ struct FilingView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
+        }
+        .alert("Already filed?", isPresented: Binding(get: { duplicate != nil }, set: { if !$0 { duplicate = nil } }), presenting: duplicate) { _ in
+            Button("File Anyway") { Task { await file() } }
+            Button("Cancel", role: .cancel) {}
+        } message: { match in
+            Text("\(match.reason.message) An earlier document is in your archive:\n\(match.existing.relativePath)")
         }
         .interactiveDismissDisabled(isFiling)
         .onAppear(perform: applyDefaults)
@@ -303,6 +311,16 @@ struct FilingView: View {
             iban = proposal.bill.iban
             paymentReference = proposal.bill.reference
         }
+    }
+
+    /// Warns about a probable duplicate before filing. If the check itself fails, filing
+    /// goes ahead: a missed warning is better than a document that can't be filed.
+    private func checkAndFile() async {
+        if let match = try? filingService.duplicates(of: document, request: request, context: modelContext).first {
+            duplicate = match
+            return
+        }
+        await file()
     }
 
     private func file() async {

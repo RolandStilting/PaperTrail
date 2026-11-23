@@ -42,3 +42,26 @@ struct FilingServiceRuleTests {
         #expect(rules.first?.ibans == ["NL00TEST0111222333"])
     }
 }
+
+@MainActor
+@Suite("FilingService duplicates")
+struct FilingServiceDuplicateTests {
+    @Test func findsTheSameFileAndTheSameInvoice() async throws {
+        let schema = Schema([DocumentRecord.self, FilingRuleRecord.self])
+        let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none))
+        let root = FileManager.default.temporaryDirectory.appending(path: "PaperTrailTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let service = FilingService(location: FilingServiceRuleTests.TempLocation(url: root), store: CoordinatedFileStore())
+        let context = container.mainContext
+
+        let bill = BillDetails(isUnpaid: true, amount: 45.99, reference: "BD-778812")
+        let request = FilingRequest(owner: "Private", category: "Invoices", receivedDate: .now, sender: "Praatnet", description: "Factuur", bill: bill)
+        let scan = PendingDocument(pdfData: Data("%PDF-1.7 synthetic scan".utf8), source: .scan)
+        #expect(try service.duplicates(of: scan, request: request, context: context).isEmpty)
+        _ = try await service.file(scan, request: request, extractedText: nil, context: context)
+
+        #expect(try service.duplicates(of: scan, request: request, context: context).first?.reason == .sameFile)
+        let emailed = PendingDocument(pdfData: Data("%PDF-1.7 synthetic email".utf8), source: .email)
+        #expect(try service.duplicates(of: emailed, request: request, context: context).first?.reason == .sameReference)
+    }
+}

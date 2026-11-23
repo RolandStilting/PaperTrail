@@ -34,6 +34,20 @@ struct FilingService {
         return record
     }
 
+    /// Documents already in the index that look like this one. Only warns; the user decides.
+    func duplicates(of document: PendingDocument, request: FilingRequest, context: ModelContext) throws -> [DuplicateMatch] {
+        let candidate = DuplicateFacts(
+            contentHash: CoordinatedFileStore.sha256(document.pdfData),
+            sender: namer.cleanSender(request.sender),
+            amount: request.bill?.amount,
+            reference: request.bill?.reference,
+            documentDate: request.documentDate,
+            receivedDate: request.receivedDate
+        )
+        let records = try context.fetch(FetchDescriptor<DocumentRecord>())
+        return DuplicateDetector.matches(for: candidate, in: records.map(\.duplicateFacts), calendar: namer.calendar)
+    }
+
     /// Remembers owner and category for this sender, so the next document from them is
     /// filed the same way. Saved together with the record.
     private func learnRule(from record: DocumentRecord, request: FilingRequest, suggestedSender: String, context: ModelContext) {
