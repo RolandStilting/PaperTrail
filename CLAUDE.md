@@ -16,10 +16,10 @@ Full design spec: https://claude.ai/artifact/3xgTR4oqguhXEpCdpx2rCd. When this f
   - Strip `/ : \ ? * " < > |`. On a name collision append ` (2)`, ` (3)` and so on.
   - Everything is stored as PDF.
 - **Special folders:** `Paper Trail/Inbox/` (watched drop zone) and `Paper Trail/Needs Review/`.
-- **Bills go to Apple Reminders** via EventKit, one list per owner ("To pay – <Owner>"). Completing the reminder marks the bill paid in the app. Never build a separate in-app to-do list. Direct debits get no reminder.
+- **Bills go to Apple Reminders** via EventKit, one list per owner ("To pay – <Owner>") in the **iCloud** Reminders account, never Exchange (its reminder IDs differ per device). Completing the reminder marks the bill paid in the app. Never build a separate in-app to-do list. Direct debits get no reminder.
 - **Paying is a two-step approach** (decided 2026-11-23): Reminders remember the bill; Paper Trail helps pay it. Per owner a payment method setting: **SEPA batch file** (`pain.001` XML to upload in business internet banking; for the Rabobank business account. ASN Bank business banking has no file import (checked by the user 2026-11-23), so that company uses QR codes) or **EPC QR code + copy buttons** (for Private at Rabobank; shown large on the Mac so the phone can scan the screen). Paper Trail never sends payments itself and never uses PSD2 payment initiation. An exported bill is "exported", not paid; paid stays = reminder completed. The paying account per owner (name, IBAN, optional BIC) is a setting, stored like the other settings, never in code or logs.
 - **All OCR and classification run on the device** (Vision + Foundation Models). Never send document content to an external AI or cloud service.
-- **Email intake = a dedicated IMAP mailbox** checked by the Mac app (menu-bar helper), with opportunistic checks on iOS. There is no inbound-mail server.
+- **Email intake = a dedicated IMAP mailbox** checked by the Mac app, with opportunistic checks on iOS. There is no inbound-mail server. Decided 2026-11-23: an **iCloud+ address** (IMAP with an app-specific password, stored in the Keychain only); the Mac app keeps running with a **menu-bar icon** (no separate helper target) and can start at login; only PDFs are filed (**no .eml kept**); processed emails are **moved to a "Processed" mailbox folder**, never deleted.
 - The app proposes, the user confirms (review queue). Rules learned from corrections run before the model.
 
 ## Tech stack
@@ -110,5 +110,5 @@ Finish and test one phase before starting the next. Commit in small, working ste
 - ~~Which devices does the user have?~~ Answered 2026-11-22: MacBook Pro M4 Max and iPhone 17 Pro Max, both with Apple Intelligence support. No iPad mentioned yet; keep the iPad layout working, but it is untested on hardware.
 - ~~One "To pay" list or one per owner?~~ Answered 2026-11-23: one per owner.
 - ~~Direct-debit bills: a "check the debit" reminder, or none?~~ Answered 2026-11-23: none.
-- Keep the original email next to the PDF?
-- Dedicated mailbox: iCloud+ address or own domain?
+- ~~Keep the original email next to the PDF?~~ Answered 2026-11-23: no, PDF only.
+- ~~Dedicated mailbox: iCloud+ address or own domain?~~ Answered 2026-11-23: iCloud+ address.
