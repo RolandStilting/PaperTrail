@@ -143,6 +143,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .keyboardDismissal()
         .navigationTitle("Settings")
         .toolbar {
             if !embedded {

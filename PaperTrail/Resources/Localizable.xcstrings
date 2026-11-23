@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "›" : {
+
+    },
     "\"%@\" is no longer in Needs Review. It was probably filed on another device. Pull down to refresh the list." : {
 
     },
@@ -9,16 +12,6 @@
     },
     "\"%@\" was written but could not be verified. The document was not removed from its source. Check iCloud Drive and try again." : {
 
-    },
-    "%@ – %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$@ – %2$@"
-          }
-        }
-      }
     },
     "%@ · %@" : {
       "localizations" : {
@@ -60,7 +53,16 @@
         }
       }
     },
+    "%@ so far" : {
+
+    },
     "%@ Try again." : {
+
+    },
+    "%lld due this week" : {
+
+    },
+    "%lld expenses" : {
 
     },
     "%lld expenses · reimbursed %@" : {
@@ -86,6 +88,15 @@
         }
       }
     },
+    "%lld files in the Inbox folder can't be read. Paper Trail reads PDFs and images only." : {
+
+    },
+    "%lld open bills" : {
+
+    },
+    "%lld overdue" : {
+
+    },
     "%lld payments, total %@, from %@." : {
       "localizations" : {
         "en" : {
@@ -99,16 +110,31 @@
     "€ 0.00" : {
 
     },
+    "1 expense" : {
+
+    },
+    "1 open bill" : {
+
+    },
     "A dedicated mailbox that this Mac checks; its emails go to Needs Review." : {
 
     },
     "Account name" : {
 
     },
+    "Actions" : {
+
+    },
     "Add" : {
 
     },
+    "Add Amount or Payment Details" : {
+
+    },
     "Add category" : {
+
+    },
+    "Add Document…" : {
 
     },
     "Add owner" : {
@@ -120,7 +146,22 @@
     "All %lld expenses in it are cleared at once." : {
 
     },
+    "All Categories" : {
+
+    },
+    "All caught up" : {
+
+    },
+    "All Documents" : {
+
+    },
     "All documents in Paper Trail in iCloud Drive (every owner, Inbox and Needs Review) move to the Trash on this Mac." : {
+
+    },
+    "All Owners" : {
+
+    },
+    "All Years" : {
 
     },
     "Allow Paper Trail in System Settings → General → Login Items." : {
@@ -147,10 +188,19 @@
     "Amount missing" : {
 
     },
+    "Any status" : {
+
+    },
     "App-specific password" : {
 
     },
+    "Archive" : {
+
+    },
     "At most 6 words" : {
+
+    },
+    "Automatic" : {
 
     },
     "BIC (optional)" : {
@@ -162,10 +212,16 @@
     "Bills" : {
 
     },
+    "Blue" : {
+
+    },
     "By the date on each document. Paper Trail counts the VAT lines; whether VAT is deductible is for you and your accountant to decide." : {
 
     },
     "Can't be paid by file" : {
+
+    },
+    "Can't show the PDF" : {
 
     },
     "Cancel" : {
@@ -186,6 +242,9 @@
     "Check Mail Now" : {
 
     },
+    "Check that the file is still in iCloud Drive and downloaded." : {
+
+    },
     "Check this mailbox" : {
 
     },
@@ -198,10 +257,25 @@
     "Claim Ready" : {
 
     },
+    "Claimed" : {
+
+    },
+    "Clear" : {
+
+    },
     "Clear All Documents" : {
 
     },
     "Clear All Documents…" : {
+
+    },
+    "Clear Filters" : {
+
+    },
+    "Colour" : {
+
+    },
+    "Colour for %@" : {
 
     },
     "Company" : {
@@ -344,7 +418,13 @@
     "Document date" : {
 
     },
+    "Document not found" : {
+
+    },
     "Documents" : {
+
+    },
+    "Documents you file appear here." : {
 
     },
     "Done" : {
@@ -372,7 +452,10 @@
     "e.g. Acme Energy" : {
 
     },
-    "Each owner gets a top-level folder. Renaming only affects documents filed afterwards." : {
+    "Each owner gets a top-level folder and a colour in lists. Renaming only affects documents filed afterwards." : {
+
+    },
+    "Edit VAT" : {
 
     },
     "Email" : {
@@ -424,9 +507,6 @@
     "Expenses" : {
 
     },
-    "Expenses (%lld)" : {
-
-    },
     "Export" : {
 
     },
@@ -457,7 +537,13 @@
     "Filed like earlier documents from %@. Change owner or category to update this rule." : {
 
     },
+    "Filed under" : {
+
+    },
     "Filed, but no reminder" : {
+
+    },
+    "Find Documents" : {
 
     },
     "Find VAT in Documents" : {
@@ -487,6 +573,15 @@
     "Found in the document's text. Check rate and amounts." : {
 
     },
+    "From your rule for %@" : {
+
+    },
+    "Gray" : {
+
+    },
+    "Green" : {
+
+    },
     "IBAN" : {
 
     },
@@ -502,10 +597,13 @@
     "IMAP server" : {
 
     },
-    "Import file…" : {
+    "Import File…" : {
 
     },
-    "Inbox" : {
+    "In iCloud Drive" : {
+
+    },
+    "It may have been removed from the archive." : {
 
     },
     "Its reminder is completed too." : {
@@ -541,6 +639,9 @@
     "Mark this claim as reimbursed?" : {
 
     },
+    "Money" : {
+
+    },
     "Monthly" : {
 
     },
@@ -572,6 +673,9 @@
 
     },
     "No mailbox password is saved. Enter the app-specific password in Settings → Email." : {
+
+    },
+    "No matching documents" : {
 
     },
     "No open bills" : {
@@ -607,16 +711,16 @@
     "OK" : {
 
     },
-    "Open Bills" : {
-
-    },
-    "Open Bills (%lld)" : {
-
-    },
     "Open Paper Trail" : {
 
     },
     "Open Paper Trail at login" : {
+
+    },
+    "Orange" : {
+
+    },
+    "Overdue" : {
 
     },
     "Owner" : {
@@ -631,19 +735,25 @@
     "Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud." : {
 
     },
+    "Paid" : {
+
+    },
     "Paper Trail" : {
 
     },
     "Paper Trail address" : {
 
     },
-    "Paper Trail can only read PDFs and images. Move these files out of the Inbox folder in iCloud Drive." : {
+    "Paper Trail adds a reminder to the To pay list of this owner in Reminders." : {
 
     },
     "Paper Trail can't use Reminders. Allow full access for Paper Trail in Settings → Privacy & Security → Reminders, then tap Create Reminder on the bill." : {
 
     },
     "Paper Trail remembers owner and category for each sender you file." : {
+
+    },
+    "Pay" : {
 
     },
     "Pay before" : {
@@ -673,6 +783,9 @@
     "Payment reference" : {
 
     },
+    "Pink" : {
+
+    },
     "Port" : {
 
     },
@@ -680,6 +793,9 @@
 
     },
     "Previous" : {
+
+    },
+    "Purple" : {
 
     },
     "QR code and copy buttons" : {
@@ -706,16 +822,22 @@
     "Received" : {
 
     },
+    "Recently filed" : {
+
+    },
     "Recognised text" : {
 
     },
     "Recognising text…" : {
 
     },
+    "Red" : {
+
+    },
     "Reference" : {
 
     },
-    "Reimbursed by %@" : {
+    "Reimbursed" : {
 
     },
     "Reimbursed claims (%lld)" : {
@@ -748,10 +870,10 @@
     "Saves the document to Needs Review in iCloud Drive, so you can file it later on any device." : {
 
     },
-    "Scan document" : {
+    "Scan Document" : {
 
     },
-    "Scan or import a receipt, invoice or letter to file it." : {
+    "Scan or import a receipt, invoice or letter, or drop a file here." : {
 
     },
     "Scan with your banking app, check the details and confirm there. Paper Trail never sends payments." : {
@@ -769,6 +891,9 @@
     "Sender missing" : {
 
     },
+    "Sender, description or text" : {
+
+    },
     "SEPA batch file" : {
 
     },
@@ -781,10 +906,22 @@
     "Settings" : {
 
     },
+    "Settings saved" : {
+
+    },
     "Share Again" : {
 
     },
+    "Share PDF" : {
+
+    },
     "Share…" : {
+
+    },
+    "Shared, emailed and Inbox documents wait here until you file them." : {
+
+    },
+    "Show in Finder" : {
 
     },
     "Show text" : {
@@ -808,13 +945,25 @@
     "Start over" : {
 
     },
+    "Start your archive" : {
+
+    },
+    "Status" : {
+
+    },
     "Submitted" : {
+
+    },
+    "Suggested on this device" : {
 
     },
     "Suggesting details on this device…" : {
 
     },
     "Summary" : {
+
+    },
+    "Teal" : {
 
     },
     "Test Connection" : {
@@ -871,6 +1020,21 @@
     "To check (not in the total)" : {
 
     },
+    "To claim" : {
+
+    },
+    "To Claim" : {
+
+    },
+    "To pay" : {
+
+    },
+    "To Pay" : {
+
+    },
+    "Today" : {
+
+    },
     "Total" : {
 
     },
@@ -886,9 +1050,6 @@
     "Unpaid bill" : {
 
     },
-    "Unpaid bills will get a reminder in a later version." : {
-
-    },
     "Unpaid bills you file show up here until their reminder is completed." : {
 
     },
@@ -898,10 +1059,10 @@
     "VAT" : {
 
     },
-    "VAT lines you corrected by hand in this period are replaced by what Paper Trail reads from the text." : {
+    "VAT %@" : {
 
     },
-    "VAT Overview" : {
+    "VAT lines you corrected by hand in this period are replaced by what Paper Trail reads from the text." : {
 
     },
     "VAT Overview Ready" : {
@@ -913,6 +1074,9 @@
     "VAT to reclaim" : {
 
     },
+    "Waiting for you to file" : {
+
+    },
     "What happens" : {
 
     },
@@ -922,7 +1086,13 @@
     "Where" : {
 
     },
+    "With VAT" : {
+
+    },
     "xxxx-xxxx-xxxx-xxxx" : {
+
+    },
+    "Year" : {
 
     },
     "Yearly" : {

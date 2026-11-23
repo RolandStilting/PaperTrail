@@ -249,6 +249,7 @@ struct VATEditSheet: View {
                 if let errorMessage { Section { Text(errorMessage).foregroundStyle(.red) } }
             }
             .formStyle(.grouped)
+            .keyboardDismissal()
             .navigationTitle(record.sender)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }

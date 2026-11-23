@@ -63,3 +63,29 @@ struct OwnerDot: View {
             .accessibilityHidden(true)
     }
 }
+
+#if os(iOS)
+import UIKit
+#endif
+
+extension View {
+    /// iPhone and iPad: a Done button above the keyboard, and swiping the form down hides the
+    /// keyboard. Number pads have no return key, so without this the keyboard can't be closed.
+    func keyboardDismissal() -> some View {
+        #if os(iOS)
+        self
+            .scrollDismissesKeyboard(.interactively)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        #else
+        self
+        #endif
+    }
+}

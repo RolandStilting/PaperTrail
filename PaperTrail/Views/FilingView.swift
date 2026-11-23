@@ -240,6 +240,7 @@ struct FilingView: View {
             }
         }
         .formStyle(.grouped)
+        .keyboardDismissal()
     }
 
     private var currentOwner: Owner? { settingsStore.settings.owners.first { $0.name == ownerName } }
