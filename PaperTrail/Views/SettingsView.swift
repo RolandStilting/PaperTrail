@@ -1,4 +1,5 @@
 import PaperTrailKit
+import SwiftData
 import SwiftUI
 
 /// Edit the owners and categories that make up the folder structure.

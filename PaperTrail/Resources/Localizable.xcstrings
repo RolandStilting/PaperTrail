@@ -606,6 +606,9 @@
     "It may have been removed from the archive." : {
 
     },
+    "Its PDF and details appear here." : {
+
+    },
     "Its reminder is completed too." : {
 
     },
@@ -880,6 +883,9 @@
 
     },
     "Scanning failed: %@. Try again." : {
+
+    },
+    "Select a document" : {
 
     },
     "Select at least one expense for the claim." : {
