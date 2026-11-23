@@ -23,6 +23,22 @@ struct ExtractionChecksTests {
         #expect(Self.checked("Hotel Sample\nRECEIPT\nTotal EUR 312.00\nPaid: Mastercard").category == "Receipts")
     }
 
+    @Test func tillReceiptSayingTeBetalenIsStillReceipt() {
+        let text = "TOTAAL TE BETALEN 49,02\nBetaald met Maestro\nFactuur op aanvraag\nContactloos\nBedankt voor uw aankoop!"
+        #expect(Self.checked(text).category == "Receipts")
+    }
+
+    @Test func receiptDescriptionDoesNotSayInvoice() {
+        #expect(ExtractionChecks.receiptDescription("Factuur voor verf en tape") == "Kassabon voor verf en tape")
+        #expect(ExtractionChecks.receiptDescription("Invoice hotel Berlin") == "Receipt hotel Berlin")
+        #expect(ExtractionChecks.receiptDescription("Boodschappen") == "Boodschappen")
+    }
+
+    @Test func paymentRequestIsNotReceipt() {
+        #expect(Self.checked("Factuurnummer 12\nTe betalen € 10,00 via PIN of overmaken").category == "Invoices")
+        #expect(Self.checked("Invoice number 7\nCard payment received, thank you").category == "Invoices")
+    }
+
     @Test func invoiceMentioningPaymentStaysInvoice() {
         #expect(Self.checked("INVOICE\nInvoice number: INV-1\nPaid by Visa. Thank you!").category == "Invoices")
         #expect(Self.checked("FACTUUR\nTotaal te betalen € 10,00\nU kunt ook betalen met PIN").category == "Invoices")

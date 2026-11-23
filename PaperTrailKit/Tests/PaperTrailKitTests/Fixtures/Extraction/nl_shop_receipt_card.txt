@@ -1,0 +1,25 @@
+BOUWMARKT VOORBEELD
+Industrieweg 12, Fictiedam
+www.bouwmarkt-voorbeeld.example
+
+Verfroller 25 cm               1 x  7,49
+Muurverf wit 2,5L              1 x 34,95
+Afplaktape 50m                 2 x  3,29      6,58
+
+TOTAAL TE BETALEN                         49,02
+Betaald met Maestro                       49,02
+
+BTW 21% over 40,51                         8,51
+Factuur op aanvraag bij de servicebalie.
+
+----------------------------------------
+Terminal ID: 00000000
+Merchant: BOUWMARKT VOORBEELD
+Datum: 07-03-2026  Tijd: 11:16
+Kaart: XXXX XXXX XXXX 0000
+Contactloos
+Autorisatiecode: 000000
+Totaal: EUR 49,02
+BETALING GELUKT
+----------------------------------------
+Bedankt voor uw aankoop!

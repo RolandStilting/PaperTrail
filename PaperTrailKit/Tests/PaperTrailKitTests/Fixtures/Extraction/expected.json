@@ -8,5 +8,6 @@
   {"file": "nl_telecom_reminder", "senders": ["Praatnet Demo", "Praatnet"], "documentDate": "2026-02-20", "category": "Invoices", "isUnpaidBill": true, "amount": 45.99, "dueDate": "2026-02-27", "iban": "NL00TEST0111222333", "reference": "BD-778812"},
   {"file": "en_software_invoice", "senders": ["Example Cloud"], "documentDate": "2026-03-01", "category": "Invoices", "isUnpaidBill": false, "amount": 29.00, "dueDate": "", "iban": "", "reference": "INV-20431"},
   {"file": "en_hotel_receipt", "senders": ["Hotel Sample Berlin", "Hotel Sample"], "documentDate": "2026-01-12", "category": "Receipts", "isUnpaidBill": false, "amount": 312.00, "dueDate": "", "iban": "", "reference": "2026-00917"},
-  {"file": "nl_rental_contract", "senders": ["Woningstichting Proefwonen", "Proefwonen"], "documentDate": "2026-04-02", "category": "Contracts", "isUnpaidBill": false, "amount": 975.00, "dueDate": "", "iban": "", "reference": ""}
+  {"file": "nl_rental_contract", "senders": ["Woningstichting Proefwonen", "Proefwonen"], "documentDate": "2026-04-02", "category": "Contracts", "isUnpaidBill": false, "amount": 975.00, "dueDate": "", "iban": "", "reference": ""},
+  {"file": "nl_shop_receipt_card", "senders": ["Bouwmarkt Voorbeeld"], "documentDate": "2026-03-07", "category": "Receipts", "isUnpaidBill": false, "amount": 49.02, "dueDate": "", "iban": "", "reference": ""}
 ]

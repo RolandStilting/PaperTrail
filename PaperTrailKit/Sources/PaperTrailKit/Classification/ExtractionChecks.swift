@@ -32,6 +32,7 @@ public enum ExtractionChecks {
         // Category
         if signals.looksLikeReceipt, let receipts = receiptCategory(in: categories) {
             result.category = receipts
+            result.description = receiptDescription(result.description)
         }
         // Snap to the exact spelling in the settings; unknown names become empty for review.
         result.category = categories.first { $0.caseInsensitiveCompare(result.category) == .orderedSame } ?? ""
@@ -76,6 +77,14 @@ public enum ExtractionChecks {
         }
 
         return result
+    }
+
+    /// Replaces a leading "Factuur" or "Invoice" in a receipt's description.
+    static func receiptDescription(_ description: String) -> String {
+        let replacements = ["factuur": "Kassabon", "invoice": "Receipt"]
+        guard let first = description.split(separator: " ").first,
+              let replacement = replacements[first.lowercased()] else { return description }
+        return replacement + description.dropFirst(first.count)
     }
 
     /// True when `amount` is written in `text` as 1234,56 / 1.234,56 / 1234.56 / 1,234.56
