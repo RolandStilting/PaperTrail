@@ -56,7 +56,30 @@ public enum ExtractionPrompt {
 
 public enum ModelAvailability: Equatable, Sendable {
     case available
-    case unavailable(String)
+    case unavailable(ModelUnavailableReason)
+}
+
+/// Why the on-device model can't run, mirroring `SystemLanguageModel.Availability.UnavailableReason`.
+public enum ModelUnavailableReason: Equatable, Sendable {
+    case deviceNotEligible
+    case appleIntelligenceNotEnabled
+    case modelNotReady
+    /// A reason added in a later OS version.
+    case other(String)
+
+    /// What went wrong and what the user can do, shown in the filing screen.
+    public var message: String {
+        switch self {
+        case .deviceNotEligible:
+            String(localized: "This device doesn't support Apple Intelligence, so Paper Trail can't suggest details here. Fill them in yourself.", bundle: .module)
+        case .appleIntelligenceNotEnabled:
+            String(localized: "Apple Intelligence is turned off. To get suggestions, turn it on in (System) Settings → Apple Intelligence & Siri. The device language and the Siri language must be the same supported language.", bundle: .module)
+        case .modelNotReady:
+            String(localized: "Apple Intelligence is still getting ready, for example downloading its model. Keep the device on Wi-Fi and power, and try again later.", bundle: .module)
+        case .other(let reason):
+            String(localized: "Apple Intelligence is not available right now (\(reason)). Fill in the details yourself.", bundle: .module)
+        }
+    }
 }
 
 /// Runs the on-device model. Document text never leaves the device.
@@ -70,7 +93,10 @@ public struct ModelExtractor: Sendable {
     public static var availability: ModelAvailability {
         switch SystemLanguageModel.default.availability {
         case .available: .available
-        case .unavailable(let reason): .unavailable(String(describing: reason))
+        case .unavailable(.deviceNotEligible): .unavailable(.deviceNotEligible)
+        case .unavailable(.appleIntelligenceNotEnabled): .unavailable(.appleIntelligenceNotEnabled)
+        case .unavailable(.modelNotReady): .unavailable(.modelNotReady)
+        case .unavailable(let reason): .unavailable(.other(String(describing: reason)))
         }
     }
 

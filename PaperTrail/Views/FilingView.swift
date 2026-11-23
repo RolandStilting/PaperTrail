@@ -237,8 +237,8 @@ struct FilingView: View {
             suggestion = .failed
             return
         }
-        guard case .available = ModelExtractor.availability else {
-            suggestion = .unavailable(String(localized: "Suggestions need Apple Intelligence, which is not available on this device right now. Fill in the details yourself."))
+        if case .unavailable(let reason) = ModelExtractor.availability {
+            suggestion = .unavailable(reason.message)
             return
         }
         suggestion = .working

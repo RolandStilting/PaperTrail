@@ -17,6 +17,9 @@
         }
       }
     },
+    "€ 0.00" : {
+
+    },
     "Add" : {
 
     },
@@ -24,6 +27,9 @@
 
     },
     "Add owner" : {
+
+    },
+    "Amount" : {
 
     },
     "At most 6 words" : {
@@ -63,6 +69,9 @@
         }
       }
     },
+    "Could not suggest details for this document. Fill them in yourself." : {
+
+    },
     "Date on document" : {
 
     },
@@ -72,7 +81,13 @@
     "Details" : {
 
     },
+    "Details suggested on this device. Check them before filing." : {
+
+    },
     "Document date" : {
+
+    },
+    "Due date" : {
 
     },
     "e.g. Acme Energy" : {
@@ -93,6 +108,9 @@
     "Folders inside each owner's year folder." : {
 
     },
+    "IBAN" : {
+
+    },
     "iCloud Drive is not available. Sign in to iCloud and turn on iCloud Drive for Paper Trail in Settings, then try again." : {
 
     },
@@ -100,6 +118,9 @@
 
     },
     "Import file…" : {
+
+    },
+    "NL00 BANK 0123 4567 89" : {
 
     },
     "No documents yet" : {
@@ -121,6 +142,15 @@
 
     },
     "Paper Trail" : {
+
+    },
+    "Pay before" : {
+
+    },
+    "Payment" : {
+
+    },
+    "Payment reference" : {
 
     },
     "Preparing document…" : {
@@ -159,7 +189,19 @@
     "Something went wrong" : {
 
     },
+    "Suggesting details on this device…" : {
+
+    },
+    "Suggestions need Apple Intelligence, which is not available on this device right now. Fill in the details yourself." : {
+
+    },
     "Text recognition failed. You can still file the document." : {
+
+    },
+    "Unpaid bill" : {
+
+    },
+    "Unpaid bills will get a reminder in a later version." : {
 
     },
     "Where" : {

@@ -43,3 +43,14 @@ struct ProposalTests {
         #expect(record.paymentReference == nil)
     }
 }
+
+@Suite("ModelAvailability")
+struct ModelAvailabilityTests {
+    @Test func everyReasonSaysWhatToDo() {
+        let reasons: [ModelUnavailableReason] = [.deviceNotEligible, .appleIntelligenceNotEnabled, .modelNotReady, .other("test")]
+        let messages = reasons.map(\.message)
+        #expect(Set(messages).count == reasons.count)
+        #expect(messages[1].contains("Settings"))
+        #expect(messages[3].contains("test"))
+    }
+}
