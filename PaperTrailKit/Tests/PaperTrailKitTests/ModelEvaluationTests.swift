@@ -53,9 +53,11 @@ struct ModelEvaluationTests {
         }
         let folder = try Self.fixturesURL()
         let expected = try JSONDecoder().decode([Expected].self, from: Data(contentsOf: folder.appending(path: "expected.json")))
-        let extractor = ModelExtractor(categories: ArchiveSettings.defaults.categories.map(\.name))
+        let categories = ArchiveSettings.defaults.categories.map(\.name)
+        let extractor = ModelExtractor(categories: categories)
 
         var totals = Dictionary(uniqueKeysWithValues: Self.fields.map { ($0, 0) })
+        var rawTotals = totals
         var report = ["| document | " + Self.fields.joined(separator: " | ") + " | seconds |",
                       "|---|" + Self.fields.map { _ in "---" }.joined(separator: "|") + "|---|"]
         var details: [String] = []
@@ -63,20 +65,23 @@ struct ModelEvaluationTests {
         for want in expected {
             let text = try String(contentsOf: folder.appending(path: "\(want.file).txt"), encoding: .utf8)
             let start = ContinuousClock.now
-            let got: ModelExtraction
+            let raw: ModelExtraction
             do {
-                got = try await extractor.extract(from: text)
+                raw = try await extractor.extract(from: text)
             } catch {
                 report.append("| \(want.file) | error: \(error) |")
                 continue
             }
             let seconds = (ContinuousClock.now - start).components.seconds
+            let got = ExtractionChecks.apply(raw, text: text, categories: categories)
             let scores = Self.score(got, want)
             for (field, ok) in scores where ok { totals[field, default: 0] += 1 }
+            for (field, ok) in Self.score(raw, want) where ok { rawTotals[field, default: 0] += 1 }
             report.append("| \(want.file) | " + Self.fields.map { scores[$0]! ? "✓" : "✗" }.joined(separator: " | ") + " | \(seconds) |")
             details.append("\(want.file): sender=\(got.sender) | date=\(got.documentDate) | cat=\(got.category) | desc=\(got.description) | unpaid=\(got.isUnpaidBill) | amount=\(got.amount) | due=\(got.dueDate) | iban=\(got.iban) | ref=\(got.reference)")
         }
-        report.append("| **total / \(expected.count)** | " + Self.fields.map { "\(totals[$0]!)" }.joined(separator: " | ") + " | |")
+        report.append("| model only / \(expected.count) | " + Self.fields.map { "\(rawTotals[$0]!)" }.joined(separator: " | ") + " | |")
+        report.append("| **with checks / \(expected.count)** | " + Self.fields.map { "\(totals[$0]!)" }.joined(separator: " | ") + " | |")
 
         print("\n=== Model extraction evaluation ===\n" + report.joined(separator: "\n") + "\n\n" + details.joined(separator: "\n") + "\n")
     }

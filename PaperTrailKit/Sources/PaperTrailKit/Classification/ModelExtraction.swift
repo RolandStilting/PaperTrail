@@ -44,7 +44,8 @@ public enum ExtractionPrompt {
         that a person received, and extract filing details. Documents are usually in Dutch or English. \
         Only use information that is in the text; never invent values. \
         The recipient is the person who received the document; the sender is the organisation that wrote it. \
-        Categories to choose from: \(categories.joined(separator: ", ")).
+        Choose the category from this list:
+        \(CategoryHints.describe(categories))
         """
     }
 
@@ -81,5 +82,10 @@ public struct ModelExtractor: Sendable {
             options: GenerationOptions(samplingMode: .greedy)
         )
         return response.content
+    }
+
+    /// The model's answer, corrected by ``ExtractionChecks`` against the text.
+    public func propose(from text: String) async throws -> ModelExtraction {
+        ExtractionChecks.apply(try await extract(from: text), text: text, categories: categories)
     }
 }
