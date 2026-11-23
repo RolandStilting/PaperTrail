@@ -7,10 +7,16 @@
     "\"Inbox\" and \"Needs Review\" are reserved folder names. Pick another owner name." : {
 
     },
+    "%@ pays with a SEPA file. Enter the account name and IBAN it pays from." : {
+
+    },
     "Add at least one category." : {
 
     },
     "Add at least one owner." : {
+
+    },
+    "Amount: %@" : {
 
     },
     "Apple Intelligence is not available right now (%@). Fill in the details yourself." : {
@@ -31,10 +37,39 @@
     "Could not create the PDF. Try scanning again; if it keeps failing, restart the app." : {
 
     },
+    "Document: %@/%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Document: %1$@/%2$@"
+          }
+        }
+      }
+    },
     "Every category needs a name." : {
 
     },
     "Every owner needs a name." : {
+
+    },
+    "IBAN: %@" : {
+
+    },
+    "Pay %@" : {
+
+    },
+    "Pay %@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Pay %1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "Reference: %@" : {
 
     },
     "Same sender and the same invoice number or reference." : {
@@ -49,6 +84,9 @@
     "Shared document" : {
 
     },
+    "The IBAN for %@ is not valid. Check it for typos." : {
+
+    },
     "The scan has no pages. Scan the document again." : {
 
     },
@@ -56,6 +94,9 @@
 
     },
     "This is exactly the same file." : {
+
+    },
+    "To pay – %@" : {
 
     },
     "Two categories have the same name. Make each category name unique." : {

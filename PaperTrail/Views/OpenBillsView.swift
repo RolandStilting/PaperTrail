@@ -20,6 +20,7 @@ struct OpenBillsView: View {
     @Query(filter: #Predicate<DocumentRecord> { $0.isUnpaidBill && !$0.isPaid }, sort: \DocumentRecord.receivedDate)
     private var bills: [DocumentRecord]
     @State private var path: [UUID] = []
+    @State private var exportingOwner: Owner?
 
     private var owners: [String] {
         let configured = settingsStore.settings.owners.map(\.name)
@@ -43,6 +44,9 @@ struct OpenBillsView: View {
                         ForEach(bills(of: owner)) { bill in
                             NavigationLink(value: bill.id) { BillRow(bill: bill) }
                         }
+                        if let settings = settingsStore.settings.owners.first(where: { $0.name == owner }), settings.paymentMethod == .sepaFile {
+                            Button("Export SEPA File…", systemImage: "square.and.arrow.up") { exportingOwner = settings }
+                        }
                     }
                 }
             }
@@ -58,6 +62,12 @@ struct OpenBillsView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
+            }
+            .sheet(item: $exportingOwner) { owner in
+                SEPAExportView(owner: owner, bills: bills(of: owner.name))
+                #if os(macOS)
+                .frame(minWidth: 480, minHeight: 520)
+                #endif
             }
         }
         .onAppear {
@@ -80,6 +90,12 @@ private struct BillRow: View {
                 }
             }
             Spacer()
+            if bill.exportedAt != nil {
+                Image(systemName: "square.and.arrow.up.circle")
+                    .foregroundStyle(.orange)
+                    .help("Exported in a SEPA file; open until its reminder is completed")
+                    .accessibilityLabel(Text("Exported"))
+            }
             if let amount = bill.amount {
                 Text(BillReminderText.amount(amount)).monospacedDigit()
             }
