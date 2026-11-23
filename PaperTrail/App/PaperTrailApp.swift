@@ -39,6 +39,16 @@ struct PaperTrailApp: App {
                 #endif
         }
         .modelContainer(modelContainer)
+        .commands {
+            CommandGroup(replacing: .newItem) {
+                Button("Add Document…") { model.showingImporter = true }
+                    .keyboardShortcut("n")
+            }
+            CommandGroup(after: .textEditing) {
+                Button("Find Documents") { model.wantsSearchFocus = true }
+                    .keyboardShortcut("f")
+            }
+        }
 
         #if os(macOS)
         // Paper Trail → Settings… (⌘,), the standard place on the Mac.

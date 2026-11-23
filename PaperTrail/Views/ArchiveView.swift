@@ -41,6 +41,7 @@ struct ArchiveView: View {
     @State private var categoryFilter: String?
     @State private var yearFilter: Int?
     @State private var statusFilter = ArchiveStatusFilter.all
+    @FocusState private var searchFocused: Bool
 
     private var calendar: Calendar { .current }
 
@@ -114,6 +115,9 @@ struct ArchiveView: View {
         }
         .safeAreaInset(edge: .top, spacing: 0) { filterBar }
         .searchable(text: $search, prompt: Text("Sender, description or text"))
+        .searchFocused($searchFocused)
+        .onChange(of: model.wantsSearchFocus) { _, _ in takeSearchFocus() }
+        .onAppear(perform: takeSearchFocus)
         .navigationTitle(owner ?? String(localized: "Archive"))
         .toolbar { ToolbarItem(placement: .primaryAction) { AddDocumentMenu() } }
         .navigationDestination(for: DocumentRoute.self) { route in
@@ -160,6 +164,13 @@ struct ArchiveView: View {
             .padding(.vertical, 8)
         }
         .background(.bar)
+    }
+
+    /// Find (⌘F): the cursor goes to the search field once.
+    private func takeSearchFocus() {
+        guard model.wantsSearchFocus else { return }
+        model.wantsSearchFocus = false
+        searchFocused = true
     }
 
     private func clearFilters() {

@@ -60,8 +60,11 @@ struct RootView: View {
             NavigationStack {
                 FilingView(document: document, filingService: model.filingService, billService: model.billService) { model.pending = nil }
             }
+            #if os(iOS)
+            .presentationSizing(.page)
+            #endif
             #if os(macOS)
-            .frame(minWidth: 560, minHeight: 680)
+            .frame(minWidth: 900, idealWidth: 1000, minHeight: 680, idealHeight: 760)
             #endif
         }
         .sheet(isPresented: $model.showingBillFromLink) {
@@ -91,6 +94,11 @@ struct RootView: View {
             Text(model.errorMessage ?? "")
         }
         .onOpenURL { model.handle(url: $0) }
+        .onChange(of: model.wantsSearchFocus) { _, wants in
+            // Find (⌘F) searches the archive; go there first if needed.
+            guard wants else { return }
+            if case .archive = selection {} else { selection = .archive(owner: nil) }
+        }
         .task {
             await model.resolveArchive()
             await model.refreshReviewItems()

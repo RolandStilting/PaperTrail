@@ -24,6 +24,8 @@ final class AppModel {
     /// A bill to open from a reminder's link.
     var billToOpen: UUID?
     var showingBillFromLink = false
+    /// Set by Find (⌘F); the archive puts the cursor in its search field and clears it.
+    var wantsSearchFocus = false
     /// Inbox problems already shown, so the check every minute doesn't repeat them.
     private var shownInboxFailures: Set<String> = []
 

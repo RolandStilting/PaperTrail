@@ -60,4 +60,23 @@ struct SenderRuleTests {
         let second = try #require(SenderRules.learn(from: ConfirmedFiling(sender: "Parkeren Test", owner: "Private", category: "Receipts"), existing: [first], now: Self.day.addingTimeInterval(60)))
         #expect(second.reimbursedBy == nil)
     }
+
+    @Test func sharedIBANDoesNotDecide() {
+        // Two senders paid through the same payment provider IBAN.
+        let energy = SenderRule(senderName: "Voorbeeld Energie", aliases: ["voorbeeld energie"], ibans: ["NL91ABNA0417164300"], owner: "Private", category: "Invoices", updatedAt: Self.day.addingTimeInterval(60))
+        let painter = SenderRule(senderName: "Schildersbedrijf Voorbeeld", aliases: ["schildersbedrijf voorbeeld"], ibans: ["NL91ABNA0417164300"], owner: "Company1", category: "Invoices", updatedAt: Self.day)
+        let text = "Schildersbedrijf Voorbeeld\nFactuur\nNL91 ABNA 0417 1643 00"
+        #expect(SenderRules.match([energy, painter], text: text) == painter)
+        #expect(SenderRules.match([energy, painter], text: "Factuur\nNL91 ABNA 0417 1643 00") == nil)
+    }
+
+    @Test func sameIBANForAnotherSenderMakesANewRule() throws {
+        let painter = try #require(SenderRules.learn(from: ConfirmedFiling(sender: "Schildersbedrijf Voorbeeld", owner: "Company1", category: "Invoices",
+                                                                          payToIban: "NL91ABNA0417164300"), existing: [], now: Self.day))
+        let energy = try #require(SenderRules.learn(from: ConfirmedFiling(sender: "Voorbeeld Energie", owner: "Private", category: "Invoices",
+                                                                         payToIban: "NL91ABNA0417164300"), existing: [painter], now: Self.day.addingTimeInterval(60)))
+        #expect(energy.id != painter.id)
+        #expect(energy.senderName == "Voorbeeld Energie")
+        #expect(SenderRules.match([painter, energy], text: "Schildersbedrijf Voorbeeld\nNL91 ABNA 0417 1643 00") == painter)
+    }
 }

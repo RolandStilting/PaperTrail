@@ -43,6 +43,11 @@ struct FilingView: View {
     @State private var vat = VATInfo()
 
     @State private var suggestion = SuggestionState.waitingForText
+    /// Fields filled in by the on-device suggestion, and by a learned rule.
+    @State private var suggested: Set<Field> = []
+    @State private var fromRule: Set<Field> = []
+    /// Payment fields for documents that don't look like a bill, on request.
+    @State private var showsPayment = false
     /// Fields the user changed; a late suggestion never overwrites them.
     @State private var edited: Set<Field> = []
     /// The learned rule that matched this document; its owner, category and sender win over the model.
@@ -91,21 +96,29 @@ struct FilingView: View {
         try? FilingPlanner.plan(for: request, namer: filingService.namer).relativePath
     }
 
-    var body: some View {
+    private func form(showsPDF: Bool) -> some View {
         Form {
-            Section {
-                PDFPreview(data: document.pdfData)
-                    .frame(minHeight: 260)
+            if showsPDF {
+                Section {
+                    PDFPreview(data: document.pdfData)
+                        .frame(minHeight: 260)
+                }
             }
 
             suggestionSection
 
             Section("Where") {
-                Picker("Owner", selection: tracked($ownerName, .owner)) {
-                    ForEach(settingsStore.settings.owners) { Text($0.name).tag($0.name) }
+                HStack {
+                    Picker("Owner", selection: tracked($ownerName, .owner)) {
+                        ForEach(settingsStore.settings.owners) { Text($0.name).tag($0.name) }
+                    }
+                    mark(.owner)
                 }
-                Picker("Category", selection: tracked($categoryName, .category)) {
-                    ForEach(settingsStore.settings.categories) { Text($0.name).tag($0.name) }
+                HStack {
+                    Picker("Category", selection: tracked($categoryName, .category)) {
+                        ForEach(settingsStore.settings.categories) { Text($0.name).tag($0.name) }
+                    }
+                    mark(.category)
                 }
             }
 
@@ -113,45 +126,68 @@ struct FilingView: View {
                 DatePicker("Received", selection: $receivedDate, displayedComponents: .date)
                 Toggle("Date on document", isOn: tracked($hasDocumentDate, .documentDate))
                 if hasDocumentDate {
-                    DatePicker("Document date", selection: tracked($documentDate, .documentDate), displayedComponents: .date)
-                }
-                TextField("Sender", text: tracked($sender, .sender), prompt: Text("e.g. Acme Energy"))
-                TextField("Description", text: tracked($descriptionText, .description), prompt: Text("At most 6 words"))
-            }
-
-            Section {
-                Toggle("Unpaid bill", isOn: tracked($isUnpaidBill, .bill))
-                TextField("Amount", value: tracked($amount, .bill), format: .currency(code: "EUR"), prompt: Text("€ 0.00"))
-                    #if os(iOS)
-                    .keyboardType(.decimalPad)
-                    #endif
-                if isUnpaidBill {
-                    Toggle("Due date", isOn: tracked($hasDueDate, .bill))
-                    if hasDueDate {
-                        DatePicker("Pay before", selection: tracked($dueDate, .bill), displayedComponents: .date)
+                    HStack {
+                        DatePicker("Document date", selection: tracked($documentDate, .documentDate), displayedComponents: .date)
+                        mark(.documentDate)
                     }
-                    TextField("IBAN", text: tracked($iban, .bill), prompt: Text("NL00 BANK 0123 4567 89"))
-                        .autocorrectionDisabled()
-                    TextField("Payment reference", text: tracked($paymentReference, .bill))
-                        .autocorrectionDisabled()
                 }
-            } header: {
-                Text("Payment")
-            } footer: {
-                if isUnpaidBill {
-                    Text("Unpaid bills will get a reminder in a later version.")
+                HStack {
+                    TextField("Sender", text: tracked($sender, .sender), prompt: Text("e.g. Acme Energy"))
+                    mark(.sender)
+                }
+                HStack {
+                    TextField("Description", text: tracked($descriptionText, .description), prompt: Text("At most 6 words"))
+                    mark(.description)
                 }
             }
 
-            Section {
-                Picker("To be reimbursed by", selection: tracked($reimbursedBy, .reimbursement)) {
-                    Text("Nobody").tag("")
-                    ForEach(settingsStore.settings.owners.filter { $0.name != ownerName }) { Text($0.name).tag($0.name) }
+            if showsPaymentFields {
+                Section {
+                    HStack {
+                        Toggle("Unpaid bill", isOn: tracked($isUnpaidBill, .bill))
+                        mark(.bill)
+                    }
+                    TextField("Amount", value: tracked($amount, .bill), format: .currency(code: "EUR"), prompt: Text("€ 0.00"))
+                        #if os(iOS)
+                        .keyboardType(.decimalPad)
+                        #endif
+                    if isUnpaidBill {
+                        Toggle("Due date", isOn: tracked($hasDueDate, .bill))
+                        if hasDueDate {
+                            DatePicker("Pay before", selection: tracked($dueDate, .bill), displayedComponents: .date)
+                        }
+                        TextField("IBAN", text: tracked($iban, .bill), prompt: Text("NL00 BANK 0123 4567 89"))
+                            .autocorrectionDisabled()
+                        TextField("Payment reference", text: tracked($paymentReference, .bill))
+                            .autocorrectionDisabled()
+                    }
+                } header: {
+                    Text("Payment")
+                } footer: {
+                    if isUnpaidBill {
+                        Text("Paper Trail adds a reminder to the To pay list of this owner in Reminders.")
+                    }
                 }
-            } header: {
-                Text("Expense")
-            } footer: {
-                Text("For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed.")
+            } else {
+                Section {
+                    Button("Add Amount or Payment Details", systemImage: "eurosign.circle") { showsPayment = true }
+                }
+            }
+
+            if showsExpense {
+                Section {
+                    HStack {
+                        Picker("To be reimbursed by", selection: tracked($reimbursedBy, .reimbursement)) {
+                            Text("Nobody").tag("")
+                            ForEach(settingsStore.settings.owners.filter { $0.name != ownerName }) { Text($0.name).tag($0.name) }
+                        }
+                        mark(.reimbursement)
+                    }
+                } header: {
+                    Text("Expense")
+                } footer: {
+                    Text("For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed.")
+                }
             }
 
             if tracksVAT {
@@ -204,6 +240,48 @@ struct FilingView: View {
             }
         }
         .formStyle(.grouped)
+    }
+
+    private var currentOwner: Owner? { settingsStore.settings.owners.first { $0.name == ownerName } }
+
+    /// Expenses are personal documents a company pays back; for a company's own documents the
+    /// section only shows when already set.
+    private var showsExpense: Bool { !reimbursedBy.isEmpty || currentOwner?.vatPeriod == nil }
+
+    private var showsPaymentFields: Bool { showsPayment || isUnpaidBill || amount != nil }
+
+    /// A sparkle for a suggested value, a branch for one from a learned rule; nothing once edited.
+    @ViewBuilder
+    private func mark(_ field: Field) -> some View {
+        if !edited.contains(field) {
+            if fromRule.contains(field), let rule = appliedRule {
+                Image(systemName: "arrow.triangle.branch")
+                    .foregroundStyle(.tint)
+                    .help(Text("From your rule for \(rule.senderName)"))
+                    .accessibilityLabel(Text("From your rule for \(rule.senderName)"))
+            } else if suggested.contains(field) {
+                Image(systemName: "sparkles")
+                    .foregroundStyle(.tint)
+                    .help(Text("Suggested on this device"))
+                    .accessibilityLabel(Text("Suggested on this device"))
+            }
+        }
+    }
+
+    var body: some View {
+        // Wide enough (Mac, iPad, a big phone sideways): the PDF beside the fields; else on top.
+        GeometryReader { geometry in
+            if geometry.size.width >= 640 {
+                HStack(spacing: 0) {
+                    PDFPreview(data: document.pdfData)
+                        .frame(width: max(260, geometry.size.width * 0.45))
+                    Divider()
+                    form(showsPDF: false)
+                }
+            } else {
+                form(showsPDF: true)
+            }
+        }
         .navigationTitle("File document")
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -215,6 +293,7 @@ struct FilingView: View {
                     ProgressView()
                 } else {
                     Button("File") { Task { await checkAndFile() } }
+                        .keyboardShortcut(.return, modifiers: .command)
                         .disabled(previewPath == nil)
                 }
             }
@@ -323,6 +402,8 @@ struct FilingView: View {
         guard let text = extractedText,
               let rule = SenderRules.match(ruleRecords.map(\.rule), text: text) else { return }
         appliedRule = rule
+        fromRule = [.owner, .category, .sender]
+        if rule.reimbursedBy != nil { fromRule.insert(.reimbursement) }
         let settings = settingsStore.settings
         // Skip values whose owner or category was removed from Settings since.
         if !edited.contains(.owner), settings.owners.contains(where: { $0.name == rule.owner }) {
@@ -365,6 +446,8 @@ struct FilingView: View {
     private func apply(_ proposal: Proposal) {
         suggestedSender = proposal.sender
         let ruleWins = appliedRule != nil
+        suggested.formUnion([.description, .documentDate, .bill])
+        if !ruleWins { suggested.formUnion([.category, .sender]) }
         if !edited.contains(.category), !ruleWins, !proposal.category.isEmpty { categoryName = proposal.category }
         if !edited.contains(.sender), !ruleWins, !proposal.sender.isEmpty { sender = proposal.sender }
         if !edited.contains(.description), !proposal.description.isEmpty { descriptionText = proposal.description }

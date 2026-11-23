@@ -71,10 +71,17 @@ public enum SenderRules {
         let wordText = " " + words.joined(separator: " ") + " "
         let squashed = iban(text)
 
+        // An IBAN identifies a sender only if no other sender uses it: payment providers collect
+        // for many companies on one IBAN, and then the name must decide.
+        var ibanOwners: [String: Set<String>] = [:]
+        for rule in rules {
+            for iban in rule.ibans { ibanOwners[iban, default: []].insert(alias(rule.senderName)) }
+        }
+
         var best: (rule: SenderRule, score: Int)?
         for rule in rules {
             var score = 0
-            if rule.ibans.contains(where: { !$0.isEmpty && squashed.contains($0) }) {
+            if rule.ibans.contains(where: { !$0.isEmpty && squashed.contains($0) && (ibanOwners[$0]?.count ?? 0) == 1 }) {
                 score = 1_000
             }
             for alias in rule.aliases where alias.count >= minimumAliasLength && wordText.contains(" \(alias) ") {
@@ -97,8 +104,10 @@ public enum SenderRules {
         guard let primary = names.first, !filing.owner.isEmpty, !filing.category.isEmpty else { return nil }
         let payTo = iban(filing.payToIban)
 
+        // Merge only with a rule for the same name. A shared IBAN (a payment provider) must never
+        // merge two senders into one rule.
         var rule = existing
-            .filter { $0.aliases.contains(primary) || (!payTo.isEmpty && $0.ibans.contains(payTo)) }
+            .filter { $0.aliases.contains(primary) }
             .max { $0.updatedAt < $1.updatedAt }
             ?? SenderRule(senderName: filing.sender, owner: filing.owner, category: filing.category, updatedAt: now)
 
