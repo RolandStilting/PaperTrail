@@ -8,6 +8,7 @@ struct PaperTrailApp: App {
     private let modelContainer = Self.makeModelContainer()
     private let filingService: FilingService
     private let billService = BillService(reminders: EventKitBillReminders())
+    private let expenseService = ExpenseService(location: ICloudArchiveLocation())
     #if os(macOS)
     @State private var mailIntake: MailIntakeService
     #endif
@@ -25,7 +26,7 @@ struct PaperTrailApp: App {
 
     var body: some Scene {
         WindowGroup(id: "main") {
-            ContentView(filingService: filingService, billService: billService)
+            ContentView(filingService: filingService, billService: billService, expenseService: expenseService)
                 .environment(settingsStore)
                 #if os(macOS)
                 .environment(mailIntake)

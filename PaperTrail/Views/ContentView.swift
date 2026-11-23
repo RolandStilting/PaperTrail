@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 struct ContentView: View {
     let filingService: FilingService
     let billService: BillService
+    let expenseService: ExpenseService
 
     @Query(sort: \DocumentRecord.filedAt, order: .reverse) private var records: [DocumentRecord]
 
@@ -24,6 +25,9 @@ struct ContentView: View {
     @State private var shownInboxFailures: Set<String> = []
     @Environment(\.modelContext) private var modelContext
     @State private var showingBills = false
+    @State private var showingExpenses = false
+    @Environment(SettingsStore.self) private var settingsStore
+    @Query(filter: #Predicate<DocumentRecord> { $0.reimbursedBy != nil && $0.claimID == nil }) private var openExpenses: [DocumentRecord]
     @State private var billToOpen: UUID?
     @Query(filter: #Predicate<DocumentRecord> { $0.isUnpaidBill && !$0.isPaid }) private var openBills: [DocumentRecord]
     @Environment(\.scenePhase) private var scenePhase
@@ -76,7 +80,13 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                             .truncationMode(.middle)
+                        if let company = record.reimbursedBy {
+                            Label("Reimbursed by \(company)", systemImage: "eurosign.arrow.circlepath")
+                                .font(.caption)
+                                .foregroundStyle(.tint)
+                        }
                     }
+                    .contextMenu { reimbursementMenu(for: record) }
                 }
             }
             .refreshable { await refreshReviewItems() }
@@ -103,6 +113,12 @@ struct ContentView: View {
     /// Open Bills sheet, links from reminders and syncing paid state.
     private func billHooks(_ content: some View) -> some View {
         content
+            .sheet(isPresented: $showingExpenses) {
+                ExpensesView(expenseService: expenseService)
+                #if os(macOS)
+                .frame(minWidth: 560, minHeight: 640)
+                #endif
+            }
             .sheet(isPresented: $showingBills) {
                 OpenBillsView(billService: billService, initialBillID: billToOpen)
                 #if os(macOS)
@@ -197,6 +213,13 @@ struct ContentView: View {
                 Label(openBills.isEmpty ? String(localized: "Open Bills") : String(localized: "Open Bills (\(openBills.count))"), systemImage: "eurosign.circle")
             }
         }
+        ToolbarItem(placement: .primaryAction) {
+            Button {
+                showingExpenses = true
+            } label: {
+                Label(openExpenses.isEmpty ? String(localized: "Expenses") : String(localized: "Expenses (\(openExpenses.count))"), systemImage: "eurosign.arrow.circlepath")
+            }
+        }
         ToolbarItem(placement: .secondaryAction) {
             Button("Settings", systemImage: "gearshape") { showingSettings = true }
         }
@@ -207,6 +230,28 @@ struct ContentView: View {
             archiveRoot = try await filingService.location.resolveRoot()
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    /// Mark or unmark a filed document as an expense a company pays back. Not after it was claimed.
+    @ViewBuilder
+    private func reimbursementMenu(for record: DocumentRecord) -> some View {
+        if record.claimID == nil {
+            Menu("To Be Reimbursed By", systemImage: "eurosign.arrow.circlepath") {
+                Button("Nobody") { setReimbursedBy(nil, on: record) }
+                ForEach(settingsStore.settings.owners.filter { $0.name != record.ownerName }) { owner in
+                    Button(owner.name) { setReimbursedBy(owner.name, on: record) }
+                }
+            }
+        }
+    }
+
+    private func setReimbursedBy(_ company: String?, on record: DocumentRecord) {
+        record.reimbursedBy = company
+        do {
+            try modelContext.save()
+        } catch {
+            errorMessage = String(localized: "Could not save the change: \(error.localizedDescription)")
         }
     }
 
