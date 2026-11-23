@@ -37,7 +37,7 @@
     "Could not create the PDF. Try scanning again; if it keeps failing, restart the app." : {
 
     },
-    "Could not sign in to the mailbox (%@). Check the user name and use an app-specific password." : {
+    "Could not sign in to the mailbox (%@). For iCloud: sign in with your main iCloud address, not an alias, and an app-specific password; your normal Apple Account password doesn't work with two-factor authentication." : {
 
     },
     "Document: %@/%@" : {

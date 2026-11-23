@@ -270,9 +270,6 @@
     "Email" : {
 
     },
-    "Email address" : {
-
-    },
     "Email: %@" : {
 
     },
@@ -340,9 +337,6 @@
     "Folders inside each owner's year folder." : {
 
     },
-    "For iCloud, create an app-specific password at account.apple.com → Sign-In and Security. It gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this Mac's Keychain. If signing in fails, try the full email address as user name." : {
-
-    },
     "IBAN" : {
 
     },
@@ -383,9 +377,6 @@
 
     },
     "Name on the paying account" : {
-
-    },
-    "name@icloud.com" : {
 
     },
     "Needs Review" : {
@@ -446,6 +437,9 @@
 
     },
     "Paper Trail" : {
+
+    },
+    "Paper Trail address" : {
 
     },
     "Paper Trail can only read PDFs and images. Move these files out of the Inbox folder in iCloud Drive." : {
@@ -562,6 +556,12 @@
     "Show text" : {
 
     },
+    "Sign in with" : {
+
+    },
+    "Sign in with your main iCloud address (an alias can't sign in) and an app-specific password from account.apple.com → Sign-In and Security; your normal password doesn't work with two-factor authentication. For iCloud, Paper Trail also tries the full @icloud.com address. The password gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this Mac's Keychain." : {
+
+    },
     "Signed in to the mailbox. Save to start checking it." : {
 
     },
@@ -578,6 +578,9 @@
 
     },
     "Text recognition failed. You can still file the document." : {
+
+    },
+    "The alias your rule filters on (optional)" : {
 
     },
     "The email \"%@\" has no PDF, image or text to file. It stays in the mailbox; move it out yourself." : {
@@ -610,9 +613,6 @@
     "Upload the file in your bank's business internet banking, check the payments there and sign. Nothing is paid until you sign at the bank. Bills stay open until their reminder is completed." : {
 
     },
-    "User name" : {
-
-    },
     "When you file a document, Paper Trail remembers where documents from that sender go." : {
 
     },
@@ -620,6 +620,9 @@
 
     },
     "xxxx-xxxx-xxxx-xxxx" : {
+
+    },
+    "Your main iCloud address, not the alias" : {
 
     }
   },
