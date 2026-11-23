@@ -43,7 +43,20 @@
     "%@ Try again." : {
 
     },
+    "%lld payments, total %@, from %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld payments, total %2$@, from %3$@."
+          }
+        }
+      }
+    },
     "€ 0.00" : {
+
+    },
+    "Account name" : {
 
     },
     "Add" : {
@@ -55,13 +68,31 @@
     "Add owner" : {
 
     },
+    "Already exported %@" : {
+
+    },
     "Already filed?" : {
 
     },
     "Amount" : {
 
     },
+    "Amount missing" : {
+
+    },
     "At most 6 words" : {
+
+    },
+    "BIC (optional)" : {
+
+    },
+    "Bill paid" : {
+
+    },
+    "Bills" : {
+
+    },
+    "Can't be paid by file" : {
 
     },
     "Cancel" : {
@@ -79,6 +110,18 @@
     "Choose an owner and a category." : {
 
     },
+    "Completing the bill's reminder in Reminders also marks it paid." : {
+
+    },
+    "Copied" : {
+
+    },
+    "Copy" : {
+
+    },
+    "Could not check Reminders for paid bills: %@" : {
+
+    },
     "Could not delete the rule" : {
 
     },
@@ -87,6 +130,19 @@
     },
     "Could not find a free file name for \"%@\". Change the description and try again." : {
 
+    },
+    "Could not make the QR code. Use the copy buttons instead." : {
+
+    },
+    "Could not make the SEPA file. Check the paying account for %@ in Settings and the details of each bill. (%@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not make the SEPA file. Check the paying account for %1$@ in Settings and the details of each bill. (%2$@)"
+          }
+        }
+      }
     },
     "Could not move \"%@\" to Needs Review: %@" : {
       "localizations" : {
@@ -127,7 +183,16 @@
         }
       }
     },
+    "Could not save the file: %@ Try another folder." : {
+
+    },
+    "Could not save the reminder: %@ Try again from Open Bills." : {
+
+    },
     "Could not suggest details for this document. Fill them in yourself." : {
+
+    },
+    "Create Reminder" : {
 
     },
     "Date on document" : {
@@ -145,7 +210,19 @@
     "Details suggested on this device. Check them before filing." : {
 
     },
+    "Document" : {
+
+    },
     "Document date" : {
+
+    },
+    "Done" : {
+
+    },
+    "Due" : {
+
+    },
+    "Due %@" : {
 
     },
     "Due date" : {
@@ -155,6 +232,21 @@
 
     },
     "Each owner gets a top-level folder. Renaming only affects documents filed afterwards." : {
+
+    },
+    "Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud." : {
+
+    },
+    "Export" : {
+
+    },
+    "Export SEPA File…" : {
+
+    },
+    "Exported" : {
+
+    },
+    "Exported in a SEPA file; open until its reminder is completed" : {
 
     },
     "File" : {
@@ -172,10 +264,16 @@
     "Filed like earlier documents from %@. Change owner or category to update this rule." : {
 
     },
+    "Filed, but no reminder" : {
+
+    },
     "Folders inside each owner's year folder." : {
 
     },
     "IBAN" : {
+
+    },
+    "IBAN missing or not valid" : {
 
     },
     "iCloud Drive is not available. Sign in to iCloud and turn on iCloud Drive for Paper Trail in Settings, then try again." : {
@@ -190,16 +288,43 @@
     "Inbox" : {
 
     },
+    "Its reminder is completed too." : {
+
+    },
     "Learned rules" : {
 
     },
+    "Mark as Paid" : {
+
+    },
+    "Mark this bill as paid?" : {
+
+    },
+    "Name on the paying account" : {
+
+    },
     "Needs Review" : {
+
+    },
+    "New owner" : {
 
     },
     "NL00 BANK 0123 4567 89" : {
 
     },
     "No documents yet" : {
+
+    },
+    "No open bills" : {
+
+    },
+    "No QR code: the amount is missing or not valid." : {
+
+    },
+    "No QR code: the IBAN is missing or not valid. Check it on the document and use the copy buttons." : {
+
+    },
+    "No QR code: the sender is missing." : {
 
     },
     "No rules yet" : {
@@ -209,6 +334,12 @@
 
     },
     "OK" : {
+
+    },
+    "Open Bills" : {
+
+    },
+    "Open Bills (%lld)" : {
 
     },
     "Owner" : {
@@ -226,19 +357,43 @@
     "Paper Trail can only read PDFs and images. Move these files out of the Inbox folder in iCloud Drive." : {
 
     },
+    "Paper Trail can't use Reminders. Allow full access for Paper Trail in Settings → Privacy & Security → Reminders, then tap Create Reminder on the bill." : {
+
+    },
     "Paper Trail remembers owner and category for each sender you file." : {
 
     },
     "Pay before" : {
 
     },
+    "Pay on" : {
+
+    },
+    "Pay to" : {
+
+    },
+    "Pay with" : {
+
+    },
+    "Paying account" : {
+
+    },
+    "Paying bills" : {
+
+    },
     "Payment" : {
+
+    },
+    "Payment QR code" : {
 
     },
     "Payment reference" : {
 
     },
     "Preparing document…" : {
+
+    },
+    "QR code and copy buttons" : {
 
     },
     "Received" : {
@@ -248,6 +403,9 @@
 
     },
     "Recognising text…" : {
+
+    },
+    "Reference" : {
 
     },
     "Review Later" : {
@@ -265,10 +423,22 @@
     "Scan or import a receipt, invoice or letter to file it." : {
 
     },
+    "Scan with your banking app, check the details and confirm there. Paper Trail never sends payments." : {
+
+    },
     "Scanning failed: %@. Try again." : {
 
     },
     "Sender" : {
+
+    },
+    "Sender missing" : {
+
+    },
+    "SEPA batch file" : {
+
+    },
+    "SEPA file for %@" : {
 
     },
     "Settings" : {
@@ -286,10 +456,22 @@
     "Text recognition failed. You can still file the document." : {
 
     },
+    "The file was saved, but Paper Trail could not note the export: %@" : {
+
+    },
+    "There is no Reminders account to create the To pay list in. Turn on Reminders in iCloud settings, then try again." : {
+
+    },
     "Unpaid bill" : {
 
     },
     "Unpaid bills will get a reminder in a later version." : {
+
+    },
+    "Unpaid bills you file show up here until their reminder is completed." : {
+
+    },
+    "Upload the file in your bank's business internet banking, check the payments there and sign. Nothing is paid until you sign at the bank. Bills stay open until their reminder is completed." : {
 
     },
     "When you file a document, Paper Trail remembers where documents from that sender go." : {

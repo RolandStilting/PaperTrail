@@ -17,6 +17,7 @@ struct FilingView: View {
 
     let document: PendingDocument
     let filingService: FilingService
+    let billService: BillService
     var onDone: () -> Void
 
     @Environment(SettingsStore.self) private var settingsStore
@@ -47,6 +48,8 @@ struct FilingView: View {
     @State private var suggestedSender = ""
     /// Set when the document looks like one already filed; the user decides whether to file anyway.
     @State private var duplicate: DuplicateMatch?
+    /// Set when the document was filed but its reminder could not be created.
+    @State private var reminderProblem: String?
 
     @State private var extractedText: String?
     @State private var ocrFailed = false
@@ -196,6 +199,11 @@ struct FilingView: View {
             Button("Cancel", role: .cancel) {}
         } message: { match in
             Text("\(match.reason.message) An earlier document is in your archive:\n\(match.existing.relativePath)")
+        }
+        .alert("Filed, but no reminder", isPresented: Binding(get: { reminderProblem != nil }, set: { if !$0 { reminderProblem = nil; onDone() } })) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(reminderProblem ?? "")
         }
         .interactiveDismissDisabled(isFiling)
         .onAppear(perform: applyDefaults)
@@ -348,7 +356,14 @@ struct FilingView: View {
         isFiling = true
         defer { isFiling = false }
         do {
-            _ = try await filingService.file(document, request: request, extractedText: extractedText, suggestedSender: suggestedSender, context: modelContext)
+            let record = try await filingService.file(document, request: request, extractedText: extractedText, suggestedSender: suggestedSender, context: modelContext)
+            do {
+                try await billService.addReminder(for: record, context: modelContext)
+            } catch {
+                // The document is safely filed; only the reminder is missing.
+                reminderProblem = error.localizedDescription
+                return
+            }
             onDone()
         } catch {
             errorMessage = error.localizedDescription

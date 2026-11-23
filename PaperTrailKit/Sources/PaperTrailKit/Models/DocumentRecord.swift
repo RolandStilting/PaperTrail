@@ -36,6 +36,20 @@ public final class DocumentRecord {
     public var iban: String?
     public var paymentReference: String?
 
+    // Paying (phase 4). Paid = the reminder was completed (or "Mark as paid" in the app).
+    public var isPaid: Bool = false
+    public var paidAt: Date?
+    /// Reminders' calendarItemExternalIdentifier; the same on all devices for iCloud reminders.
+    public var reminderExternalID: String?
+    /// When the bill was last put in a SEPA batch file. Exported is not paid.
+    public var exportedAt: Date?
+
+    /// Unpaid bill still waiting for payment.
+    public var isOpenBill: Bool { isUnpaidBill && !isPaid }
+
+    /// Link from the reminder back into the app.
+    public var billURL: URL { URL(string: "papertrail://bill/\(id.uuidString)")! }
+
     public init(
         relativePath: String,
         ownerName: String,

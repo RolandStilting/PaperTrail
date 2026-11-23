@@ -38,6 +38,16 @@ public struct ArchiveSettings: Codable, Hashable, Sendable {
             errors.append(String(localized: "\"Inbox\" and \"Needs Review\" are reserved folder names. Pick another owner name.", bundle: .module))
         }
 
+        for owner in owners {
+            let iban = owner.payingAccount.iban
+            if !iban.isEmpty, !IBAN.isValid(iban) {
+                errors.append(String(localized: "The IBAN for \(owner.name) is not valid. Check it for typos.", bundle: .module))
+            }
+            if owner.paymentMethod == .sepaFile, owner.payingAccount.name.isEmpty || iban.isEmpty {
+                errors.append(String(localized: "\(owner.name) pays with a SEPA file. Enter the account name and IBAN it pays from.", bundle: .module))
+            }
+        }
+
         if categories.isEmpty {
             errors.append(String(localized: "Add at least one category.", bundle: .module))
         }
