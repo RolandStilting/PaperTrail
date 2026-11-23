@@ -16,6 +16,7 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var archiveRoot: ArchiveRoot?
     @State private var reviewItems: [ReviewItem] = []
+    @State private var isDropTargeted = false
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -61,6 +62,18 @@ struct ContentView: View {
                 }
             }
             .refreshable { await refreshReviewItems() }
+            .dropDestination(for: URL.self) { urls, _ in
+                Task { await handleDrop(urls) }
+                return !urls.isEmpty
+            } isTargeted: { isDropTargeted = $0 }
+            .overlay {
+                if isDropTargeted {
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(.tint, style: StrokeStyle(lineWidth: 3, dash: [8]))
+                        .padding(8)
+                        .allowsHitTesting(false)
+                }
+            }
             .navigationTitle("Paper Trail")
             .toolbar { toolbarContent }
             .overlay {
@@ -155,6 +168,38 @@ struct ContentView: View {
             pending = try await filingService.reviewQueue.open(item)
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    /// One dropped file opens the filing screen; several go to Needs Review to file one by one.
+    /// Every file is checked; the ones that can't be read are listed in one message.
+    private func handleDrop(_ urls: [URL]) async {
+        let fileURLs = urls.filter(\.isFileURL)
+        guard !fileURLs.isEmpty, !isPreparing, pending == nil else { return }
+        isPreparing = true
+        defer { isPreparing = false }
+
+        if fileURLs.count == 1 {
+            do {
+                pending = try await DocumentCapture.fromFile(at: fileURLs[0])
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            return
+        }
+
+        var failures: [String] = []
+        for url in fileURLs {
+            do {
+                let document = try await DocumentCapture.fromFile(at: url)
+                try await filingService.saveForReview(document)
+            } catch {
+                failures.append(error.localizedDescription)
+            }
+        }
+        await refreshReviewItems()
+        if !failures.isEmpty {
+            errorMessage = failures.joined(separator: "\n\n")
         }
     }
 
