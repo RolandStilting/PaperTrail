@@ -24,8 +24,17 @@ nonisolated struct InboxCollector: Sendable {
         root.appending(path: ArchivePaths.inboxFolderName, directoryHint: .isDirectory)
     }
 
+    /// The Share Extension's hand-off folder in the App Group container, if available.
+    static func sharedIncomingFolder() -> URL? {
+        guard let groupID = Bundle.main.object(forInfoDictionaryKey: SharedIncoming.appGroupInfoKey) as? String,
+              let container = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID)
+        else { return nil }
+        return SharedIncoming.folder(in: container)
+    }
+
+    /// Moves documents from the Share Extension's folder into Inbox, then processes Inbox.
     @concurrent
-    func collect(root: URL) async -> InboxReport {
+    func collect(root: URL, sharedFolder: URL? = InboxCollector.sharedIncomingFolder()) async -> InboxReport {
         let fileManager = FileManager.default
         let inbox = Self.inbox(in: root)
         let needsReview = ReviewQueue.folder(in: root)
@@ -33,6 +42,17 @@ nonisolated struct InboxCollector: Sendable {
 
         // Creating the folder makes the drop zone visible in iCloud Drive.
         try? fileManager.createDirectory(at: inbox, withIntermediateDirectories: true)
+
+        if let sharedFolder, let shared = try? fileManager.contentsOfDirectory(atPath: sharedFolder.path(percentEncoded: false)) {
+            for name in shared.sorted() where !name.hasPrefix(".") {
+                do {
+                    _ = try Self.coordinatedMove(sharedFolder.appending(path: name), toFolder: inbox, preferredName: name)
+                } catch {
+                    report.failures.append(String(localized: "Could not move the shared document \"\(name)\" to Inbox: \(error.localizedDescription)"))
+                }
+            }
+        }
+
         guard let entries = try? fileManager.contentsOfDirectory(atPath: inbox.path(percentEncoded: false)) else {
             report.failures.append(String(localized: "Could not read the Inbox folder. Check iCloud Drive and try again."))
             return report

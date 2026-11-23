@@ -139,3 +139,32 @@ struct InboxCollectorTests {
         #expect(queued.contains { $0.hasSuffix(" bon.pdf") })
     }
 }
+
+@Suite("Shared documents")
+struct SharedDocumentTests {
+    @Test func sharedFilesEndUpInNeedsReview() async throws {
+        let base = FileManager.default.temporaryDirectory.appending(path: "PaperTrailTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        let root = base.appending(path: "Archive", directoryHint: .isDirectory)
+        let shared = SharedIncoming.folder(in: base.appending(path: "Group", directoryHint: .isDirectory))
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let source = base.appending(path: "mail-attachment.pdf")
+        try Data("%PDF-1.7 synthetic shared".utf8).write(to: source)
+        _ = try SharedIncoming.save(source, preferredName: "Factuur", into: shared)
+
+        let report = await InboxCollector(store: CoordinatedFileStore()).collect(root: root, sharedFolder: shared)
+        #expect(report.moved == 1)
+        #expect(report.failures.isEmpty)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: shared.path(percentEncoded: false)).isEmpty)
+        let queued = try await ReviewQueue(store: CoordinatedFileStore()).items(root: root)
+        #expect(queued.first?.name.hasSuffix(" Factuur.pdf") == true)
+    }
+
+    @Test func appGroupIsConfigured() throws {
+        let groupID = try #require(Bundle.main.object(forInfoDictionaryKey: SharedIncoming.appGroupInfoKey) as? String)
+        #if os(macOS)
+        #expect(groupID == "67YRLXTX42.nl.rolandstilting.papertrail")
+        #else
+        #expect(groupID == "group.nl.rolandstilting.papertrail")
+        #endif
+    }
+}
