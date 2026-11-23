@@ -18,6 +18,8 @@ struct FilingView: View {
     let document: PendingDocument
     let filingService: FilingService
     let billService: BillService
+    /// Beside the Needs Review list instead of a sheet: no Cancel, no window title of its own.
+    var embedded = false
     var onDone: () -> Void
 
     @Environment(SettingsStore.self) private var settingsStore
@@ -283,11 +285,13 @@ struct FilingView: View {
                 form(showsPDF: true)
             }
         }
-        .navigationTitle("File document")
+        .titleUnlessEmbedded(embedded, String(localized: "File document"))
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel", action: onDone)
-                    .disabled(isFiling)
+            if !embedded {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel", action: onDone)
+                        .disabled(isFiling)
+                }
             }
             ToolbarItem(placement: .confirmationAction) {
                 if isFiling {

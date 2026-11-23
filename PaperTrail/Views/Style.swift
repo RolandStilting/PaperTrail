@@ -74,3 +74,11 @@ extension View {
         #endif
     }
 }
+
+extension View {
+    /// A pane beside a list leaves the window title to the list's screen.
+    @ViewBuilder
+    func titleUnlessEmbedded(_ embedded: Bool, _ title: String) -> some View {
+        if embedded { self } else { navigationTitle(title) }
+    }
+}

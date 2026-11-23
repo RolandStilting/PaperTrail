@@ -128,11 +128,3 @@ struct DocumentDetailView: View {
         }
     }
 }
-
-private extension View {
-    /// The document pane leaves the window title to the archive.
-    @ViewBuilder
-    func titleUnlessEmbedded(_ embedded: Bool, _ title: String) -> some View {
-        if embedded { self } else { navigationTitle(title) }
-    }
-}

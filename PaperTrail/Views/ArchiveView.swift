@@ -83,25 +83,15 @@ struct ArchiveView: View {
 
     var body: some View {
         // Wide (Mac, iPad): the list with the selected document beside it. Narrow: tap to open.
-        GeometryReader { geometry in
-            if geometry.size.width >= 640 {
-                HStack(spacing: 0) {
-                    documentList(split: true)
-                        .frame(width: min(420, max(290, geometry.size.width * 0.38)))
-                    Divider()
-                    Group {
-                        if let selection, shown.contains(where: { $0.id == selection }) {
-                            DocumentDetailView(id: selection, embedded: true)
-                                .id(selection)
-                        } else {
-                            ContentUnavailableView("Select a document", systemImage: "doc.text.magnifyingglass",
-                                                   description: Text("Its PDF and details appear here."))
-                        }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+        ListWithDetail { split in
+            documentList(split: split)
+        } detail: {
+            if let selection, shown.contains(where: { $0.id == selection }) {
+                DocumentDetailView(id: selection, embedded: true)
+                    .id(selection)
             } else {
-                documentList(split: false)
+                ContentUnavailableView("Select a document", systemImage: "doc.text.magnifyingglass",
+                                       description: Text("Its PDF and details appear here."))
             }
         }
         .searchable(text: $search, prompt: Text("Sender, description or text"))
@@ -160,6 +150,8 @@ struct ArchiveView: View {
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) { filterBar }
+        .arrowKeySelection($selection, in: months.flatMap { $0.records.map(\.id) })
+        .onAppear { if split, selection == nil { selection = months.first?.records.first?.id } }
         // Space bar: a large Quick Look preview of the selected document, as in Finder.
         .onKeyPress(.space) {
             guard let selection, let record = shown.first(where: { $0.id == selection }),
@@ -281,32 +273,105 @@ struct DocumentActions: View {
 /// Documents waiting in Needs Review.
 struct ReviewListView: View {
     @Environment(AppModel.self) private var model
+    @State private var selection: URL?
+
+    private var ids: [URL] { model.reviewItems.map(\.url) }
 
     var body: some View {
-        List {
-            if model.reviewItems.isEmpty {
-                ContentUnavailableView("All caught up", systemImage: "checkmark.circle",
-                                       description: Text("Shared, emailed and Inbox documents wait here until you file them."))
-            }
-            ForEach(model.reviewItems) { item in
-                Button { Task { await model.openReviewItem(item) } } label: {
-                    Label {
-                        VStack(alignment: .leading) {
-                            Text(item.name).lineLimit(1).truncationMode(.middle)
-                            if let date = item.savedDate {
-                                Text(date.formatted(date: .abbreviated, time: .omitted)).font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
-                    } icon: {
-                        Image(systemName: item.isDownloaded ? "doc.badge.clock" : "icloud.and.arrow.down")
-                    }
-                }
-                .disabled(model.isPreparing)
+        ListWithDetail { split in
+            reviewList(split: split)
+        } detail: {
+            if let selection, let item = model.reviewItems.first(where: { $0.url == selection }) {
+                ReviewPane(item: item) { filed in advance(after: item, filed: filed) }
+                    .id(item.url)
+            } else {
+                ContentUnavailableView(model.reviewItems.isEmpty ? "All caught up" : "Select a document",
+                                       systemImage: model.reviewItems.isEmpty ? "checkmark.circle" : "doc.text.magnifyingglass",
+                                       description: Text(model.reviewItems.isEmpty ? "Nothing waiting to be filed." : "File it right here."))
             }
         }
         .navigationTitle("Needs Review")
         .refreshable { await model.refreshReviewItems() }
         .toolbar { ToolbarItem(placement: .primaryAction) { AddDocumentMenu() } }
+    }
+
+    private func reviewList(split: Bool) -> some View {
+        List(selection: $selection) {
+            if model.reviewItems.isEmpty {
+                ContentUnavailableView("All caught up", systemImage: "checkmark.circle",
+                                       description: Text("Shared, emailed and Inbox documents wait here until you file them."))
+            }
+            ForEach(model.reviewItems) { item in
+                Group {
+                    if split {
+                        ReviewRow(item: item)
+                    } else {
+                        Button { Task { await model.openReviewItem(item) } } label: { ReviewRow(item: item) }
+                            .disabled(model.isPreparing)
+                    }
+                }
+                .tag(item.url)
+            }
+        }
+        .arrowKeySelection($selection, in: ids)
+        .onAppear { if split, selection == nil { selection = ids.first } }
+        .onChange(of: ids) { _, newIDs in
+            if split, let selection, !newIDs.contains(selection) { self.selection = newIDs.first }
+        }
+    }
+
+    /// After filing, the next document is selected, so the queue can be worked through.
+    private func advance(after item: ReviewItem, filed: Bool) {
+        guard filed else { return }
+        let index = ids.firstIndex(of: item.url) ?? 0
+        Task {
+            await model.refreshReviewItems()
+            let remaining = ids
+            selection = remaining.isEmpty ? nil : remaining[min(index, remaining.count - 1)]
+        }
+    }
+}
+
+private struct ReviewRow: View {
+    let item: ReviewItem
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading) {
+                Text(item.name).lineLimit(1).truncationMode(.middle)
+                if let date = item.savedDate {
+                    Text(date.formatted(date: .abbreviated, time: .omitted)).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        } icon: {
+            Image(systemName: item.isDownloaded ? "doc.badge.clock" : "icloud.and.arrow.down")
+        }
+    }
+}
+
+/// The filing screen for one Needs Review document, beside the list.
+private struct ReviewPane: View {
+    let item: ReviewItem
+    var onFinished: (_ filed: Bool) -> Void
+
+    @Environment(AppModel.self) private var model
+    @State private var document: PendingDocument?
+    @State private var loadError: String?
+
+    var body: some View {
+        Group {
+            if let document {
+                FilingView(document: document, filingService: model.filingService, billService: model.billService,
+                           embedded: true) { onFinished(true) }
+            } else if let loadError {
+                ContentUnavailableView("Can't open the document", systemImage: "exclamationmark.triangle", description: Text(loadError))
+            } else {
+                ProgressView("Opening…")
+            }
+        }
+        .task {
+            do { document = try await model.filingService.reviewQueue.open(item) } catch { loadError = error.localizedDescription }
+        }
     }
 }
 

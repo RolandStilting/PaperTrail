@@ -23,6 +23,7 @@ struct OpenBillsView: View {
     private var bills: [DocumentRecord]
     @State private var path: [UUID] = []
     @State private var exportingOwner: Owner?
+    @State private var selection: UUID?
 
     private var owners: [String] {
         let configured = settingsStore.settings.owners.map(\.name)
@@ -35,21 +36,28 @@ struct OpenBillsView: View {
             .sorted { ($0.dueDate ?? .distantFuture, $0.receivedDate) < ($1.dueDate ?? .distantFuture, $1.receivedDate) }
     }
 
+    /// Bills in the order the list shows them, for the arrow keys.
+    private var orderedIDs: [UUID] { owners.flatMap { bills(of: $0).map(\.id) } }
+
     var body: some View {
         SheetNavigation(embedded: embedded, path: $path) {
-            List {
-                if bills.isEmpty {
-                    ContentUnavailableView("No open bills", systemImage: "checkmark.seal", description: Text("Unpaid bills you file show up here until their reminder is completed."))
-                }
-                ForEach(owners, id: \.self) { owner in
-                    Section(owner) {
-                        ForEach(bills(of: owner)) { bill in
-                            NavigationLink(value: bill.id) { BillRow(bill: bill) }
-                        }
-                        if let settings = settingsStore.settings.owners.first(where: { $0.name == owner }), settings.paymentMethod == .sepaFile {
-                            Button("Export SEPA File…", systemImage: "square.and.arrow.up") { exportingOwner = settings }
+            Group {
+                if embedded {
+                    // Mac and iPad: the selected bill's QR code and details beside the list.
+                    ListWithDetail { split in
+                        billList(split: split)
+                    } detail: {
+                        if let selection, let bill = bills.first(where: { $0.id == selection }) {
+                            BillDetailView(bill: bill, billService: billService, embedded: true)
+                                .id(bill.id)
+                        } else {
+                            ContentUnavailableView(bills.isEmpty ? "No open bills" : "Select a bill",
+                                                   systemImage: bills.isEmpty ? "checkmark.seal" : "qrcode",
+                                                   description: Text(bills.isEmpty ? "Everything is paid." : "Its QR code and payment details appear here."))
                         }
                     }
+                } else {
+                    billList(split: false)
                 }
             }
             .navigationTitle("To Pay")
@@ -76,6 +84,37 @@ struct OpenBillsView: View {
         }
         .onAppear {
             if let initialBillID, path.isEmpty { path = [initialBillID] }
+        }
+    }
+
+    private func billList(split: Bool) -> some View {
+        List(selection: $selection) {
+            if bills.isEmpty {
+                ContentUnavailableView("No open bills", systemImage: "checkmark.seal", description: Text("Unpaid bills you file show up here until their reminder is completed."))
+            }
+            ForEach(owners, id: \.self) { owner in
+                Section(owner) {
+                    ForEach(bills(of: owner)) { bill in
+                        Group {
+                            if split {
+                                BillRow(bill: bill)
+                            } else {
+                                NavigationLink(value: bill.id) { BillRow(bill: bill) }
+                            }
+                        }
+                        .tag(bill.id)
+                    }
+                    if let settings = settingsStore.settings.owners.first(where: { $0.name == owner }), settings.paymentMethod == .sepaFile {
+                        Button("Export SEPA File…", systemImage: "square.and.arrow.up") { exportingOwner = settings }
+                    }
+                }
+            }
+        }
+        .arrowKeySelection($selection, in: orderedIDs)
+        .onAppear { if split, selection == nil { selection = orderedIDs.first } }
+        .onChange(of: orderedIDs) { _, ids in
+            // A bill marked paid leaves the list: select the next one.
+            if split, let selection, !ids.contains(selection) { self.selection = ids.first }
         }
     }
 }
@@ -110,6 +149,8 @@ private struct BillRow: View {
 struct BillDetailView: View {
     let bill: DocumentRecord
     let billService: BillService
+    /// Beside the To Pay list: the list keeps the window title.
+    var embedded = false
 
     @Environment(\.modelContext) private var modelContext
     @State private var errorMessage: String?
@@ -126,6 +167,16 @@ struct BillDetailView: View {
 
     var body: some View {
         Form {
+            if embedded {
+                Section {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(bill.sender).font(.title2.weight(.semibold))
+                        if let amount = bill.amount {
+                            Text(BillReminderText.amount(amount)).font(.title3).monospacedDigit().foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
             Section {
                 switch qrPayload {
                 case .success(let payload):
@@ -166,7 +217,7 @@ struct BillDetailView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(bill.sender)
+        .titleUnlessEmbedded(embedded, bill.sender)
         .task { reminderMissing = await billService.reminderIsMissing(for: bill) }
         .confirmationDialog("Mark this bill as paid?", isPresented: $confirmingPaid) {
             Button("Mark as Paid") { Task { await markPaid() } }
