@@ -44,7 +44,15 @@ struct DocumentDetailView: View {
             }
 
             Section {
-                LabeledContent("Filed under", value: "\(record.ownerName) › \(record.categoryName)")
+                LabeledContent("Filed under") {
+                    HStack(spacing: 6) {
+                        OwnerDot(owner: record.ownerName)
+                        Text(record.ownerName)
+                        Text("›").foregroundStyle(.tertiary)
+                        Label(record.categoryName, systemImage: CategoryStyle.symbol(for: record.categoryName))
+                    }
+                    .foregroundStyle(.secondary)
+                }
                 LabeledContent("Received", value: record.receivedDate.formatted(date: .long, time: .omitted))
                 if let date = record.documentDate {
                     LabeledContent("Date on document", value: date.formatted(date: .long, time: .omitted))

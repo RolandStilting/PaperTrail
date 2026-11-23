@@ -146,7 +146,13 @@ struct RootView: View {
                 Section("Archive") {
                     Label("All Documents", systemImage: "archivebox").tag(Destination.archive(owner: nil))
                     ForEach(settingsStore.settings.owners) { owner in
-                        Label(owner.name, systemImage: "folder").tag(Destination.archive(owner: owner.name))
+                        Label {
+                            Text(owner.name)
+                        } icon: {
+                            Image(systemName: "folder.fill")
+                                .foregroundStyle(settingsStore.settings.color(ofOwner: owner.name).color)
+                        }
+                        .tag(Destination.archive(owner: owner.name))
                     }
                 }
                 Section("Money") {

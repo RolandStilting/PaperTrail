@@ -127,12 +127,20 @@ struct ArchiveView: View {
                 if owner == nil {
                     FilterChip(title: ownerFilter.map { LocalizedStringKey($0) } ?? "Owner", isActive: ownerFilter != nil) {
                         Button("All Owners") { ownerFilter = nil }
-                        ForEach(settingsStore.settings.owners) { o in Button(o.name) { ownerFilter = o.name } }
+                        ForEach(settingsStore.settings.owners) { o in
+                            Button {
+                                ownerFilter = o.name
+                            } label: {
+                                Label { Text(o.name) } icon: { Image(systemName: "circle.fill").foregroundStyle(settingsStore.settings.color(ofOwner: o.name).color) }
+                            }
+                        }
                     }
                 }
                 FilterChip(title: categoryFilter.map { LocalizedStringKey($0) } ?? "Category", isActive: categoryFilter != nil) {
                     Button("All Categories") { categoryFilter = nil }
-                    ForEach(settingsStore.settings.categories) { c in Button(c.name) { categoryFilter = c.name } }
+                    ForEach(settingsStore.settings.categories) { c in
+                        Button(c.name, systemImage: CategoryStyle.symbol(for: c.name)) { categoryFilter = c.name }
+                    }
                 }
                 FilterChip(title: yearFilter.map { LocalizedStringKey(String($0)) } ?? "Year", isActive: yearFilter != nil) {
                     Button("All Years") { yearFilter = nil }
@@ -255,10 +263,13 @@ struct DocumentRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            DocumentThumbnail(url: fileURL)
+            DocumentThumbnail(url: fileURL, placeholderSymbol: CategoryStyle.symbol(for: record.categoryName))
             VStack(alignment: .leading, spacing: 2) {
                 Text(record.sender).font(.body.weight(.medium)).lineLimit(1)
-                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                HStack(spacing: 5) {
+                    if showsOwner { OwnerDot(owner: record.ownerName) }
+                    Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                }
             }
             Spacer(minLength: 8)
             VStack(alignment: .trailing, spacing: 4) {
@@ -297,11 +308,11 @@ struct StatusBadge: View {
         }
         switch record.claimState {
         case .open: return ("To claim", .teal)
-        case .submitted: return ("Claimed", .blue)
-        case .reimbursed: return ("Reimbursed", .green)
+        case .submitted: return ("Claimed", .accentColor)
+        case .reimbursed: return ("Reimbursed", .done)
         case .none: break
         }
-        if record.isUnpaidBill && record.isPaid { return ("Paid", .green) }
+        if record.isUnpaidBill && record.isPaid { return ("Paid", .done) }
         return nil
     }
 }

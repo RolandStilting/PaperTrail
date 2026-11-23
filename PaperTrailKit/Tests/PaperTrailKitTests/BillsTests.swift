@@ -79,3 +79,15 @@ struct OwnerPaymentTests {
         #expect(settings.validationErrors.count == 1)
     }
 }
+
+@Suite("Owner colours")
+struct OwnerColorTests {
+    @Test func automaticByPositionUnlessChosen() {
+        var settings = ArchiveSettings.defaults
+        #expect(settings.color(ofOwner: "Company1") == .blue)
+        #expect(settings.color(ofOwner: "Company2") == .teal)
+        settings.owners[0].color = .purple
+        #expect(settings.color(ofOwner: "Company1") == .purple)
+        #expect(settings.color(ofOwner: "Unknown") == .gray)
+    }
+}

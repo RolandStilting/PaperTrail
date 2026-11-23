@@ -21,7 +21,26 @@ struct SettingsView: View {
         Form {
             Section {
                 ForEach($draft.owners) { $owner in
-                    TextField("Owner name", text: $owner.name)
+                    HStack {
+                        Menu {
+                            Picker("Colour", selection: $owner.color) {
+                                Text("Automatic").tag(OwnerColor?.none)
+                                ForEach(OwnerColor.allCases, id: \.self) { color in
+                                    Label { Text(color.title) } icon: { Image(systemName: "circle.fill").foregroundStyle(color.color) }
+                                        .tag(OwnerColor?.some(color))
+                                }
+                            }
+                        } label: {
+                            Circle()
+                                .fill(draft.color(ofOwner: owner.name).color)
+                                .frame(width: 14, height: 14)
+                                .accessibilityLabel(Text("Colour for \(owner.name)"))
+                        }
+                        .menuStyle(.button)
+                        .buttonStyle(.plain)
+                        .fixedSize()
+                        TextField("Owner name", text: $owner.name)
+                    }
                 }
                 .onDelete { draft.owners.remove(atOffsets: $0) }
                 .onMove { draft.owners.move(fromOffsets: $0, toOffset: $1) }
@@ -31,7 +50,7 @@ struct SettingsView: View {
             } header: {
                 Text("Owners")
             } footer: {
-                Text("Each owner gets a top-level folder. Renaming only affects documents filed afterwards.")
+                Text("Each owner gets a top-level folder and a colour in lists. Renaming only affects documents filed afterwards.")
             }
 
             Section {

@@ -6,6 +6,8 @@ import SwiftUI
 /// list never downloads the whole archive from iCloud; others show a document symbol.
 struct DocumentThumbnail: View {
     let url: URL?
+    /// Shown when there is no preview, e.g. the category's symbol.
+    var placeholderSymbol = "doc.text"
     var size = CGSize(width: 34, height: 44)
 
     @Environment(\.displayScale) private var displayScale
@@ -21,7 +23,7 @@ struct DocumentThumbnail: View {
                     .clipShape(.rect(cornerRadius: 4))
                     .overlay(RoundedRectangle(cornerRadius: 4).stroke(.separator, lineWidth: 0.5))
             } else {
-                Image(systemName: "doc.text")
+                Image(systemName: placeholderSymbol)
                     .font(.title3)
                     .foregroundStyle(.secondary)
             }

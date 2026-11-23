@@ -69,19 +69,20 @@ struct TodayView: View {
     private var cards: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 12)], spacing: 12) {
             NavigationLink { ReviewListView() } label: {
-                TodayCard(title: "Needs Review", systemImage: "tray.and.arrow.down", tint: .blue,
+                TodayCard(title: "Needs Review", systemImage: model.reviewItems.isEmpty ? "checkmark" : "tray.and.arrow.down",
+                          tint: model.reviewItems.isEmpty ? .done : .accentColor,
                           value: "\(model.reviewItems.count)",
                           detail: model.reviewItems.isEmpty ? String(localized: "All caught up") : String(localized: "Waiting for you to file"))
             }
             NavigationLink { OpenBillsView(billService: model.billService, embedded: true) } label: {
-                TodayCard(title: "To Pay", systemImage: "eurosign.circle", tint: overdue.isEmpty ? .orange : .red,
+                TodayCard(title: "To Pay", systemImage: "eurosign", tint: openBills.isEmpty ? .done : (overdue.isEmpty ? .orange : .red),
                           value: BillReminderText.amount(sum(openBills)),
                           detail: overdue.isEmpty
                             ? (dueSoon.isEmpty ? Self.count(openBills.count, one: String(localized: "1 open bill"), other: String(localized: "\(openBills.count) open bills")) : String(localized: "\(dueSoon.count) due this week"))
                             : String(localized: "\(overdue.count) overdue"))
             }
             NavigationLink { ExpensesView(expenseService: model.expenseService, embedded: true) } label: {
-                TodayCard(title: "To Claim", systemImage: "eurosign.arrow.circlepath", tint: .teal,
+                TodayCard(title: "To Claim", systemImage: "arrow.uturn.backward", tint: openExpenses.isEmpty ? .done : .teal,
                           value: BillReminderText.amount(sum(openExpenses)),
                           detail: Self.count(openExpenses.count, one: String(localized: "1 expense"), other: String(localized: "\(openExpenses.count) expenses")))
             }
@@ -132,21 +133,31 @@ struct TodayCard: View {
     let detail: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label(title, systemImage: systemImage)
-                .font(.subheadline.weight(.medium))
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.title3.weight(.medium))
                 .foregroundStyle(tint)
-            Text(value)
-                .font(.title2.weight(.semibold))
-                .monospacedDigit()
-                .foregroundStyle(.primary)
-            Text(detail)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+                .frame(width: 40, height: 40)
+                .background(tint.opacity(0.15), in: .circle)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.title2.weight(.semibold))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+                Text(detail)
+                    .font(.footnote)
+                    .foregroundStyle(tint)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(.tertiary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(.background.secondary, in: .rect(cornerRadius: 14))
+        .background(.background.secondary, in: .rect(cornerRadius: 16))
         .contentShape(.rect)
     }
 }
