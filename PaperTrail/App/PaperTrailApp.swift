@@ -7,8 +7,7 @@ struct PaperTrailApp: App {
     @State private var settingsStore = SettingsStore()
     private let modelContainer = Self.makeModelContainer()
     private let filingService: FilingService
-    private let billService = BillService(reminders: EventKitBillReminders())
-    private let expenseService = ExpenseService(location: ICloudArchiveLocation())
+    @State private var model: AppModel
     #if os(macOS)
     @State private var mailIntake: MailIntakeService
     #endif
@@ -16,6 +15,11 @@ struct PaperTrailApp: App {
     init() {
         let filingService = FilingService(location: ICloudArchiveLocation(), store: CoordinatedFileStore())
         self.filingService = filingService
+        _model = State(initialValue: AppModel(
+            filingService: filingService,
+            billService: BillService(reminders: EventKitBillReminders()),
+            expenseService: ExpenseService(location: ICloudArchiveLocation())
+        ))
         #if os(macOS)
         // The mailbox is checked on the Mac, independent of any open window.
         let mail = MailIntakeService(filingService: filingService)
@@ -26,13 +30,27 @@ struct PaperTrailApp: App {
 
     var body: some Scene {
         WindowGroup(id: "main") {
-            ContentView(filingService: filingService, billService: billService, expenseService: expenseService)
+            RootView()
                 .environment(settingsStore)
+                .environment(model)
                 #if os(macOS)
                 .environment(mailIntake)
+                .frame(minWidth: 820, minHeight: 560)
                 #endif
         }
         .modelContainer(modelContainer)
+
+        #if os(macOS)
+        // Paper Trail → Settings… (⌘,), the standard place on the Mac.
+        Settings {
+            NavigationStack { SettingsView(embedded: true) }
+                .environment(settingsStore)
+                .environment(model)
+                .environment(mailIntake)
+                .modelContainer(modelContainer)
+                .frame(minWidth: 520, minHeight: 600)
+        }
+        #endif
 
         #if os(macOS)
         MenuBarExtra("Paper Trail", systemImage: "tray.and.arrow.down") {

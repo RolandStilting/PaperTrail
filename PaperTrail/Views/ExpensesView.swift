@@ -8,6 +8,8 @@ import AppKit
 /// Personal expenses that companies pay back: open expenses, submitted claims and history.
 struct ExpensesView: View {
     let expenseService: ExpenseService
+    /// Inside the app's navigation (tab or sidebar) instead of a sheet.
+    var embedded = false
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -32,7 +34,7 @@ struct ExpensesView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigation(embedded: embedded) {
             List {
                 if companies.isEmpty {
                     ContentUnavailableView("No expenses", systemImage: "eurosign.arrow.circlepath",
@@ -44,7 +46,7 @@ struct ExpensesView: View {
             }
             .navigationTitle("Expenses")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+                if !embedded { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             }
             .sheet(item: $package) { package in
                 ClaimReadyView(package: package) { self.package = nil }

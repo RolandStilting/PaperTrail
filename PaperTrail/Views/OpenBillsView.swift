@@ -13,6 +13,8 @@ struct OpenBillsView: View {
     let billService: BillService
     /// Bill to open straight away, e.g. from a reminder's link.
     var initialBillID: UUID?
+    /// Inside the app's navigation (tab or sidebar) instead of a sheet.
+    var embedded = false
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -34,7 +36,7 @@ struct OpenBillsView: View {
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
+        SheetNavigation(embedded: embedded, path: $path) {
             List {
                 if bills.isEmpty {
                     ContentUnavailableView("No open bills", systemImage: "checkmark.seal", description: Text("Unpaid bills you file show up here until their reminder is completed."))
@@ -50,7 +52,7 @@ struct OpenBillsView: View {
                     }
                 }
             }
-            .navigationTitle("Open Bills")
+            .navigationTitle("To Pay")
             .navigationDestination(for: UUID.self) { id in
                 if let bill = bills.first(where: { $0.id == id }) {
                     BillDetailView(bill: bill, billService: billService)
@@ -59,8 +61,10 @@ struct OpenBillsView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                if !embedded {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
                 }
             }
             .sheet(item: $exportingOwner) { owner in

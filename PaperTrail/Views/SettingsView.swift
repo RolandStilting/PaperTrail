@@ -3,6 +3,8 @@ import SwiftUI
 
 /// Edit the owners and categories that make up the folder structure.
 struct SettingsView: View {
+    /// In a tab or the Mac Settings window: no Cancel, and Save stays on the screen.
+    var embedded = false
     @Environment(SettingsStore.self) private var settingsStore
     #if os(macOS)
     @Environment(MailIntakeService.self) private var mail
@@ -10,6 +12,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var draft = ArchiveSettings.defaults
+    @State private var savedMessage = false
     @State private var errors: [String] = []
 
     var body: some View {
@@ -94,6 +97,10 @@ struct SettingsView: View {
             }
             #endif
 
+            if savedMessage, errors.isEmpty {
+                Section { Label("Settings saved", systemImage: "checkmark.circle").foregroundStyle(.green) }
+            }
+
             if !errors.isEmpty {
                 Section {
                     ForEach(errors, id: \.self) { Text($0).foregroundStyle(.red) }
@@ -103,8 +110,10 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .navigationTitle("Settings")
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+            if !embedded {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
@@ -114,10 +123,13 @@ struct SettingsView: View {
                         draft.owners[index].payingAccount.name = draft.owners[index].payingAccount.name.trimmingCharacters(in: .whitespaces)
                     }
                     errors = settingsStore.update(draft)
-                    if errors.isEmpty { dismiss() }
+                    if errors.isEmpty {
+                        if embedded { savedMessage = true } else { dismiss() }
+                    }
                 }
             }
         }
         .onAppear { draft = settingsStore.settings }
+        .onChange(of: draft) { _, _ in savedMessage = false }
     }
 }
