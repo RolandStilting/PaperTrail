@@ -43,6 +43,8 @@ struct PaperTrailApp: App {
         .defaultSize(width: 1280, height: 820)
         #endif
         .commands {
+            // View → Show/Hide Sidebar (⌃⌘S).
+            SidebarCommands()
             CommandGroup(replacing: .newItem) {
                 Button("Add Document…") { model.showingImporter = true }
                     .keyboardShortcut("n")

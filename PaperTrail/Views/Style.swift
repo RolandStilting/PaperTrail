@@ -5,6 +5,8 @@ import SwiftUI
 /// app icon; mint marks everything that is done.
 extension Color {
     static let done = Color("DoneColor")
+    /// Mac window background behind the content; darker than the system one in dark mode.
+    static let appBackground = Color("AppBackground")
 }
 
 extension OwnerColor {

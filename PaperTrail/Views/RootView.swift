@@ -26,6 +26,7 @@ struct RootView: View {
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
     @State private var selection: Destination? = .today
+    @State private var columnVisibility = NavigationSplitViewVisibility.all
     @State private var isDropTargeted = false
 
     private var usesTabs: Bool {
@@ -145,7 +146,7 @@ struct RootView: View {
     // MARK: iPad and Mac
 
     private var sidebarLayout: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             List(selection: $selection) {
                 Label("Today", systemImage: "sun.max").tag(Destination.today)
                 Label("Needs Review", systemImage: "tray.and.arrow.down")
@@ -181,9 +182,26 @@ struct RootView: View {
         } detail: {
             NavigationStack {
                 detail(for: selection ?? .today)
+                    #if os(macOS)
+                    // Lists and forms show the darker app background instead of their own.
+                    .scrollContentBackground(.hidden)
+                    .background(Color.appBackground.ignoresSafeArea())
+                    #endif
             }
             .id(selection)
         }
+        #if os(macOS)
+        .toolbar {
+            // Always offer a way to fold the sidebar away (also View → Hide Sidebar, ⌃⌘S).
+            ToolbarItem(placement: .navigation) {
+                Button(columnVisibility == .detailOnly ? "Show Sidebar" : "Hide Sidebar", systemImage: "sidebar.left") {
+                    withAnimation { columnVisibility = columnVisibility == .detailOnly ? .all : .detailOnly }
+                }
+                .help(columnVisibility == .detailOnly ? "Show Sidebar" : "Hide Sidebar")
+            }
+        }
+        .toolbar(removing: .sidebarToggle)
+        #endif
     }
 
     @ViewBuilder

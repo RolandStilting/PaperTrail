@@ -221,6 +221,9 @@
     "Can't be paid by file" : {
 
     },
+    "Can't open the document" : {
+
+    },
     "Can't show the PDF" : {
 
     },
@@ -492,6 +495,9 @@
     "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email." : {
 
     },
+    "Everything is paid." : {
+
+    },
     "Excl. VAT" : {
 
     },
@@ -529,6 +535,9 @@
 
     },
     "File document" : {
+
+    },
+    "File it right here." : {
 
     },
     "File name" : {
@@ -607,6 +616,9 @@
 
     },
     "Its PDF and details appear here." : {
+
+    },
+    "Its QR code and payment details appear here." : {
 
     },
     "Its reminder is completed too." : {
@@ -711,6 +723,9 @@
     "None" : {
 
     },
+    "Nothing waiting to be filed." : {
+
+    },
     "OK" : {
 
     },
@@ -718,6 +733,9 @@
 
     },
     "Open Paper Trail at login" : {
+
+    },
+    "Opening…" : {
 
     },
     "Orange" : {
@@ -883,6 +901,9 @@
 
     },
     "Scanning failed: %@. Try again." : {
+
+    },
+    "Select a bill" : {
 
     },
     "Select a document" : {
