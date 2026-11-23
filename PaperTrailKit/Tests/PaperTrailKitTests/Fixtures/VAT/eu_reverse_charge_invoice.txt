@@ -1,0 +1,10 @@
+Example Software BV-Partner GmbH
+Invoice 2026-0091
+Invoice date: 4 February 2026
+
+Licence Example Suite (annual)            EUR 600.00
+VAT 0%                                    EUR 0.00
+Total                                     EUR 600.00
+
+VAT reverse charged: the recipient is liable for VAT (Article 196 VAT Directive).
+Customer VAT number: NL000000000B01

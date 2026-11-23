@@ -1,0 +1,13 @@
+Gasthof Beispiel GmbH
+Musterweg 3, 80000 München
+USt-IdNr. DE000000000
+
+Rechnung Nr. 4711
+Übernachtung 2 Nächte                 180,00
+Frühstück                              24,00
+Gesamt EUR                            204,00
+
+enthaltene MwSt 7% auf 180,00          11,78
+enthaltene MwSt 19% auf 24,00           3,83
+
+Bezahlt: Mastercard
