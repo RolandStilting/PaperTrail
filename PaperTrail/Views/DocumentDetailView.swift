@@ -14,7 +14,12 @@ struct DocumentDetailView: View {
     @State private var loadFailed = false
     @State private var editingVAT = false
 
-    init(id: UUID) {
+    /// In the archive's document pane: the archive keeps the window title, so the sender is
+    /// shown as a heading instead.
+    var embedded = false
+
+    init(id: UUID, embedded: Bool = false) {
+        self.embedded = embedded
         _matches = Query(filter: #Predicate<DocumentRecord> { $0.id == id })
     }
 
@@ -29,6 +34,11 @@ struct DocumentDetailView: View {
 
     private func content(_ record: DocumentRecord) -> some View {
         Form {
+            if embedded {
+                Section {
+                    Text(record.sender).font(.title2.weight(.semibold))
+                }
+            }
             Section {
                 Group {
                     if let pdf {
@@ -104,7 +114,7 @@ struct DocumentDetailView: View {
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(record.sender)
+        .titleUnlessEmbedded(embedded, record.sender)
         .sheet(isPresented: $editingVAT) { VATEditSheet(record: record) }
         .task(id: record.relativePath) { await load(record) }
     }
@@ -116,5 +126,13 @@ struct DocumentDetailView: View {
         } catch {
             loadFailed = true
         }
+    }
+}
+
+private extension View {
+    /// The document pane leaves the window title to the archive.
+    @ViewBuilder
+    func titleUnlessEmbedded(_ embedded: Bool, _ title: String) -> some View {
+        if embedded { self } else { navigationTitle(title) }
     }
 }

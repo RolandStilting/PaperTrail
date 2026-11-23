@@ -39,6 +39,9 @@ struct PaperTrailApp: App {
                 #endif
         }
         .modelContainer(modelContainer)
+        #if os(macOS)
+        .defaultSize(width: 1280, height: 820)
+        #endif
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("Add Document…") { model.showingImporter = true }

@@ -1,4 +1,5 @@
 import PaperTrailKit
+import QuickLook
 import SwiftData
 import SwiftUI
 
@@ -42,6 +43,8 @@ struct ArchiveView: View {
     @State private var yearFilter: Int?
     @State private var statusFilter = ArchiveStatusFilter.all
     @FocusState private var searchFocused: Bool
+    @State private var selection: UUID?
+    @State private var quickLookURL: URL?
 
     private var calendar: Calendar { .current }
 
@@ -79,7 +82,43 @@ struct ArchiveView: View {
     }
 
     var body: some View {
-        List {
+        // Wide (Mac, iPad): the list with the selected document beside it. Narrow: tap to open.
+        GeometryReader { geometry in
+            if geometry.size.width >= 640 {
+                HStack(spacing: 0) {
+                    documentList(split: true)
+                        .frame(width: min(420, max(290, geometry.size.width * 0.38)))
+                    Divider()
+                    Group {
+                        if let selection, shown.contains(where: { $0.id == selection }) {
+                            DocumentDetailView(id: selection, embedded: true)
+                                .id(selection)
+                        } else {
+                            ContentUnavailableView("Select a document", systemImage: "doc.text.magnifyingglass",
+                                                   description: Text("Its PDF and details appear here."))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            } else {
+                documentList(split: false)
+            }
+        }
+        .searchable(text: $search, prompt: Text("Sender, description or text"))
+        .searchFocused($searchFocused)
+        .onChange(of: model.wantsSearchFocus) { _, _ in takeSearchFocus() }
+        .onAppear(perform: takeSearchFocus)
+        .navigationTitle(owner ?? String(localized: "Archive"))
+        .toolbar { ToolbarItem(placement: .primaryAction) { AddDocumentMenu() } }
+        .navigationDestination(for: DocumentRoute.self) { route in
+            DocumentDetailView(id: route.id)
+        }
+        .quickLookPreview($quickLookURL)
+    }
+
+    /// The documents, grouped by month. In the split layout a row selects; otherwise it opens.
+    private func documentList(split: Bool) -> some View {
+        List(selection: $selection) {
             if shown.isEmpty {
                 if !search.isEmpty {
                     ContentUnavailableView.search(text: search)
@@ -97,9 +136,16 @@ struct ArchiveView: View {
             ForEach(months, id: \.month) { group in
                 Section {
                     ForEach(group.records) { record in
-                        NavigationLink(value: DocumentRoute(id: record.id)) {
-                            DocumentRow(record: record, showsOwner: owner == nil, fileURL: model.fileURL(for: record))
+                        Group {
+                            if split {
+                                DocumentRow(record: record, showsOwner: owner == nil, fileURL: model.fileURL(for: record))
+                            } else {
+                                NavigationLink(value: DocumentRoute(id: record.id)) {
+                                    DocumentRow(record: record, showsOwner: owner == nil, fileURL: model.fileURL(for: record))
+                                }
+                            }
                         }
+                        .tag(record.id)
                         .contextMenu { DocumentActions(record: record) }
                         .swipeActions(edge: .trailing) {
                             if record.isOpenBill {
@@ -114,14 +160,12 @@ struct ArchiveView: View {
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) { filterBar }
-        .searchable(text: $search, prompt: Text("Sender, description or text"))
-        .searchFocused($searchFocused)
-        .onChange(of: model.wantsSearchFocus) { _, _ in takeSearchFocus() }
-        .onAppear(perform: takeSearchFocus)
-        .navigationTitle(owner ?? String(localized: "Archive"))
-        .toolbar { ToolbarItem(placement: .primaryAction) { AddDocumentMenu() } }
-        .navigationDestination(for: DocumentRoute.self) { route in
-            DocumentDetailView(id: route.id)
+        // Space bar: a large Quick Look preview of the selected document, as in Finder.
+        .onKeyPress(.space) {
+            guard let selection, let record = shown.first(where: { $0.id == selection }),
+                  let url = model.fileURL(for: record) else { return .ignored }
+            quickLookURL = quickLookURL == nil ? url : nil
+            return .handled
         }
     }
 
