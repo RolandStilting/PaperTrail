@@ -7,10 +7,11 @@ struct PaperTrailApp: App {
     @State private var settingsStore = SettingsStore()
     private let modelContainer = Self.makeModelContainer()
     private let filingService = FilingService(location: ICloudArchiveLocation(), store: CoordinatedFileStore())
+    private let billService = BillService(reminders: EventKitBillReminders())
 
     var body: some Scene {
         WindowGroup {
-            ContentView(filingService: filingService)
+            ContentView(filingService: filingService, billService: billService)
                 .environment(settingsStore)
         }
         .modelContainer(modelContainer)

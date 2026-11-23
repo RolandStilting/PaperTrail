@@ -18,10 +18,23 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>$(PAPERTRAIL_BUNDLE_ID)</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>papertrail</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Paper Trail uses the camera to scan receipts, invoices and letters.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Paper Trail adds unpaid bills to your To pay lists in Reminders and marks a bill paid when you complete its reminder.</string>
 	<key>NSUbiquitousContainers</key>
 	<dict>
 		<key>iCloud.nl.rolandstilting.papertrail</key>

@@ -1,3 +1,4 @@
+import EventKit
 import PaperTrailKit
 import SwiftData
 import SwiftUI
@@ -5,6 +6,7 @@ import UniformTypeIdentifiers
 
 struct ContentView: View {
     let filingService: FilingService
+    let billService: BillService
 
     @Query(sort: \DocumentRecord.filedAt, order: .reverse) private var records: [DocumentRecord]
 
@@ -20,9 +22,13 @@ struct ContentView: View {
     @State private var unreadableInboxFiles: [String] = []
     /// Inbox problems already shown, so the check every minute doesn't repeat them.
     @State private var shownInboxFailures: Set<String> = []
+    @Environment(\.modelContext) private var modelContext
+    @State private var showingBills = false
+    @State private var billToOpen: UUID?
+    @Query(filter: #Predicate<DocumentRecord> { $0.isUnpaidBill && !$0.isPaid }) private var openBills: [DocumentRecord]
     @Environment(\.scenePhase) private var scenePhase
 
-    var body: some View {
+    private var mainList: some View {
         NavigationStack {
             List {
                 if archiveRoot?.isLocalFallback == true {
@@ -92,9 +98,35 @@ struct ContentView: View {
                 if isPreparing { ProgressView("Preparing document…") }
             }
         }
+    }
+
+    /// Open Bills sheet, links from reminders and syncing paid state.
+    private func billHooks(_ content: some View) -> some View {
+        content
+            .sheet(isPresented: $showingBills) {
+                OpenBillsView(billService: billService, initialBillID: billToOpen)
+                #if os(macOS)
+                .frame(minWidth: 520, minHeight: 640)
+                #endif
+            }
+            .onOpenURL { url in
+                // papertrail://bill/<id>, the link in a bill's reminder.
+                guard url.scheme == "papertrail", url.host() == "bill", let id = UUID(uuidString: url.lastPathComponent) else { return }
+                billToOpen = id
+                showingBills = true
+            }
+            .task {
+                for await _ in NotificationCenter.default.notifications(named: .EKEventStoreChanged) {
+                    await syncBills()
+                }
+            }
+    }
+
+    var body: some View {
+        billHooks(mainList)
         .sheet(item: $pending) { document in
             NavigationStack {
-                FilingView(document: document, filingService: filingService) { pending = nil }
+                FilingView(document: document, filingService: filingService, billService: billService) { pending = nil }
             }
             #if os(macOS)
             .frame(minWidth: 520, minHeight: 640)
@@ -138,6 +170,7 @@ struct ContentView: View {
             guard scenePhase == .active else { return }
             while !Task.isCancelled {
                 await refreshReviewItems()
+                await syncBills()
                 try? await Task.sleep(for: .seconds(60))
             }
         }
@@ -156,6 +189,14 @@ struct ContentView: View {
             }
             .disabled(isPreparing)
         }
+        ToolbarItem(placement: .primaryAction) {
+            Button {
+                billToOpen = nil
+                showingBills = true
+            } label: {
+                Label(openBills.isEmpty ? String(localized: "Open Bills") : String(localized: "Open Bills (\(openBills.count))"), systemImage: "eurosign.circle")
+            }
+        }
         ToolbarItem(placement: .secondaryAction) {
             Button("Settings", systemImage: "gearshape") { showingSettings = true }
         }
@@ -166,6 +207,15 @@ struct ContentView: View {
             archiveRoot = try await filingService.location.resolveRoot()
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    /// Marks bills paid whose reminder was completed, here or on another device.
+    private func syncBills() async {
+        do {
+            try await billService.syncPaidState(bills: openBills, context: modelContext)
+        } catch {
+            errorMessage = String(localized: "Could not check Reminders for paid bills: \(error.localizedDescription)")
         }
     }
 

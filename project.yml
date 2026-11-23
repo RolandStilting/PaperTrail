@@ -47,6 +47,10 @@ targets:
       properties:
         CFBundleDisplayName: Paper Trail
         NSCameraUsageDescription: Paper Trail uses the camera to scan receipts, invoices and letters.
+        NSRemindersFullAccessUsageDescription: Paper Trail adds unpaid bills to your To pay lists in Reminders and marks a bill paid when you complete its reminder.
+        CFBundleURLTypes:
+          - CFBundleURLName: $(PAPERTRAIL_BUNDLE_ID)
+            CFBundleURLSchemes: [papertrail]
         UIBackgroundModes: [remote-notification]
         PTICloudContainerIdentifier: iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)
         PTAppGroupIdentifier: $(PAPERTRAIL_APP_GROUP)
