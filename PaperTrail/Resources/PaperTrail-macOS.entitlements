@@ -25,5 +25,9 @@
 	<true/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>$(PAPERTRAIL_APP_GROUP)</string>
+	</array>
 </dict>
 </plist>

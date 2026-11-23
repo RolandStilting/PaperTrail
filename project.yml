@@ -22,6 +22,10 @@ settings:
     # everywhere except the NSUbiquitousContainers key below (Xcode does not expand keys).
     # Change both together; ICloudContainerConfigTests fails if they differ.
     PAPERTRAIL_BUNDLE_ID: nl.rolandstilting.papertrail
+    # App Group shared by the app and the Share Extension. iOS requires the "group." prefix
+    # and a registered group; macOS uses the Team ID prefix (as in Xcode's macOS templates).
+    PAPERTRAIL_APP_GROUP[sdk=iphone*]: group.$(PAPERTRAIL_BUNDLE_ID)
+    PAPERTRAIL_APP_GROUP[sdk=macosx*]: $(DEVELOPMENT_TEAM).$(PAPERTRAIL_BUNDLE_ID)
 
 packages:
   PaperTrailKit:
@@ -35,6 +39,9 @@ targets:
       - path: PaperTrail
     dependencies:
       - package: PaperTrailKit
+      - target: PaperTrailShare
+        embed: true
+        codeSign: true
     info:
       path: PaperTrail/Resources/Info.plist
       properties:
@@ -42,6 +49,7 @@ targets:
         NSCameraUsageDescription: Paper Trail uses the camera to scan receipts, invoices and letters.
         UIBackgroundModes: [remote-notification]
         PTICloudContainerIdentifier: iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)
+        PTAppGroupIdentifier: $(PAPERTRAIL_APP_GROUP)
         NSUbiquitousContainers:
           # Must be iCloud.<PAPERTRAIL_BUNDLE_ID>, written out in full.
           iCloud.nl.rolandstilting.papertrail:
@@ -65,6 +73,41 @@ targets:
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.productivity
         CODE_SIGN_ENTITLEMENTS[sdk=iphone*]: PaperTrail/Resources/PaperTrail-iOS.entitlements
         CODE_SIGN_ENTITLEMENTS[sdk=macosx*]: PaperTrail/Resources/PaperTrail-macOS.entitlements
+
+  PaperTrailShare:
+    type: app-extension
+    supportedDestinations: [iOS, macOS]
+    sources:
+      - path: PaperTrailShare
+    dependencies:
+      - package: PaperTrailKit
+    info:
+      path: PaperTrailShare/Info.plist
+      properties:
+        CFBundleDisplayName: Paper Trail
+        PTAppGroupIdentifier: $(PAPERTRAIL_APP_GROUP)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            # Only PDFs and images; Paper Trail can't read other files.
+            NSExtensionActivationRule: >-
+              SUBQUERY(extensionItems, $item, SUBQUERY($item.attachments, $attachment,
+              ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "com.adobe.pdf"
+              OR ANY $attachment.registeredTypeIdentifiers UTI-CONFORMS-TO "public.image").@count >= 1).@count >= 1
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(PAPERTRAIL_BUNDLE_ID).share
+        PRODUCT_NAME: PaperTrailShare
+        PRODUCT_MODULE_NAME: PaperTrailShare
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_HARDENED_RUNTIME: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+        CODE_SIGN_ENTITLEMENTS[sdk=iphone*]: PaperTrailShare/PaperTrailShare-iOS.entitlements
+        CODE_SIGN_ENTITLEMENTS[sdk=macosx*]: PaperTrailShare/PaperTrailShare-macOS.entitlements
 
   PaperTrailTests:
     type: bundle.unit-test

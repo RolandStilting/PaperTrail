@@ -1,4 +1,6 @@
+import CoreGraphics
 import Foundation
+import ImageIO
 import PaperTrailKit
 import SwiftData
 import Testing
@@ -96,5 +98,73 @@ struct ReviewQueueTests {
         await #expect(throws: ReviewQueueError.self) {
             _ = try await service.file(opened, request: request, extractedText: nil, context: container.mainContext)
         }
+    }
+}
+
+@Suite("InboxCollector")
+struct InboxCollectorTests {
+    static func pngData() throws -> Data {
+        let context = try #require(CGContext(data: nil, width: 40, height: 60, bitsPerComponent: 8, bytesPerRow: 0,
+                                             space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        context.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: 40, height: 60))
+        let image = try #require(context.makeImage())
+        let data = NSMutableData()
+        let destination = try #require(CGImageDestinationCreateWithData(data, "public.png" as CFString, 1, nil))
+        CGImageDestinationAddImage(destination, image, nil)
+        #expect(CGImageDestinationFinalize(destination))
+        return data as Data
+    }
+
+    @Test func movesPdfsAndImagesAndLeavesOtherFiles() async throws {
+        let root = FileManager.default.temporaryDirectory.appending(path: "PaperTrailTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        let inbox = InboxCollector.inbox(in: root)
+        try FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
+        try Data("%PDF-1.7 synthetic inbox".utf8).write(to: inbox.appending(path: "factuur.pdf"))
+        try Self.pngData().write(to: inbox.appending(path: "bon.png"))
+        try Data("notes".utf8).write(to: inbox.appending(path: "notes.txt"))
+        try Data("broken".utf8).write(to: inbox.appending(path: "kapot.jpg"))
+
+        let collector = InboxCollector(store: CoordinatedFileStore())
+        let report = await collector.collect(root: root)
+        #expect(report.moved == 2)
+        #expect(report.unsupported == ["notes.txt"])
+        #expect(report.failures.count == 1)
+
+        let remaining = try FileManager.default.contentsOfDirectory(atPath: inbox.path(percentEncoded: false)).sorted()
+        #expect(remaining == ["kapot.jpg", "notes.txt"])
+        let queued = try await ReviewQueue(store: CoordinatedFileStore()).items(root: root).map(\.name)
+        #expect(queued.count == 2)
+        #expect(queued.contains { $0.hasSuffix(" factuur.pdf") })
+        #expect(queued.contains { $0.hasSuffix(" bon.pdf") })
+    }
+}
+
+@Suite("Shared documents")
+struct SharedDocumentTests {
+    @Test func sharedFilesEndUpInNeedsReview() async throws {
+        let base = FileManager.default.temporaryDirectory.appending(path: "PaperTrailTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        let root = base.appending(path: "Archive", directoryHint: .isDirectory)
+        let shared = SharedIncoming.folder(in: base.appending(path: "Group", directoryHint: .isDirectory))
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let source = base.appending(path: "mail-attachment.pdf")
+        try Data("%PDF-1.7 synthetic shared".utf8).write(to: source)
+        _ = try SharedIncoming.save(source, preferredName: "Factuur", into: shared)
+
+        let report = await InboxCollector(store: CoordinatedFileStore()).collect(root: root, sharedFolder: shared)
+        #expect(report.moved == 1)
+        #expect(report.failures.isEmpty)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: shared.path(percentEncoded: false)).isEmpty)
+        let queued = try await ReviewQueue(store: CoordinatedFileStore()).items(root: root)
+        #expect(queued.first?.name.hasSuffix(" Factuur.pdf") == true)
+    }
+
+    @Test func appGroupIsConfigured() throws {
+        let groupID = try #require(Bundle.main.object(forInfoDictionaryKey: SharedIncoming.appGroupInfoKey) as? String)
+        #if os(macOS)
+        #expect(groupID == "67YRLXTX42.nl.rolandstilting.papertrail")
+        #else
+        #expect(groupID == "group.nl.rolandstilting.papertrail")
+        #endif
     }
 }

@@ -9,6 +9,7 @@ struct FilingService {
     var namer = FileNamer()
 
     var reviewQueue: ReviewQueue { ReviewQueue(store: store) }
+    var inboxCollector: InboxCollector { InboxCollector(store: store) }
 
     /// Saves the document to Needs Review to file later.
     func saveForReview(_ document: PendingDocument) async throws {

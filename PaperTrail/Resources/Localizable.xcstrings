@@ -88,7 +88,30 @@
     "Could not find a free file name for \"%@\". Change the description and try again." : {
 
     },
+    "Could not move \"%@\" to Needs Review: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not move \"%1$@\" to Needs Review: %2$@"
+          }
+        }
+      }
+    },
+    "Could not move the shared document \"%@\" to Inbox: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Could not move the shared document \"%1$@\" to Inbox: %2$@"
+          }
+        }
+      }
+    },
     "Could not read \"%@\". Make sure the file is downloaded and not damaged, then try again." : {
+
+    },
+    "Could not read the Inbox folder. Check iCloud Drive and try again." : {
 
     },
     "Could not read the Needs Review folder: %@. Pull down to try again." : {
@@ -164,6 +187,9 @@
     "Import file…" : {
 
     },
+    "Inbox" : {
+
+    },
     "Learned rules" : {
 
     },
@@ -195,6 +221,9 @@
 
     },
     "Paper Trail" : {
+
+    },
+    "Paper Trail can only read PDFs and images. Move these files out of the Inbox folder in iCloud Drive." : {
 
     },
     "Paper Trail remembers owner and category for each sender you file." : {
