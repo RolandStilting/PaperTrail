@@ -26,6 +26,7 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var showingBills = false
     @State private var showingExpenses = false
+    @State private var showingVAT = false
     @Environment(SettingsStore.self) private var settingsStore
     @Query(filter: #Predicate<DocumentRecord> { $0.reimbursedBy != nil && $0.claimID == nil }) private var openExpenses: [DocumentRecord]
     @State private var billToOpen: UUID?
@@ -113,6 +114,12 @@ struct ContentView: View {
     /// Open Bills sheet, links from reminders and syncing paid state.
     private func billHooks(_ content: some View) -> some View {
         content
+            .sheet(isPresented: $showingVAT) {
+                VATOverviewView()
+                #if os(macOS)
+                .frame(minWidth: 560, minHeight: 680)
+                #endif
+            }
             .sheet(isPresented: $showingExpenses) {
                 ExpensesView(expenseService: expenseService)
                 #if os(macOS)
@@ -218,6 +225,11 @@ struct ContentView: View {
                 showingExpenses = true
             } label: {
                 Label(openExpenses.isEmpty ? String(localized: "Expenses") : String(localized: "Expenses (\(openExpenses.count))"), systemImage: "eurosign.arrow.circlepath")
+            }
+        }
+        ToolbarItem(placement: .secondaryAction) {
+            if settingsStore.settings.owners.contains(where: { $0.vatPeriod != nil }) {
+                Button("VAT Overview", systemImage: "percent") { showingVAT = true }
             }
         }
         ToolbarItem(placement: .secondaryAction) {

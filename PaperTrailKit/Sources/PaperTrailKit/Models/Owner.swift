@@ -31,15 +31,19 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
     public var name: String
     public var paymentMethod: PaymentMethod
     public var payingAccount: PayingAccount
+    /// How often this owner files a VAT return; nil when it doesn't (e.g. Private).
+    public var vatPeriod: VATPeriodKind?
 
-    public init(id: UUID = UUID(), name: String, paymentMethod: PaymentMethod = .qrCode, payingAccount: PayingAccount = PayingAccount()) {
+    public init(id: UUID = UUID(), name: String, paymentMethod: PaymentMethod = .qrCode, payingAccount: PayingAccount = PayingAccount(),
+                vatPeriod: VATPeriodKind? = nil) {
         self.id = id
         self.name = name
         self.paymentMethod = paymentMethod
         self.payingAccount = payingAccount
+        self.vatPeriod = vatPeriod
     }
 
-    enum CodingKeys: String, CodingKey { case id, name, paymentMethod, payingAccount }
+    enum CodingKeys: String, CodingKey { case id, name, paymentMethod, payingAccount, vatPeriod }
 
     /// Settings saved before phase 4 have no payment fields; they get the defaults.
     public init(from decoder: any Decoder) throws {
@@ -48,5 +52,6 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
         name = try container.decode(String.self, forKey: .name)
         paymentMethod = try container.decodeIfPresent(PaymentMethod.self, forKey: .paymentMethod) ?? .qrCode
         payingAccount = try container.decodeIfPresent(PayingAccount.self, forKey: .payingAccount) ?? PayingAccount()
+        vatPeriod = try container.decodeIfPresent(VATPeriodKind.self, forKey: .vatPeriod)
     }
 }

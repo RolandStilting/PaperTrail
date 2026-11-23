@@ -120,3 +120,28 @@ struct ArchiveResetTests {
     }
 }
 #endif
+
+@MainActor
+@Suite("VAT on filed documents")
+struct VATFilingTests {
+    @Test func filingStoresVATAndTheReportUsesIt() async throws {
+        let schema = Schema(PaperTrailSchema.models)
+        let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none))
+        let root = FileManager.default.temporaryDirectory.appending(path: "PaperTrailTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let service = FilingService(location: FilingServiceRuleTests.TempLocation(url: root), store: CoordinatedFileStore())
+        let vat = VATInfo(lines: [VATLine(rate: 21, base: 100, amount: 21)])
+        let request = FilingRequest(owner: "Company1", category: "Invoices", receivedDate: .now, sender: "Leverancier Test",
+                                    description: "Factuur", bill: BillDetails(amount: 121), vat: vat)
+        let record = try await service.file(PendingDocument(pdfData: Data("%PDF-1.7 synthetic vat".utf8), source: .scan),
+                                            request: request, extractedText: nil, context: container.mainContext)
+        #expect(record.vatInfo == vat)
+
+        let fetched = try #require(try container.mainContext.fetch(FetchDescriptor<DocumentRecord>()).first)
+        let report = VATReport(company: "Company1", period: .containing(fetched.vatDate, kind: .quarter), items: [
+            VATReportItem(date: fetched.vatDate, sender: fetched.sender, description: fetched.documentDescription, amount: fetched.amount,
+                          vat: fetched.vatInfo ?? VATInfo(), isReimbursedExpense: false, relativePath: fetched.relativePath),
+        ])
+        #expect(report.totalToReclaim == 21)
+    }
+}

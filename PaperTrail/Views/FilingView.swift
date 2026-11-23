@@ -5,7 +5,7 @@ import SwiftUI
 /// The review screen: the app suggests category, sender, description, dates and payment
 /// details on the device; the user checks them and files the document.
 struct FilingView: View {
-    enum Field: Hashable { case owner, category, documentDate, sender, description, bill, reimbursement }
+    enum Field: Hashable { case owner, category, documentDate, sender, description, bill, reimbursement, vat }
 
     enum SuggestionState: Equatable {
         case waitingForText
@@ -40,6 +40,7 @@ struct FilingView: View {
     @State private var paymentReference = ""
     /// Empty: not a reimbursable expense.
     @State private var reimbursedBy = ""
+    @State private var vat = VATInfo()
 
     @State private var suggestion = SuggestionState.waitingForText
     /// Fields the user changed; a late suggestion never overwrites them.
@@ -62,8 +63,14 @@ struct FilingView: View {
         FilingRequest(
             owner: ownerName, category: categoryName, receivedDate: receivedDate,
             documentDate: hasDocumentDate ? documentDate : nil, sender: sender, description: descriptionText,
-            bill: bill, reimbursedBy: reimbursedBy.isEmpty || reimbursedBy == ownerName ? nil : reimbursedBy
+            bill: bill, reimbursedBy: reimbursedBy.isEmpty || reimbursedBy == ownerName ? nil : reimbursedBy,
+            vat: tracksVAT && !vat.isEmpty ? vat : nil
         )
+    }
+
+    /// VAT matters when the owner files VAT returns, or a company that does reimburses the expense.
+    private var tracksVAT: Bool {
+        settingsStore.settings.owners.contains { ($0.name == ownerName || $0.name == reimbursedBy) && $0.vatPeriod != nil }
     }
 
     private var bill: BillDetails? {
@@ -145,6 +152,16 @@ struct FilingView: View {
                 Text("Expense")
             } footer: {
                 Text("For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed.")
+            }
+
+            if tracksVAT {
+                Section {
+                    VATEditor(vat: tracked($vat, .vat))
+                } header: {
+                    Text("VAT")
+                } footer: {
+                    Text(vat.lines.isEmpty ? "No VAT line found in the text. Add one if the document shows VAT." : "Found in the document's text. Check rate and amounts.")
+                }
             }
 
             Section("File name") {
@@ -290,7 +307,15 @@ struct FilingView: View {
             return
         }
         applyRule()
+        suggestVAT()
         await suggestDetails()
+        suggestVAT()
+    }
+
+    /// VAT lines from the text; read again once the total amount is known.
+    private func suggestVAT() {
+        guard !edited.contains(.vat), let text = extractedText else { return }
+        vat = VATExtractor.extract(from: text, total: amount)
     }
 
     /// Learned rules run before the model, and also work when the model is unavailable.

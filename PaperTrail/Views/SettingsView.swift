@@ -56,12 +56,18 @@ struct SettingsView: View {
                             .autocorrectionDisabled()
                         TextField("BIC (optional)", text: $owner.payingAccount.bic)
                             .autocorrectionDisabled()
+                        Picker("VAT return", selection: $owner.vatPeriod) {
+                            Text("None").tag(VATPeriodKind?.none)
+                            Text("Monthly").tag(VATPeriodKind?.some(.month))
+                            Text("Quarterly").tag(VATPeriodKind?.some(.quarter))
+                            Text("Yearly").tag(VATPeriodKind?.some(.year))
+                        }
                     }
                 }
             } header: {
-                Text("Paying bills")
+                Text("Paying bills and VAT")
             } footer: {
-                Text("Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud.")
+                Text("Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud.")
             }
 
             #if os(macOS)
