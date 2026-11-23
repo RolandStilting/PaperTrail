@@ -90,3 +90,22 @@ struct VATExtractorLayoutTests {
         #expect(info.lines.isEmpty)
     }
 }
+
+@Suite("VATExtractor summary tables")
+struct VATExtractorSummaryTableTests {
+    @Test func headingsAboveARowOfNumbers() throws {
+        let info = VATExtractor.extract(from: try VATExtractorTests.fixture("VAT", "summary_table_one_row"), total: 1028.50)
+        #expect(info.lines == [VATLine(rate: 21, base: 850, amount: 178.50)])
+        #expect(!info.isForeign)
+    }
+
+    @Test func cellsOnSeparateLines() throws {
+        let info = VATExtractor.extract(from: try VATExtractorTests.fixture("VAT", "summary_table_split_cells"), total: 1357.62)
+        #expect(info.lines == [VATLine(rate: 21, base: 1122, amount: 235.62)])
+    }
+
+    @Test func aPercentageUnderAHeadingNeedsAmountsThatCheckOut() {
+        let text = "Btw-tarief\n21,00 %\nKorting 10,00"
+        #expect(VATExtractor.extract(from: text, total: 100).isEmpty)
+    }
+}

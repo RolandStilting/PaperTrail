@@ -98,6 +98,9 @@
     "IBAN: %@" : {
 
     },
+    "Incl. VAT" : {
+
+    },
     "input VAT to reclaim" : {
 
     },
@@ -163,6 +166,9 @@
 
     },
     "The connection to the mail server was closed. Check your internet connection and try again." : {
+
+    },
+    "The documents follow on the next pages, in the order listed." : {
 
     },
     "The folder to check and the Processed folder must be different." : {

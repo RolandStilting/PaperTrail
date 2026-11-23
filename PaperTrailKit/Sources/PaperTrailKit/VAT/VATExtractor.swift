@@ -64,16 +64,32 @@ public enum VATExtractor {
         var found: [VATLine] = []
 
         for (index, rawLine) in lines.enumerated() {
-            let (hasDutch, hasForeign) = vatWords(in: rawLine)
+            var (hasDutch, hasForeign) = vatWords(in: rawLine)
+            let percent = percentage(in: rawLine)
+            // Summary tables put the headings ("Btw-basisbedrag  Btw-bedrag  Btw-tarief") above a
+            // row of plain numbers; a VAT heading just above a percentage counts too.
+            var underHeading = false
+            if !(hasDutch || hasForeign), percent != nil {
+                for previous in lines[max(0, index - 4)..<index] {
+                    let words = vatWords(in: previous)
+                    if words.dutch || words.foreign {
+                        (hasDutch, hasForeign, underHeading) = (words.dutch, words.foreign, true)
+                        break
+                    }
+                }
+            }
             guard hasDutch || hasForeign else { continue }
 
             var line: VATLine?
-            if let (rate, rest) = percentage(in: rawLine) {
-                line = vatLine(rate: rate, amounts: moneyAmounts(in: rest), total: total)
-                // PDF tables often put the amount on the next line: "BTW 21%" / "€ 5,03".
-                if line == nil, index + 1 < lines.count, percentage(in: lines[index + 1]) == nil,
-                   !vatWords(in: lines[index + 1]).0, !vatWords(in: lines[index + 1]).1 {
-                    line = vatLine(rate: rate, amounts: moneyAmounts(in: lines[index + 1]), total: total)
+            if let (rate, rest) = percent {
+                line = vatLine(rate: rate, amounts: moneyAmounts(in: rest), total: total, allowLoneAmount: !underHeading)
+                // PDF text often splits table cells over lines: look at the lines around it, but
+                // only accept amounts that check out against the rate or the total.
+                if line == nil {
+                    let neighbours = [index - 2, index - 1, index + 1]
+                        .filter { lines.indices.contains($0) && percentage(in: lines[$0]) == nil }
+                        .flatMap { moneyAmounts(in: lines[$0]) }
+                    line = vatLine(rate: rate, amounts: moneyAmounts(in: rest) + neighbours, total: total, allowLoneAmount: false)
                 }
                 if let rate = line?.rate, hasForeign || !dutchRates.contains(rate) { info.isForeign = true }
             } else if let total, !rawLine.contains("incl"), !rawLine.contains("excl") {
@@ -147,7 +163,7 @@ public enum VATExtractor {
 
     /// Picks base and VAT from a line's amounts: a pair where VAT ≈ base × rate wins; otherwise
     /// an amount that fits the document total; otherwise a single amount is the VAT.
-    static func vatLine(rate: Double, amounts: [Double], total: Double?) -> VATLine? {
+    static func vatLine(rate: Double, amounts: [Double], total: Double?, allowLoneAmount: Bool = true) -> VATLine? {
         guard !amounts.isEmpty else { return nil }
         if rate == 0 {
             guard amounts.contains(0) || amounts.count == 1 else { return nil }
@@ -170,7 +186,7 @@ public enum VATExtractor {
         }
         // A lone amount is the VAT only if it can be: never more than the rate of the total
         // (so "Totaal incl. 21% btw € 121,00" is not read as VAT).
-        guard amounts.count == 1 else { return nil }
+        guard allowLoneAmount, amounts.count == 1 else { return nil }
         if let total, amounts[0] > total * rate / 100 + 0.02 { return nil }
         return VATLine(rate: rate, amount: amounts[0])
     }

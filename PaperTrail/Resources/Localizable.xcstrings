@@ -694,6 +694,15 @@
     "Rate" : {
 
     },
+    "Read Again" : {
+
+    },
+    "Read VAT again for all documents in this period?" : {
+
+    },
+    "Read VAT Again for This Period…" : {
+
+    },
     "Received" : {
 
     },
@@ -838,13 +847,16 @@
     "The PDF has a summary page and all receipts; the CSV opens in Excel or Numbers. The expenses are now marked as submitted." : {
 
     },
-    "The PDF summarises the period; the CSV lists every document and VAT line. Check deductibility with your accountant." : {
+    "The PDF has the summary followed by every invoice and receipt; the CSV lists every document and VAT line. Check deductibility with your accountant." : {
 
     },
     "The receipt \"%@\" is not in Paper Trail anymore (moved or renamed?). Put it back or remove it from the claim, then try again." : {
 
     },
     "There is no Reminders account to create the To pay list in. Turn on Reminders in iCloud settings, then try again." : {
+
+    },
+    "These documents are not in Paper Trail anymore (moved or renamed?): %@. Put them back and export again." : {
 
     },
     "This whole account is only for Paper Trail" : {
@@ -884,6 +896,9 @@
 
     },
     "VAT" : {
+
+    },
+    "VAT lines you corrected by hand in this period are replaced by what Paper Trail reads from the text." : {
 
     },
     "VAT Overview" : {

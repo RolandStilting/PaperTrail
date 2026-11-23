@@ -1,0 +1,16 @@
+Elektronica Voorbeeld International Ltd.
+Btw-nummer: NL000000000B01
+
+Factuurnummer: TEST-0001
+Factuurdatum: 05.11.2026
+
+Artikel   Omschrijving              Aantal   Waarde (excl. btw)   Btw-tarief (%)
+000010    Tablet 256 GB              1        800,00              21,00
+000020    Hoes                       1        50,00               21,00
+
+U hebt betaald per creditcard.
+
+Btw-
+basisbedrag      Btw-bedrag      Btw-tarief
+850,00           178,50          21,00 %
+Totaalprijs (incl. btw)   EUR 1.028,50
