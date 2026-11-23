@@ -20,6 +20,8 @@ struct TodayView: View {
     }
     private func sum(_ records: [DocumentRecord]) -> Double { records.compactMap(\.amount).reduce(0, +) }
 
+    static func count(_ n: Int, one: String, other: String) -> String { n == 1 ? one : other }
+
     /// VAT to reclaim in the current period, for each company that files VAT returns.
     private var vatNow: [(company: String, period: VATPeriod, total: Double)] {
         settingsStore.settings.owners.compactMap { owner in
@@ -75,13 +77,13 @@ struct TodayView: View {
                 TodayCard(title: "To Pay", systemImage: "eurosign.circle", tint: overdue.isEmpty ? .orange : .red,
                           value: BillReminderText.amount(sum(openBills)),
                           detail: overdue.isEmpty
-                            ? (dueSoon.isEmpty ? String(localized: "\(openBills.count) open bills") : String(localized: "\(dueSoon.count) due this week"))
+                            ? (dueSoon.isEmpty ? Self.count(openBills.count, one: String(localized: "1 open bill"), other: String(localized: "\(openBills.count) open bills")) : String(localized: "\(dueSoon.count) due this week"))
                             : String(localized: "\(overdue.count) overdue"))
             }
             NavigationLink { ExpensesView(expenseService: model.expenseService, embedded: true) } label: {
                 TodayCard(title: "To Claim", systemImage: "eurosign.arrow.circlepath", tint: .teal,
                           value: BillReminderText.amount(sum(openExpenses)),
-                          detail: String(localized: "\(openExpenses.count) expenses"))
+                          detail: Self.count(openExpenses.count, one: String(localized: "1 expense"), other: String(localized: "\(openExpenses.count) expenses")))
             }
             ForEach(vatNow, id: \.company) { vat in
                 NavigationLink { VATOverviewView(embedded: true) } label: {
@@ -109,7 +111,7 @@ struct TodayView: View {
             VStack(spacing: 0) {
                 ForEach(recent.prefix(6)) { record in
                     NavigationLink(value: DocumentRoute(id: record.id)) {
-                        DocumentRow(record: record)
+                        DocumentRow(record: record, fileURL: model.fileURL(for: record))
                             .padding(.vertical, 8)
                             .contentShape(.rect)
                     }

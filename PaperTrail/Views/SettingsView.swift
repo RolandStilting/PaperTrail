@@ -13,6 +13,8 @@ struct SettingsView: View {
 
     @State private var draft = ArchiveSettings.defaults
     @State private var savedMessage = false
+    @Environment(AppModel.self) private var model
+    @Environment(\.modelContext) private var modelContext
     @State private var errors: [String] = []
 
     var body: some View {
@@ -94,6 +96,20 @@ struct SettingsView: View {
                 Text("Start over")
             } footer: {
                 Text("Moves all documents to the Trash and clears the lists, for example after testing. Settings stay.")
+            }
+            #endif
+
+            #if DEBUG
+            Section {
+                Button("Add Sample Documents", systemImage: "doc.badge.plus") {
+                    Task {
+                        do { try await SampleDocuments.add(using: model.filingService, context: modelContext) } catch { model.errorMessage = error.localizedDescription }
+                    }
+                }
+            } header: {
+                Text("Debug")
+            } footer: {
+                Text("Debug builds only. Files a few made-up documents to try the screens.")
             }
             #endif
 
