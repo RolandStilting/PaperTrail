@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "\"%@\" is no longer in Needs Review. It was probably filed on another device. Pull down to refresh the list." : {
+
+    },
     "\"%@\" is not a PDF or image. Paper Trail can import PDFs and images." : {
 
     },
@@ -88,6 +91,9 @@
     "Could not read \"%@\". Make sure the file is downloaded and not damaged, then try again." : {
 
     },
+    "Could not read the Needs Review folder: %@. Pull down to try again." : {
+
+    },
     "Could not save \"%@\": %@. Check that iCloud Drive has free space and try again." : {
       "localizations" : {
         "en" : {
@@ -161,6 +167,9 @@
     "Learned rules" : {
 
     },
+    "Needs Review" : {
+
+    },
     "NL00 BANK 0123 4567 89" : {
 
     },
@@ -212,7 +221,13 @@
     "Recognising text…" : {
 
     },
+    "Review Later" : {
+
+    },
     "Save" : {
+
+    },
+    "Saves the document to Needs Review in iCloud Drive, so you can file it later on any device." : {
 
     },
     "Scan document" : {

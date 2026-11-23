@@ -95,8 +95,8 @@ Claude Code can't do these. Ask the user when one is needed:
 ## Build phases
 
 1. **Capture and file:** project setup, iCloud container, settings for owners and categories, camera scan, OCR, manual filing with the naming rules. ✅ Done 2026-11-23: tested on MacBook Pro and iPhone 17 Pro Max, including two-way sync, name collisions, multi-page scans, Mac PDF import and offline filing.
-2. **Smart proposals:** ← in progress. Done: Dutch/English model evaluation, on-device classification with `ExtractionChecks`, suggestions in the filing screen (tested on Mac and iPhone 2026-11-23), learned sender rules (`SenderRules`, stored as `FilingRuleRecord`; tested on Mac and iPhone 2026-11-23, rules sync and show in Settings). Duplicate check (`DuplicateDetector`: same file, same sender + reference, or same sender + amount + date; warns before filing; not yet tested on devices). Needs Review queue (the `Needs Review` folder is the queue; Review Later in the filing screen, list on the main screen; not yet tested on devices).
-3. **More ways in:** Share Extension, watched Inbox folder, Mac drag and drop.
+2. **Smart proposals:** ✅ Done 2026-11-23: tested on MacBook Pro and iPhone 17 Pro Max. Dutch/English model evaluation (`PAPERTRAIL_MODEL_EVAL=1 swift test --filter ModelEvaluation`), on-device suggestions corrected by `ExtractionChecks`, learned sender rules (`SenderRules`, stored as `FilingRuleRecord`, synced), duplicate check (`DuplicateDetector`: same file, same sender + reference, or same sender + amount + date), Needs Review queue (the `Needs Review` folder is the queue; Review Later in the filing screen).
+3. **More ways in:** ← next. Share Extension, watched Inbox folder, Mac drag and drop.
 4. **Bills in Reminders:** create reminder (title `Pay <Sender> · € <amount>`, due date, notes with IBAN/reference/file path, URL back into the app), listen for completion, open-bills overview, copy buttons.
 5. **Email:** Mac menu-bar helper, IMAP fetching, HTML email to PDF.
 6. **Polish:** Spotlight, searchable PDFs (invisible OCR text layer), widgets, Shortcuts actions, Face ID lock.
