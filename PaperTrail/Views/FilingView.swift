@@ -5,7 +5,7 @@ import SwiftUI
 /// The review screen: the app suggests category, sender, description, dates and payment
 /// details on the device; the user checks them and files the document.
 struct FilingView: View {
-    enum Field: Hashable { case owner, category, documentDate, sender, description, bill }
+    enum Field: Hashable { case owner, category, documentDate, sender, description, bill, reimbursement }
 
     enum SuggestionState: Equatable {
         case waitingForText
@@ -38,6 +38,8 @@ struct FilingView: View {
     @State private var dueDate = Date.now
     @State private var iban = ""
     @State private var paymentReference = ""
+    /// Empty: not a reimbursable expense.
+    @State private var reimbursedBy = ""
 
     @State private var suggestion = SuggestionState.waitingForText
     /// Fields the user changed; a late suggestion never overwrites them.
@@ -60,7 +62,7 @@ struct FilingView: View {
         FilingRequest(
             owner: ownerName, category: categoryName, receivedDate: receivedDate,
             documentDate: hasDocumentDate ? documentDate : nil, sender: sender, description: descriptionText,
-            bill: bill
+            bill: bill, reimbursedBy: reimbursedBy.isEmpty || reimbursedBy == ownerName ? nil : reimbursedBy
         )
     }
 
@@ -132,6 +134,17 @@ struct FilingView: View {
                 if isUnpaidBill {
                     Text("Unpaid bills will get a reminder in a later version.")
                 }
+            }
+
+            Section {
+                Picker("To be reimbursed by", selection: tracked($reimbursedBy, .reimbursement)) {
+                    Text("Nobody").tag("")
+                    ForEach(settingsStore.settings.owners.filter { $0.name != ownerName }) { Text($0.name).tag($0.name) }
+                }
+            } header: {
+                Text("Expense")
+            } footer: {
+                Text("For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed.")
             }
 
             Section("File name") {
@@ -294,6 +307,10 @@ struct FilingView: View {
             categoryName = rule.category
         }
         if !edited.contains(.sender) { sender = rule.senderName }
+        if !edited.contains(.reimbursement), let company = rule.reimbursedBy,
+           settings.owners.contains(where: { $0.name == company }), company != ownerName {
+            reimbursedBy = company
+        }
     }
 
     /// Asks the on-device model for a proposal. Document text never leaves the device.

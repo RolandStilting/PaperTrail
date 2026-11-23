@@ -25,6 +25,7 @@ final class FakeReminders: BillReminding {
 
     var deleted: Set<String> = []
     func reminderExists(externalID: String) async -> Bool { !deleted.contains(externalID) }
+    func deleteReminder(externalID: String) async throws { deleted.insert(externalID) }
 }
 
 @MainActor
@@ -35,7 +36,7 @@ struct BillServiceTests {
     var service: BillService { BillService(reminders: reminders) }
 
     init() throws {
-        let schema = Schema([DocumentRecord.self, FilingRuleRecord.self])
+        let schema = Schema(PaperTrailSchema.models)
         container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none))
     }
 

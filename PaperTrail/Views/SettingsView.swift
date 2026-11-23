@@ -78,6 +78,16 @@ struct SettingsView: View {
                 Text("Paper Trail remembers owner and category for each sender you file.")
             }
 
+            #if os(macOS)
+            Section {
+                NavigationLink("Clear All Documents…") { ResetArchiveView() }
+            } header: {
+                Text("Start over")
+            } footer: {
+                Text("Moves all documents to the Trash and clears the lists, for example after testing. Settings stay.")
+            }
+            #endif
+
             if !errors.isEmpty {
                 Section {
                     ForEach(errors, id: \.self) { Text($0).foregroundStyle(.red) }

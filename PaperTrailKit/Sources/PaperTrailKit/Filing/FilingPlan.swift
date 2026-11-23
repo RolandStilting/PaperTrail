@@ -10,8 +10,11 @@ public struct FilingRequest: Sendable, Hashable {
     public var description: String
     /// Payment details, if the user confirmed any.
     public var bill: BillDetails?
+    /// The company that reimburses this expense, if any.
+    public var reimbursedBy: String?
 
-    public init(owner: String, category: String, receivedDate: Date, documentDate: Date? = nil, sender: String, description: String, bill: BillDetails? = nil) {
+    public init(owner: String, category: String, receivedDate: Date, documentDate: Date? = nil, sender: String, description: String,
+                bill: BillDetails? = nil, reimbursedBy: String? = nil) {
         self.owner = owner
         self.category = category
         self.receivedDate = receivedDate
@@ -19,6 +22,7 @@ public struct FilingRequest: Sendable, Hashable {
         self.sender = sender
         self.description = description
         self.bill = bill
+        self.reimbursedBy = reimbursedBy
     }
 }
 

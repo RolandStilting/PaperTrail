@@ -12,16 +12,19 @@ public struct SenderRule: Sendable, Hashable, Identifiable {
     public var ibans: [String]
     public var owner: String
     public var category: String
+    /// Company that reimburses expenses from this sender, if the user marked them so.
+    public var reimbursedBy: String?
     public var updatedAt: Date
 
     public init(id: UUID = UUID(), senderName: String, aliases: [String] = [], ibans: [String] = [],
-                owner: String, category: String, updatedAt: Date = .now) {
+                owner: String, category: String, reimbursedBy: String? = nil, updatedAt: Date = .now) {
         self.id = id
         self.senderName = senderName
         self.aliases = aliases
         self.ibans = ibans
         self.owner = owner
         self.category = category
+        self.reimbursedBy = reimbursedBy
         self.updatedAt = updatedAt
     }
 }
@@ -36,13 +39,16 @@ public struct ConfirmedFiling: Sendable, Hashable {
     /// IBAN of an unpaid bill (pay-to account). Leave empty otherwise: an IBAN on a direct
     /// debit or bank letter is the recipient's own account and must not identify a sender.
     public var payToIban: String
+    /// The company the user chose to reimburse this expense; nil when not reimbursable.
+    public var reimbursedBy: String?
 
-    public init(sender: String, suggestedSender: String = "", owner: String, category: String, payToIban: String = "") {
+    public init(sender: String, suggestedSender: String = "", owner: String, category: String, payToIban: String = "", reimbursedBy: String? = nil) {
         self.sender = sender
         self.suggestedSender = suggestedSender
         self.owner = owner
         self.category = category
         self.payToIban = payToIban
+        self.reimbursedBy = reimbursedBy
     }
 }
 
@@ -99,6 +105,7 @@ public enum SenderRules {
         rule.senderName = filing.sender.trimmingCharacters(in: .whitespaces)
         rule.owner = filing.owner
         rule.category = filing.category
+        rule.reimbursedBy = filing.reimbursedBy
         rule.updatedAt = now
         for name in names where !rule.aliases.contains(name) { rule.aliases.append(name) }
         if !payTo.isEmpty, !rule.ibans.contains(payTo) { rule.ibans.append(payTo) }

@@ -11,6 +11,8 @@ public final class FilingRuleRecord {
     public var ibansText: String = ""
     public var ownerName: String = ""
     public var categoryName: String = ""
+    /// Empty when the sender's expenses are not reimbursed.
+    public var reimbursedByName: String = ""
     public var updatedAt: Date = Date.distantPast
 
     public init(_ rule: SenderRule) {
@@ -24,6 +26,7 @@ public final class FilingRuleRecord {
         ibansText = rule.ibans.joined(separator: "\n")
         ownerName = rule.owner
         categoryName = rule.category
+        reimbursedByName = rule.reimbursedBy ?? ""
         updatedAt = rule.updatedAt
     }
 
@@ -32,7 +35,8 @@ public final class FilingRuleRecord {
             id: id, senderName: senderName,
             aliases: aliasesText.split(separator: "\n").map(String.init),
             ibans: ibansText.split(separator: "\n").map(String.init),
-            owner: ownerName, category: categoryName, updatedAt: updatedAt
+            owner: ownerName, category: categoryName,
+            reimbursedBy: reimbursedByName.isEmpty ? nil : reimbursedByName, updatedAt: updatedAt
         )
     }
 }

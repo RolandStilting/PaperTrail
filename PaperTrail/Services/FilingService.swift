@@ -39,6 +39,7 @@ struct FilingService {
             source: document.source,
             bill: request.bill
         )
+        record.reimbursedBy = request.reimbursedBy
         context.insert(record)
         learnRule(from: record, request: request, suggestedSender: suggestedSender, context: context)
         // The file is already safe on disk; an index failure is reported but the index
@@ -69,7 +70,8 @@ struct FilingService {
         let payTo = request.bill?.isUnpaid == true ? request.bill?.iban ?? "" : ""
         let filing = ConfirmedFiling(
             sender: record.sender, suggestedSender: suggestedSender,
-            owner: record.ownerName, category: record.categoryName, payToIban: payTo
+            owner: record.ownerName, category: record.categoryName, payToIban: payTo,
+            reimbursedBy: request.reimbursedBy
         )
         guard let rule = SenderRules.learn(from: filing, existing: records.map(\.rule)) else { return }
         if let existing = records.first(where: { $0.id == rule.id }) {
