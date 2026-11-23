@@ -1,7 +1,42 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "\"%@\" is a reserved folder name. Rename the owner in Settings." : {
 
+    },
+    "\"Inbox\" and \"Needs Review\" are reserved folder names. Pick another owner name." : {
+
+    },
+    "Add at least one category." : {
+
+    },
+    "Add at least one owner." : {
+
+    },
+    "Choose a category before filing." : {
+
+    },
+    "Choose an owner before filing." : {
+
+    },
+    "Could not create the PDF. Try scanning again; if it keeps failing, restart the app." : {
+
+    },
+    "Every category needs a name." : {
+
+    },
+    "Every owner needs a name." : {
+
+    },
+    "The scan has no pages. Scan the document again." : {
+
+    },
+    "Two categories have the same name. Make each category name unique." : {
+
+    },
+    "Two owners have the same name. Make each owner name unique." : {
+
+    }
   },
   "version" : "1.0"
 }
