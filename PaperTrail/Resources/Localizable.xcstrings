@@ -56,7 +56,20 @@
     "%@ so far" : {
 
     },
+    "%@ so far · return due %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ so far · return due %2$@"
+          }
+        }
+      }
+    },
     "%@ Try again." : {
+
+    },
+    "%lld documents" : {
 
     },
     "%lld due this week" : {
@@ -110,6 +123,9 @@
     "€ 0.00" : {
 
     },
+    "1 document" : {
+
+    },
     "1 expense" : {
 
     },
@@ -144,6 +160,9 @@
 
     },
     "All %lld expenses in it are cleared at once." : {
+
+    },
+    "All %lld open bills" : {
 
     },
     "All Categories" : {
@@ -186,6 +205,9 @@
 
     },
     "Amount missing" : {
+
+    },
+    "Amounts on documents received this month, per owner." : {
 
     },
     "Any status" : {
@@ -242,6 +264,9 @@
     "Check every %lld minutes" : {
 
     },
+    "Check Mail" : {
+
+    },
     "Check Mail Now" : {
 
     },
@@ -249,6 +274,9 @@
 
     },
     "Check this mailbox" : {
+
+    },
+    "Checking…" : {
 
     },
     "Choose an owner and a category." : {
@@ -452,6 +480,15 @@
     "Due date" : {
 
     },
+    "Due Soon" : {
+
+    },
+    "Due today" : {
+
+    },
+    "Due tomorrow" : {
+
+    },
     "e.g. Acme Energy" : {
 
     },
@@ -591,6 +628,9 @@
     "Green" : {
 
     },
+    "Hide Sidebar" : {
+
+    },
     "IBAN" : {
 
     },
@@ -604,6 +644,9 @@
 
     },
     "IMAP server" : {
+
+    },
+    "Import" : {
 
     },
     "Import File…" : {
@@ -684,6 +727,9 @@
     "No documents yet" : {
 
     },
+    "No due date" : {
+
+    },
     "No expenses" : {
 
     },
@@ -723,6 +769,12 @@
     "None" : {
 
     },
+    "Nothing received yet this month." : {
+
+    },
+    "Nothing to pay" : {
+
+    },
     "Nothing waiting to be filed." : {
 
     },
@@ -742,6 +794,9 @@
 
     },
     "Overdue" : {
+
+    },
+    "Overdue since %@" : {
 
     },
     "Owner" : {
@@ -873,6 +928,9 @@
     "Reverse charge (BTW verlegd)" : {
 
     },
+    "Review %lld" : {
+
+    },
     "Review Later" : {
 
     },
@@ -949,6 +1007,9 @@
 
     },
     "Show in Finder" : {
+
+    },
+    "Show Sidebar" : {
 
     },
     "Show text" : {

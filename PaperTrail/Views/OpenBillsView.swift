@@ -153,7 +153,12 @@ struct BillDetailView: View {
     var embedded = false
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openURL) private var openURL
+    @Environment(AppModel.self) private var model
+    @Environment(SettingsStore.self) private var settingsStore
     @State private var errorMessage: String?
+    @State private var scanProblem: String?
+    @State private var isScanning = false
     @State private var confirmingPaid = false
     @State private var copied: String?
     @State private var isWorking = false
@@ -178,17 +183,13 @@ struct BillDetailView: View {
                 }
             }
             Section {
-                switch qrPayload {
-                case .success(let payload):
-                    PaymentQRCode(payload: payload)
-                        .frame(maxWidth: 320, maxHeight: 320)
-                        .frame(maxWidth: .infinity)
-                case .failure(let error):
-                    Label(Self.message(for: error), systemImage: "info.circle")
-                        .foregroundStyle(.secondary)
-                }
+                paymentCodeContent
             } footer: {
-                Text("Scan with your banking app, check the details and confirm there. Paper Trail never sends payments.")
+                switch bill.paymentCode?.source {
+                case .qrCode: Text("From the invoice itself: scan the code with your banking app, check the details and confirm there. Paper Trail never sends payments.")
+                case .link: Text("From the invoice itself: the sender's payment page. Check the details there before you pay. Paper Trail never sends payments.")
+                case nil: Text("Scan with your banking app, check the details and confirm there. Paper Trail never sends payments.")
+                }
             }
 
             Section("Details") {
@@ -212,6 +213,8 @@ struct BillDetailView: View {
                 }
                 Button("Mark as Paid", systemImage: "checkmark.circle") { confirmingPaid = true }
                     .disabled(isWorking)
+                Button("Look for Payment Code Again", systemImage: "qrcode.viewfinder") { Task { await findPaymentCode(again: true) } }
+                    .disabled(isScanning)
             } footer: {
                 Text("Completing the bill's reminder in Reminders also marks it paid.")
             }
@@ -219,6 +222,7 @@ struct BillDetailView: View {
         .formStyle(.grouped)
         .titleUnlessEmbedded(embedded, bill.sender)
         .task { reminderMissing = await billService.reminderIsMissing(for: bill) }
+        .task(id: bill.id) { await findPaymentCode(again: false) }
         .confirmationDialog("Mark this bill as paid?", isPresented: $confirmingPaid) {
             Button("Mark as Paid") { Task { await markPaid() } }
         } message: {
@@ -228,6 +232,78 @@ struct BillDetailView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
+        }
+    }
+
+    /// The owner's banking app accepts Paper Trail's own EPC QR code.
+    private var bankScansEPC: Bool {
+        settingsStore.settings.owners.first { $0.name == bill.ownerName }?.bankScansEPCQRCode ?? true
+    }
+
+    @ViewBuilder
+    private var paymentCodeContent: some View {
+        if let code = bill.paymentCode {
+            if code.source == .qrCode {
+                PaymentQRCode(payload: code.payload)
+                    .frame(maxWidth: 320, maxHeight: 320)
+                    .frame(maxWidth: .infinity)
+            }
+            if let url = code.url {
+                Button {
+                    openURL(url)
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Open Payment Page")
+                            Text(code.host ?? "").font(.caption).foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "safari")
+                    }
+                }
+                .help(url.absoluteString)
+            }
+        } else if isScanning {
+            ProgressView("Looking for a payment code on the invoice…")
+                .frame(maxWidth: .infinity)
+        } else if bankScansEPC {
+            switch qrPayload {
+            case .success(let payload):
+                PaymentQRCode(payload: payload)
+                    .frame(maxWidth: 320, maxHeight: 320)
+                    .frame(maxWidth: .infinity)
+            case .failure(let error):
+                Label(Self.message(for: error), systemImage: "info.circle")
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            Label("This invoice has no payment code or link. Use the copy buttons below.", systemImage: "info.circle")
+                .foregroundStyle(.secondary)
+        }
+        if let scanProblem {
+            Label(scanProblem, systemImage: "exclamationmark.triangle")
+                .font(.footnote)
+                .foregroundStyle(.orange)
+        }
+    }
+
+    /// Searches the bill's PDF once for a QR code or pay link from the sender; the result is
+    /// stored on the record (and synced), so other devices don't search again.
+    private func findPaymentCode(again: Bool) async {
+        guard again || bill.paymentCodeCheckedAt == nil, let url = model.fileURL(for: bill) else { return }
+        isScanning = true
+        defer { isScanning = false }
+        do {
+            let result = try await PaymentCodeScanner.scan(fileAt: url, text: bill.extractedText ?? "")
+            bill.paymentCode = result.code
+            // Without a working QR search, only a found link counts as done; try again next time.
+            if result.code != nil || !result.qrSearchFailed { bill.paymentCodeCheckedAt = .now }
+            try modelContext.save()
+            scanProblem = result.code == nil && result.qrSearchFailed
+                ? String(localized: "Couldn't look for QR codes on this device; only links were checked.")
+                : nil
+        } catch {
+            scanProblem = error.localizedDescription
         }
     }
 

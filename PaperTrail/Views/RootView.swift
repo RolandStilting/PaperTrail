@@ -178,6 +178,8 @@ struct RootView: View {
             .navigationTitle("Paper Trail")
             #if os(macOS)
             .navigationSplitViewColumnWidth(min: 180, ideal: 210)
+            // The own button below replaces the standard one; it must be removed on the sidebar.
+            .toolbar(removing: .sidebarToggle)
             #endif
         } detail: {
             NavigationStack {
@@ -200,7 +202,6 @@ struct RootView: View {
                 .help(columnVisibility == .detailOnly ? "Show Sidebar" : "Hide Sidebar")
             }
         }
-        .toolbar(removing: .sidebarToggle)
         #endif
     }
 

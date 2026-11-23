@@ -8,13 +8,13 @@ import SwiftData
 enum SampleDocuments {
     struct Sample {
         var owner: String, category: String, sender: String, description: String
-        var monthsAgo: Int, amount: Double, unpaidDueInDays: Int? = nil
+        var monthsAgo: Int, amount: Double, unpaidDueInDays: Int? = nil, payLink: String? = nil
         var reimbursedBy: String? = nil, vatRate: Double? = nil
     }
 
     static let samples: [Sample] = [
         Sample(owner: "Company1", category: "Invoices", sender: "Schildersbedrijf Voorbeeld", description: "Schilderwerk kozijnen",
-               monthsAgo: 0, amount: 853.66, unpaidDueInDays: 5, vatRate: 21),
+               monthsAgo: 0, amount: 853.66, unpaidDueInDays: 5, payLink: "https://betalen.example.test/factuur/2026-118", vatRate: 21),
         Sample(owner: "Company1", category: "Invoices", sender: "Example Cloud", description: "Abonnement november",
                monthsAgo: 0, amount: 29.00, vatRate: 21),
         Sample(owner: "Private", category: "Receipts", sender: "Parkeergarage Proef", description: "Parkeren centrum",
@@ -51,7 +51,7 @@ enum SampleDocuments {
                                         sender: sample.sender, description: sample.description, bill: bill,
                                         reimbursedBy: sample.reimbursedBy, vat: vat)
             _ = try await filingService.file(PendingDocument(pdfData: pdf, source: .fileImport, originalName: "sample.pdf"),
-                                             request: request, extractedText: "\(sample.sender) \(sample.description)", context: context)
+                                             request: request, extractedText: "\(sample.sender) \(sample.description)" + (sample.payLink.map { " Betaal direct via \($0)" } ?? ""), context: context)
         }
     }
 }

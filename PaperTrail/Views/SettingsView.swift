@@ -76,6 +76,7 @@ struct SettingsView: View {
                             Text("QR code and copy buttons").tag(PaymentMethod.qrCode)
                             Text("SEPA batch file").tag(PaymentMethod.sepaFile)
                         }
+                        Toggle("Banking app scans standard QR codes", isOn: $owner.bankScansEPCQRCode)
                         TextField("Account name", text: $owner.payingAccount.name, prompt: Text("Name on the paying account"))
                         TextField("IBAN", text: $owner.payingAccount.iban, prompt: Text("Paying account"))
                             .autocorrectionDisabled()
@@ -92,7 +93,7 @@ struct SettingsView: View {
             } header: {
                 Text("Paying bills and VAT")
             } footer: {
-                Text("Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud.")
+                Text("Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud.")
             }
 
             #if os(macOS)

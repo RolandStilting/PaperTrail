@@ -45,18 +45,22 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
     public var vatPeriod: VATPeriodKind?
     /// nil: an automatic colour by position.
     public var color: OwnerColor?
+    /// Whether this owner's banking app accepts the standard EPC payment QR code (ASN does,
+    /// the Rabobank app doesn't). When false, only a code printed on the invoice is shown.
+    public var bankScansEPCQRCode: Bool
 
     public init(id: UUID = UUID(), name: String, paymentMethod: PaymentMethod = .qrCode, payingAccount: PayingAccount = PayingAccount(),
-                vatPeriod: VATPeriodKind? = nil, color: OwnerColor? = nil) {
+                vatPeriod: VATPeriodKind? = nil, color: OwnerColor? = nil, bankScansEPCQRCode: Bool = true) {
         self.id = id
         self.name = name
         self.paymentMethod = paymentMethod
         self.payingAccount = payingAccount
         self.vatPeriod = vatPeriod
         self.color = color
+        self.bankScansEPCQRCode = bankScansEPCQRCode
     }
 
-    enum CodingKeys: String, CodingKey { case id, name, paymentMethod, payingAccount, vatPeriod, color }
+    enum CodingKeys: String, CodingKey { case id, name, paymentMethod, payingAccount, vatPeriod, color, bankScansEPCQRCode }
 
     /// Settings saved before phase 4 have no payment fields; they get the defaults.
     public init(from decoder: any Decoder) throws {
@@ -67,5 +71,6 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
         payingAccount = try container.decodeIfPresent(PayingAccount.self, forKey: .payingAccount) ?? PayingAccount()
         vatPeriod = try container.decodeIfPresent(VATPeriodKind.self, forKey: .vatPeriod)
         color = try container.decodeIfPresent(OwnerColor.self, forKey: .color)
+        bankScansEPCQRCode = try container.decodeIfPresent(Bool.self, forKey: .bankScansEPCQRCode) ?? true
     }
 }
