@@ -1,0 +1,17 @@
+TESTMARKT
+Filiaal Fictiedam Centrum
+Marktplein 5
+
+Halfvolle melk 1L          1,19
+Volkoren brood             2,49
+Kaas jong belegen 500g     6,99
+Appels 1kg                 2,79
+Koffiebonen 1kg           10,39
+---------------------------------
+TOTAAL                    23,85
+PIN                       23,85
+
+BTW 9%  over 21,88         1,97
+
+14-02-2026 17:42  Kassa 3  Bon 0041
+Bedankt voor uw bezoek!

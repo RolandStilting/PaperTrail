@@ -15,7 +15,8 @@ let package = Package(
         ),
         .testTarget(
             name: "PaperTrailKitTests",
-            dependencies: ["PaperTrailKit"]
+            dependencies: ["PaperTrailKit"],
+            resources: [.copy("Fixtures")]
         ),
     ]
 )

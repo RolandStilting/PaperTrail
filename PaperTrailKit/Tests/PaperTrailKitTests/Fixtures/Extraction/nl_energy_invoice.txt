@@ -1,0 +1,23 @@
+Voorbeeld Energie B.V.
+Postbus 1234, 9999 ZZ Fictiedam
+Klantenservice 0800-0000000
+
+R. Testgebruiker
+Voorbeeldstraat 1
+1234 AB Fictiedam
+
+FACTUUR
+Factuurnummer: VE-2026-031455
+Factuurdatum: 3 maart 2026
+Klantnummer: 55501234
+
+Periode: 1 februari 2026 t/m 28 februari 2026
+Levering elektriciteit         312 kWh     € 87,36
+Levering gas                    96 m3      € 41,28
+Vaste leveringskosten                      € 13,73
+
+Totaal te betalen (incl. btw)              € 142,37
+
+Wilt u het bedrag van € 142,37 vóór 17 maart 2026 overmaken op
+IBAN NL00 TEST 0123 4567 89 t.n.v. Voorbeeld Energie B.V.
+o.v.v. factuurnummer VE-2026-031455.

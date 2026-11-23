@@ -1,0 +1,14 @@
+Hotel Sample Berlin GmbH
+Beispielstrasse 10, 10000 Berlin
+
+RECEIPT / Rechnung Nr. 2026-00917
+Guest: R. Testgebruiker
+Arrival 09.01.2026   Departure 12.01.2026
+
+3 nights Standard Double     3 x 96.00     288.00
+City tax                                    24.00
+Total EUR                                  312.00
+Paid: Mastercard                           312.00
+
+Berlin, 12.01.2026
+Thank you for staying with us.

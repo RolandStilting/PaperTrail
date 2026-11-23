@@ -1,0 +1,12 @@
+[
+  {"file": "nl_energy_invoice", "senders": ["Voorbeeld Energie"], "documentDate": "2026-03-03", "category": "Invoices", "isUnpaidBill": true, "amount": 142.37, "dueDate": "2026-03-17", "iban": "NL00TEST0123456789", "reference": "VE-2026-031455"},
+  {"file": "nl_energy_direct_debit", "senders": ["Voorbeeld Energie"], "documentDate": "2026-03-12", "category": "Invoices", "isUnpaidBill": false, "amount": 98.10, "dueDate": "", "iban": "", "reference": "VE-JN-2025-88123"},
+  {"file": "nl_municipal_tax", "senders": ["Gemeente Fictiedam"], "documentDate": "2026-02-28", "category": "Tax", "isUnpaidBill": true, "amount": 812.40, "dueDate": "2026-03-31", "iban": "NL00TEST0987654321", "reference": "5123456789012345"},
+  {"file": "nl_supermarket_receipt", "senders": ["Testmarkt"], "documentDate": "2026-02-14", "category": "Receipts", "isUnpaidBill": false, "amount": 23.85, "dueDate": "", "iban": "", "reference": ""},
+  {"file": "nl_health_insurance_policy", "senders": ["Proefzorg", "Proefzorg Zorgverzekeraar"], "documentDate": "2025-12-15", "category": "Insurance", "isUnpaidBill": false, "amount": 148.50, "dueDate": "", "iban": "", "reference": "PZ-4410022"},
+  {"file": "nl_bank_letter", "senders": ["Fictieve Bank"], "documentDate": "2026-01-09", "category": "Bank", "isUnpaidBill": false, "amount": 0, "dueDate": "", "iban": "", "reference": ""},
+  {"file": "nl_telecom_reminder", "senders": ["Praatnet Demo", "Praatnet"], "documentDate": "2026-02-20", "category": "Invoices", "isUnpaidBill": true, "amount": 45.99, "dueDate": "2026-02-27", "iban": "NL00TEST0111222333", "reference": "BD-778812"},
+  {"file": "en_software_invoice", "senders": ["Example Cloud"], "documentDate": "2026-03-01", "category": "Invoices", "isUnpaidBill": false, "amount": 29.00, "dueDate": "", "iban": "", "reference": "INV-20431"},
+  {"file": "en_hotel_receipt", "senders": ["Hotel Sample Berlin", "Hotel Sample"], "documentDate": "2026-01-12", "category": "Receipts", "isUnpaidBill": false, "amount": 312.00, "dueDate": "", "iban": "", "reference": "2026-00917"},
+  {"file": "nl_rental_contract", "senders": ["Woningstichting Proefwonen", "Proefwonen"], "documentDate": "2026-04-02", "category": "Contracts", "isUnpaidBill": false, "amount": 975.00, "dueDate": "", "iban": "", "reference": ""}
+]

@@ -1,0 +1,22 @@
+Praatnet Demo B.V.
+
+R. Testgebruiker
+Voorbeeldstraat 1
+1234 AB Fictiedam
+
+20 februari 2026
+
+Betreft: Herinnering openstaande factuur
+
+Geachte heer/mevrouw,
+
+Wij hebben uw betaling voor factuur BD-778812 van 25 januari 2026 nog niet ontvangen.
+Het openstaande bedrag is € 45,99. De vervaldatum was 10-02-2026.
+
+Wilt u het bedrag uiterlijk 27 februari 2026 overmaken naar
+NL00TEST0111222333 t.n.v. Praatnet Demo B.V. onder vermelding van BD-778812?
+
+Heeft u inmiddels betaald, dan kunt u deze herinnering als niet verzonden beschouwen.
+
+Met vriendelijke groet,
+Praatnet Demo B.V. Debiteurenbeheer
