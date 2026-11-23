@@ -64,6 +64,7 @@ Keep logic in `PaperTrailKit` wherever possible, so it can be tested with `swift
 
 ```bash
 xcodegen generate                       # after any change to project.yml
+swift Tools/make-app-icon.swift         # after changing Tools/AppIcon-source.png (writes all app icon sizes)
 cd PaperTrailKit && swift test          # fast logic tests
 xcrun simctl list devices available     # find a simulator name
 xcodebuild -scheme PaperTrail -destination 'platform=iOS Simulator,name=<device>' build test
