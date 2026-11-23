@@ -31,5 +31,9 @@
 	<array>
 		<string>$(PAPERTRAIL_APP_GROUP)</string>
 	</array>
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)$(PAPERTRAIL_BUNDLE_ID)</string>
+	</array>
 </dict>
 </plist>

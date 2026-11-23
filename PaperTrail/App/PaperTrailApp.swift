@@ -6,15 +6,38 @@ import SwiftUI
 struct PaperTrailApp: App {
     @State private var settingsStore = SettingsStore()
     private let modelContainer = Self.makeModelContainer()
-    private let filingService = FilingService(location: ICloudArchiveLocation(), store: CoordinatedFileStore())
+    private let filingService: FilingService
     private let billService = BillService(reminders: EventKitBillReminders())
+    #if os(macOS)
+    @State private var mailIntake: MailIntakeService
+    #endif
+
+    init() {
+        let filingService = FilingService(location: ICloudArchiveLocation(), store: CoordinatedFileStore())
+        self.filingService = filingService
+        #if os(macOS)
+        // The mailbox is checked on the Mac, independent of any open window.
+        let mail = MailIntakeService(filingService: filingService)
+        _mailIntake = State(initialValue: mail)
+        mail.start()
+        #endif
+    }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main") {
             ContentView(filingService: filingService, billService: billService)
                 .environment(settingsStore)
+                #if os(macOS)
+                .environment(mailIntake)
+                #endif
         }
         .modelContainer(modelContainer)
+
+        #if os(macOS)
+        MenuBarExtra("Paper Trail", systemImage: "tray.and.arrow.down") {
+            MailMenu(mail: mailIntake)
+        }
+        #endif
     }
 
     /// Uses CloudKit sync when the app has the CloudKit entitlement, and a local store otherwise.

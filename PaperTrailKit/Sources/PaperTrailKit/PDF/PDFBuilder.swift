@@ -96,3 +96,40 @@ public enum PDFPageRenderer {
         return context.makeImage()
     }
 }
+
+/// Cuts tall PDF pages (such as a whole web page rendered as one page) into A4-height
+/// pages. Drawing stays vector, so text remains selectable and searchable.
+public enum PDFPaginator {
+    public static let a4Height: CGFloat = 841.89
+
+    public static func paginate(_ pdfData: Data, pageHeight: CGFloat = a4Height) throws(PDFBuilderError) -> Data {
+        guard let provider = CGDataProvider(data: pdfData as CFData),
+              let document = CGPDFDocument(provider), document.numberOfPages > 0 else { throw .noPages }
+        let output = NSMutableData()
+        guard let consumer = CGDataConsumer(data: output as CFMutableData),
+              let context = CGContext(consumer: consumer, mediaBox: nil, nil) else { throw .couldNotCreateContext }
+
+        for number in 1...document.numberOfPages {
+            guard let page = document.page(at: number) else { continue }
+            let box = page.getBoxRect(.mediaBox)
+            let slices = max(1, Int((box.height / pageHeight).rounded(.up)))
+            for slice in 0..<slices {
+                var pageBox = CGRect(x: 0, y: 0, width: box.width, height: pageHeight)
+                let boxData = Data(bytes: &pageBox, count: MemoryLayout<CGRect>.size)
+                context.beginPDFPage([kCGPDFContextMediaBox as String: boxData] as CFDictionary)
+                context.setFillColor(CGColor(gray: 1, alpha: 1))
+                context.fill(pageBox)
+                context.saveGState()
+                context.clip(to: pageBox)
+                // Show the slice'th A4 window, counted from the top of the tall page.
+                let offset = box.maxY - CGFloat(slice + 1) * pageHeight
+                context.translateBy(x: -box.minX, y: -offset)
+                context.drawPDFPage(page)
+                context.restoreGState()
+                context.endPDFPage()
+            }
+        }
+        context.closePDF()
+        return output as Data
+    }
+}

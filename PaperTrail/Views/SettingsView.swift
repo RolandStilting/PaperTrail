@@ -4,6 +4,9 @@ import SwiftUI
 /// Edit the owners and categories that make up the folder structure.
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
+    #if os(macOS)
+    @Environment(MailIntakeService.self) private var mail
+    #endif
     @Environment(\.dismiss) private var dismiss
 
     @State private var draft = ArchiveSettings.defaults
@@ -60,6 +63,14 @@ struct SettingsView: View {
             } footer: {
                 Text("Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud.")
             }
+
+            #if os(macOS)
+            Section {
+                NavigationLink("Email") { MailSettingsView(mail: mail) }
+            } footer: {
+                Text("A dedicated mailbox that this Mac checks; its emails go to Needs Review.")
+            }
+            #endif
 
             Section {
                 NavigationLink("Learned rules") { RulesView() }
