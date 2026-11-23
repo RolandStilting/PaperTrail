@@ -13,6 +13,15 @@
     "Add at least one owner." : {
 
     },
+    "Apple Intelligence is not available right now (%@). Fill in the details yourself." : {
+
+    },
+    "Apple Intelligence is still getting ready, for example downloading its model. Keep the device on Wi-Fi and power, and try again later." : {
+
+    },
+    "Apple Intelligence is turned off. To get suggestions, turn it on in (System) Settings → Apple Intelligence & Siri. The device language and the Siri language must be the same supported language." : {
+
+    },
     "Choose a category before filing." : {
 
     },
@@ -28,7 +37,22 @@
     "Every owner needs a name." : {
 
     },
+    "Same sender and the same invoice number or reference." : {
+
+    },
+    "Same sender, amount and date." : {
+
+    },
+    "Scan" : {
+
+    },
     "The scan has no pages. Scan the document again." : {
+
+    },
+    "This device doesn't support Apple Intelligence, so Paper Trail can't suggest details here. Fill them in yourself." : {
+
+    },
+    "This is exactly the same file." : {
 
     },
     "Two categories have the same name. Make each category name unique." : {

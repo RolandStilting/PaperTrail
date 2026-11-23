@@ -8,14 +8,17 @@ public struct FilingRequest: Sendable, Hashable {
     public var documentDate: Date?
     public var sender: String
     public var description: String
+    /// Payment details, if the user confirmed any.
+    public var bill: BillDetails?
 
-    public init(owner: String, category: String, receivedDate: Date, documentDate: Date? = nil, sender: String, description: String) {
+    public init(owner: String, category: String, receivedDate: Date, documentDate: Date? = nil, sender: String, description: String, bill: BillDetails? = nil) {
         self.owner = owner
         self.category = category
         self.receivedDate = receivedDate
         self.documentDate = documentDate
         self.sender = sender
         self.description = description
+        self.bill = bill
     }
 }
 

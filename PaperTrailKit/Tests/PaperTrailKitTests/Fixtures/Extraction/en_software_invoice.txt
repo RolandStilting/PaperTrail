@@ -1,0 +1,15 @@
+Example Cloud Ltd
+42 Sample Road, Testington TE1 2ST, United Kingdom
+VAT GB000000000
+
+INVOICE
+Invoice number: INV-20431
+Invoice date: 1 March 2026
+Billed to: R. Testgebruiker, Voorbeeldstraat 1, 1234 AB Fictiedam, Netherlands
+
+Description                         Qty    Amount
+Example Cloud Personal plan (monthly) 1    EUR 23.97
+VAT 21%                                    EUR 5.03
+Total                                      EUR 29.00
+
+Paid by Visa ending 0000 on 1 March 2026. Thank you!

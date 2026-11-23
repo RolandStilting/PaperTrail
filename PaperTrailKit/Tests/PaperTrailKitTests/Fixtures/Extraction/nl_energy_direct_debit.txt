@@ -1,0 +1,21 @@
+Voorbeeld Energie B.V.
+Klantenservice | www.voorbeeld-energie.example
+
+R. Testgebruiker
+Voorbeeldstraat 1
+1234 AB Fictiedam
+
+Jaarnota 2025
+Datum: 12 maart 2026
+Notanummer: VE-JN-2025-88123
+
+Uw verbruik in 2025
+Elektriciteit 3.410 kWh
+Gas 1.120 m3
+
+Totaal kosten 2025              € 2.318,40
+Betaalde termijnbedragen         € 2.220,30
+Nog te betalen                    € 98,10
+
+U hoeft niets te doen. Wij schrijven het bedrag van € 98,10 op of rond
+28-03-2026 automatisch af van uw rekening NL00TEST0555666777.

@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "\"%@\" is no longer in Needs Review. It was probably filed on another device. Pull down to refresh the list." : {
+
+    },
     "\"%@\" is not a PDF or image. Paper Trail can import PDFs and images." : {
 
     },
@@ -17,6 +20,32 @@
         }
       }
     },
+    "%@ › %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ › %2$@"
+          }
+        }
+      }
+    },
+    "%@ An earlier document is in your archive:\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ An earlier document is in your archive:\n%2$@"
+          }
+        }
+      }
+    },
+    "%@ Try again." : {
+
+    },
+    "€ 0.00" : {
+
+    },
     "Add" : {
 
     },
@@ -24,6 +53,12 @@
 
     },
     "Add owner" : {
+
+    },
+    "Already filed?" : {
+
+    },
+    "Amount" : {
 
     },
     "At most 6 words" : {
@@ -44,6 +79,9 @@
     "Choose an owner and a category." : {
 
     },
+    "Could not delete the rule" : {
+
+    },
     "Could not file the document" : {
 
     },
@@ -51,6 +89,9 @@
 
     },
     "Could not read \"%@\". Make sure the file is downloaded and not damaged, then try again." : {
+
+    },
+    "Could not read the Needs Review folder: %@. Pull down to try again." : {
 
     },
     "Could not save \"%@\": %@. Check that iCloud Drive has free space and try again." : {
@@ -63,7 +104,13 @@
         }
       }
     },
+    "Could not suggest details for this document. Fill them in yourself." : {
+
+    },
     "Date on document" : {
+
+    },
+    "Delete Rule" : {
 
     },
     "Description" : {
@@ -72,7 +119,13 @@
     "Details" : {
 
     },
+    "Details suggested on this device. Check them before filing." : {
+
+    },
     "Document date" : {
+
+    },
+    "Due date" : {
 
     },
     "e.g. Acme Energy" : {
@@ -84,13 +137,22 @@
     "File" : {
 
     },
+    "File Anyway" : {
+
+    },
     "File document" : {
 
     },
     "File name" : {
 
     },
+    "Filed like earlier documents from %@. Change owner or category to update this rule." : {
+
+    },
     "Folders inside each owner's year folder." : {
+
+    },
+    "IBAN" : {
 
     },
     "iCloud Drive is not available. Sign in to iCloud and turn on iCloud Drive for Paper Trail in Settings, then try again." : {
@@ -102,7 +164,19 @@
     "Import file…" : {
 
     },
+    "Learned rules" : {
+
+    },
+    "Needs Review" : {
+
+    },
+    "NL00 BANK 0123 4567 89" : {
+
+    },
     "No documents yet" : {
+
+    },
+    "No rules yet" : {
 
     },
     "No text found" : {
@@ -123,6 +197,18 @@
     "Paper Trail" : {
 
     },
+    "Paper Trail remembers owner and category for each sender you file." : {
+
+    },
+    "Pay before" : {
+
+    },
+    "Payment" : {
+
+    },
+    "Payment reference" : {
+
+    },
     "Preparing document…" : {
 
     },
@@ -135,7 +221,13 @@
     "Recognising text…" : {
 
     },
+    "Review Later" : {
+
+    },
     "Save" : {
+
+    },
+    "Saves the document to Needs Review in iCloud Drive, so you can file it later on any device." : {
 
     },
     "Scan document" : {
@@ -159,7 +251,19 @@
     "Something went wrong" : {
 
     },
+    "Suggesting details on this device…" : {
+
+    },
     "Text recognition failed. You can still file the document." : {
+
+    },
+    "Unpaid bill" : {
+
+    },
+    "Unpaid bills will get a reminder in a later version." : {
+
+    },
+    "When you file a document, Paper Trail remembers where documents from that sender go." : {
 
     },
     "Where" : {
