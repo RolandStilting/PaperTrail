@@ -11,7 +11,8 @@ final class FakeReminders: BillReminding {
 
     func createReminder(for bill: DocumentRecord) async throws -> String {
         created.append(bill.id)
-        return "ext-\(bill.id.uuidString)"
+        // Real Reminders gives every new reminder its own identifier.
+        return created.count == 1 ? "ext-\(bill.id.uuidString)" : "ext-\(bill.id.uuidString)-\(created.count)"
     }
 
     func completedReminders(among externalIDs: [String]) async throws -> [String: Date] {
@@ -21,6 +22,9 @@ final class FakeReminders: BillReminding {
     func completeReminder(externalID: String) async throws {
         completed.insert(externalID)
     }
+
+    var deleted: Set<String> = []
+    func reminderExists(externalID: String) async -> Bool { !deleted.contains(externalID) }
 }
 
 @MainActor
@@ -74,5 +78,17 @@ struct BillServiceTests {
         try await service.markPaid(record, context: container.mainContext)
         #expect(record.isPaid)
         #expect(reminders.completed.contains(record.reminderExternalID!))
+    }
+
+    @Test func deletedReminderCanBeCreatedAgain() async throws {
+        let record = bill()
+        try await service.addReminder(for: record, context: container.mainContext)
+        let first = try #require(record.reminderExternalID)
+        #expect(await !service.reminderIsMissing(for: record))
+        reminders.deleted.insert(first)
+        #expect(await service.reminderIsMissing(for: record))
+        try await service.recreateReminder(for: record, context: container.mainContext)
+        #expect(reminders.created.count == 2)
+        #expect(await !service.reminderIsMissing(for: record))
     }
 }

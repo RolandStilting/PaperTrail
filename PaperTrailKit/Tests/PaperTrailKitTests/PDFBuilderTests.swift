@@ -38,3 +38,30 @@ struct PDFBuilderTests {
         #expect(pages.first?.width == 595)
     }
 }
+
+@Suite("PDFPaginator")
+struct PDFPaginatorTests {
+    @Test func cutsTallPageIntoA4Pages() throws {
+        let output = NSMutableData()
+        var box = CGRect(x: 0, y: 0, width: 595, height: 2000)
+        let context = try #require(CGContext(consumer: CGDataConsumer(data: output as CFMutableData)!, mediaBox: &box, nil))
+        context.beginPDFPage(nil)
+        context.setFillColor(CGColor(gray: 0, alpha: 1))
+        context.fill(CGRect(x: 10, y: 10, width: 100, height: 1980))
+        context.endPDFPage()
+        context.closePDF()
+
+        let paged = try PDFPaginator.paginate(output as Data)
+        let document = try #require(CGPDFDocument(CGDataProvider(data: paged as CFData)!))
+        #expect(document.numberOfPages == 3)
+        #expect(document.page(at: 1)?.getBoxRect(.mediaBox).height == PDFPaginator.a4Height)
+    }
+
+    @Test func mailAccountICloudDefaults() {
+        let account = MailAccount.iCloud(address: "archief.voorbeeld@icloud.com")
+        #expect(account.username == "archief.voorbeeld")
+        #expect(account.server == "imap.mail.me.com")
+        #expect(account.port == 993)
+        #expect(account.isComplete)
+    }
+}

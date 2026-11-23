@@ -16,10 +16,10 @@ Full design spec: https://claude.ai/artifact/3xgTR4oqguhXEpCdpx2rCd. When this f
   - Strip `/ : \ ? * " < > |`. On a name collision append ` (2)`, ` (3)` and so on.
   - Everything is stored as PDF.
 - **Special folders:** `Paper Trail/Inbox/` (watched drop zone) and `Paper Trail/Needs Review/`.
-- **Bills go to Apple Reminders** via EventKit, one list per owner ("To pay – <Owner>"). Completing the reminder marks the bill paid in the app. Never build a separate in-app to-do list. Direct debits get no reminder.
+- **Bills go to Apple Reminders** via EventKit, one list per owner ("To pay – <Owner>") in the **iCloud** Reminders account, never Exchange (its reminder IDs differ per device). Completing the reminder marks the bill paid in the app. Never build a separate in-app to-do list. Direct debits get no reminder.
 - **Paying is a two-step approach** (decided 2026-11-23): Reminders remember the bill; Paper Trail helps pay it. Per owner a payment method setting: **SEPA batch file** (`pain.001` XML to upload in business internet banking; for the Rabobank business account. ASN Bank business banking has no file import (checked by the user 2026-11-23), so that company uses QR codes) or **EPC QR code + copy buttons** (for Private at Rabobank; shown large on the Mac so the phone can scan the screen). Paper Trail never sends payments itself and never uses PSD2 payment initiation. An exported bill is "exported", not paid; paid stays = reminder completed. The paying account per owner (name, IBAN, optional BIC) is a setting, stored like the other settings, never in code or logs.
 - **All OCR and classification run on the device** (Vision + Foundation Models). Never send document content to an external AI or cloud service.
-- **Email intake = a dedicated IMAP mailbox** checked by the Mac app (menu-bar helper), with opportunistic checks on iOS. There is no inbound-mail server.
+- **Email intake = a dedicated IMAP mailbox** checked by the Mac app, with opportunistic checks on iOS. There is no inbound-mail server. Decided 2026-11-23: an **iCloud+ address** (IMAP with an app-specific password, stored in the Keychain only); the Mac app keeps running with a **menu-bar icon** (no separate helper target) and can start at login; only PDFs are filed (**no .eml kept**); processed emails are **moved to a processed folder**, never deleted. The mailbox is an **iCloud alias on the user's own account** (option A, 2026-11-23): an icloud.com rule moves the alias's emails to the folder "Paper Trail"; Paper Trail reads only that folder and moves filed emails to "Paper Trail Processed". It refuses the Inbox unless the whole account is marked as dedicated to Paper Trail.
 - The app proposes, the user confirms (review queue). Rules learned from corrections run before the model.
 
 ## Tech stack
@@ -33,7 +33,7 @@ Full design spec: https://claude.ai/artifact/3xgTR4oqguhXEpCdpx2rCd. When this f
 | Index | SwiftData + CloudKit |
 | Search | Core Spotlight |
 | Bills | EventKit (Reminders) |
-| Email | IMAP: evaluate `apple/swift-nio-imap` first (phase 5) |
+| Email | Own minimal IMAP client on Network.framework (TLS); own MIME parsing in PaperTrailKit. `apple/swift-nio-imap` was evaluated 2026-11-23 and not used: v0.5, README says "not yet ready for use in production", and it adds swift-nio, swift-nio-ssl, swift-nio-extras, swift-log and swift-collections. iCloud: `imap.mail.me.com:993`, TLS, app-specific password ([Apple](https://support.apple.com/en-us/102525)). |
 | Project file | XcodeGen (`project.yml`). Don't hand-edit `.xcodeproj` |
 
 **Deployment targets:** iOS 26 / iPadOS 26 / macOS 26 (needed for Foundation Models). Confirm with the user before lowering.
@@ -99,8 +99,8 @@ Claude Code can't do these. Ask the user when one is needed:
 2. **Smart proposals:** ✅ Done 2026-11-23: tested on MacBook Pro and iPhone 17 Pro Max. Dutch/English model evaluation (`PAPERTRAIL_MODEL_EVAL=1 swift test --filter ModelEvaluation`), on-device suggestions corrected by `ExtractionChecks`, learned sender rules (`SenderRules`, stored as `FilingRuleRecord`, synced), duplicate check (`DuplicateDetector`: same file, same sender + reference, or same sender + amount + date), Needs Review queue (the `Needs Review` folder is the queue; Review Later in the filing screen).
 3. **More ways in:** ✅ Done 2026-11-23: tested on MacBook Pro and iPhone 17 Pro Max. Drag and drop on the main screen, watched `Inbox` folder (moved to Needs Review while the app is open; the move is the claim), Share Extension `PaperTrailShare` (copies into the App Group's `Incoming` folder; the app moves it to Inbox). App Group: `group.nl.rolandstilting.papertrail` on iOS (registered), `67YRLXTX42.nl.rolandstilting.papertrail` on macOS, set by `PAPERTRAIL_APP_GROUP` in `project.yml`.
 4. **Bills in Reminders and paying:** ✅ Done 2026-11-23: tested on MacBook Pro and iPhone 17 Pro Max. Payment settings per owner, reminders in "To pay – <Owner>" lists (created after filing, paid state synced from completion, `papertrail://bill/<id>` link back), Open Bills with copy buttons and EPC QR code (the Rabo App scans it), SEPA export (`SEPACreditTransfer`, pain.001.001.03, betalingskenmerk as structured CUR reference). **SEPA upload is untested:** the user's Rabobank business banking version has no file import either, so all owners currently pay by QR code. Test the file at a bank that imports pain.001 before relying on it.
-5. **Email:** ← next. Mac menu-bar helper, IMAP fetching, HTML email to PDF.
-6. **Polish:** Spotlight, searchable PDFs (invisible OCR text layer), widgets, Shortcuts actions, Face ID lock.
+5. **Email:** ✅ Done 2026-11-23 on the Mac: tested with the user's iCloud alias setup (PDF attachment, photo, email without attachments; emails moved to "Paper Trail Processed", Inbox untouched). Own IMAP client (`IMAPSession`, `MailboxProcessor`; SASL PLAIN or LOGIN, `<name>@icloud.com` retry), MIME parsing (`EmailIntake`), HTML → A4 PDF without JavaScript or remote content, password in the data protection Keychain, menu-bar icon, check every 5 minutes by default, open at login. Deferred: opportunistic checks on iOS; skipping attachments already filed when an email fails halfway.
+6. **Polish:** ← next. Spotlight, searchable PDFs (invisible OCR text layer), widgets, Shortcuts actions, Face ID lock.
 
 Finish and test one phase before starting the next. Commit in small, working steps.
 
@@ -110,5 +110,5 @@ Finish and test one phase before starting the next. Commit in small, working ste
 - ~~Which devices does the user have?~~ Answered 2026-11-22: MacBook Pro M4 Max and iPhone 17 Pro Max, both with Apple Intelligence support. No iPad mentioned yet; keep the iPad layout working, but it is untested on hardware.
 - ~~One "To pay" list or one per owner?~~ Answered 2026-11-23: one per owner.
 - ~~Direct-debit bills: a "check the debit" reminder, or none?~~ Answered 2026-11-23: none.
-- Keep the original email next to the PDF?
-- Dedicated mailbox: iCloud+ address or own domain?
+- ~~Keep the original email next to the PDF?~~ Answered 2026-11-23: no, PDF only.
+- ~~Dedicated mailbox: iCloud+ address or own domain?~~ Answered 2026-11-23: iCloud+ address.

@@ -112,6 +112,7 @@ struct BillDetailView: View {
     @State private var confirmingPaid = false
     @State private var copied: String?
     @State private var isWorking = false
+    @State private var reminderMissing = false
 
     private var qrPayload: Result<String, EPCQRCode.PayloadError> {
         Result { () throws(EPCQRCode.PayloadError) -> String in
@@ -150,6 +151,9 @@ struct BillDetailView: View {
                 if bill.reminderExternalID == nil {
                     Button("Create Reminder", systemImage: "checklist") { Task { await createReminder() } }
                         .disabled(isWorking)
+                } else if reminderMissing {
+                    Button("Reminder Not Found – Create Again", systemImage: "checklist") { Task { await recreateReminder() } }
+                        .disabled(isWorking)
                 }
                 Button("Mark as Paid", systemImage: "checkmark.circle") { confirmingPaid = true }
                     .disabled(isWorking)
@@ -159,6 +163,7 @@ struct BillDetailView: View {
         }
         .formStyle(.grouped)
         .navigationTitle(bill.sender)
+        .task { reminderMissing = await billService.reminderIsMissing(for: bill) }
         .confirmationDialog("Mark this bill as paid?", isPresented: $confirmingPaid) {
             Button("Mark as Paid") { Task { await markPaid() } }
         } message: {
@@ -207,6 +212,17 @@ struct BillDetailView: View {
         defer { isWorking = false }
         do {
             try await billService.addReminder(for: bill, context: modelContext)
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func recreateReminder() async {
+        isWorking = true
+        defer { isWorking = false }
+        do {
+            try await billService.recreateReminder(for: bill, context: modelContext)
+            reminderMissing = false
         } catch {
             errorMessage = error.localizedDescription
         }

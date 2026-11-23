@@ -56,6 +56,9 @@
     "€ 0.00" : {
 
     },
+    "A dedicated mailbox that this Mac checks; its emails go to Needs Review." : {
+
+    },
     "Account name" : {
 
     },
@@ -68,6 +71,9 @@
     "Add owner" : {
 
     },
+    "Allow Paper Trail in System Settings → General → Login Items." : {
+
+    },
     "Already exported %@" : {
 
     },
@@ -78,6 +84,9 @@
 
     },
     "Amount missing" : {
+
+    },
+    "App-specific password" : {
 
     },
     "At most 6 words" : {
@@ -107,6 +116,15 @@
     "Category name" : {
 
     },
+    "Check every %lld minutes" : {
+
+    },
+    "Check Mail Now" : {
+
+    },
+    "Check this mailbox" : {
+
+    },
     "Choose an owner and a category." : {
 
     },
@@ -119,7 +137,13 @@
     "Copy" : {
 
     },
+    "Could not change the login item: %@" : {
+
+    },
     "Could not check Reminders for paid bills: %@" : {
+
+    },
+    "Could not connect to the mail server: %@ Check the server name and your internet connection." : {
 
     },
     "Could not delete the rule" : {
@@ -192,6 +216,12 @@
     "Could not suggest details for this document. Fill them in yourself." : {
 
     },
+    "Could not turn the email into a PDF: %@ The email stays in the mailbox and is tried again." : {
+
+    },
+    "Could not use the Keychain: %@" : {
+
+    },
     "Create Reminder" : {
 
     },
@@ -237,6 +267,37 @@
     "Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud." : {
 
     },
+    "Email" : {
+
+    },
+    "Email: %@" : {
+
+    },
+    "Email: checked %@, %lld filed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Email: checked %1$@, %2$lld filed"
+          }
+        }
+      }
+    },
+    "Email: checking…" : {
+
+    },
+    "Email: off (Settings → Email)" : {
+
+    },
+    "Email: waiting for the first check" : {
+
+    },
+    "Enter the app-specific password first." : {
+
+    },
+    "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email." : {
+
+    },
     "Export" : {
 
     },
@@ -267,6 +328,12 @@
     "Filed, but no reminder" : {
 
     },
+    "Folder to file from" : {
+
+    },
+    "Folders" : {
+
+    },
     "Folders inside each owner's year folder." : {
 
     },
@@ -282,6 +349,9 @@
     "iCloud Drive is not available. This debug build is saving to a local folder." : {
 
     },
+    "IMAP server" : {
+
+    },
     "Import file…" : {
 
     },
@@ -294,10 +364,16 @@
     "Learned rules" : {
 
     },
+    "Mailbox" : {
+
+    },
     "Mark as Paid" : {
 
     },
     "Mark this bill as paid?" : {
+
+    },
+    "Move filed emails to" : {
 
     },
     "Name on the paying account" : {
@@ -313,6 +389,9 @@
 
     },
     "No documents yet" : {
+
+    },
+    "No mailbox password is saved. Enter the app-specific password in Settings → Email." : {
 
     },
     "No open bills" : {
@@ -342,6 +421,12 @@
     "Open Bills (%lld)" : {
 
     },
+    "Open Paper Trail" : {
+
+    },
+    "Open Paper Trail at login" : {
+
+    },
     "Owner" : {
 
     },
@@ -352,6 +437,9 @@
 
     },
     "Paper Trail" : {
+
+    },
+    "Paper Trail address" : {
 
     },
     "Paper Trail can only read PDFs and images. Move these files out of the Inbox folder in iCloud Drive." : {
@@ -390,10 +478,16 @@
     "Payment reference" : {
 
     },
+    "Port" : {
+
+    },
     "Preparing document…" : {
 
     },
     "QR code and copy buttons" : {
+
+    },
+    "Quit Paper Trail" : {
 
     },
     "Received" : {
@@ -408,10 +502,22 @@
     "Reference" : {
 
     },
+    "Reminder Not Found – Create Again" : {
+
+    },
     "Review Later" : {
 
     },
     "Save" : {
+
+    },
+    "Save Email Settings" : {
+
+    },
+    "Saved – type to replace" : {
+
+    },
+    "Saved." : {
 
     },
     "Saves the document to Needs Review in iCloud Drive, so you can file it later on any device." : {
@@ -441,10 +547,22 @@
     "SEPA file for %@" : {
 
     },
+    "Server" : {
+
+    },
     "Settings" : {
 
     },
     "Show text" : {
+
+    },
+    "Sign in with" : {
+
+    },
+    "Sign in with your main iCloud address (an alias can't sign in) and an app-specific password from account.apple.com → Sign-In and Security; your normal password doesn't work with two-factor authentication. For iCloud, Paper Trail also tries the full @icloud.com address. The password gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this Mac's Keychain." : {
+
+    },
+    "Signed in to the mailbox. Save to start checking it." : {
 
     },
     "Something went wrong" : {
@@ -453,13 +571,34 @@
     "Suggesting details on this device…" : {
 
     },
+    "Test Connection" : {
+
+    },
+    "Testing…" : {
+
+    },
     "Text recognition failed. You can still file the document." : {
+
+    },
+    "The alias your rule filters on (optional)" : {
+
+    },
+    "The email \"%@\" has no PDF, image or text to file. It stays in the mailbox; move it out yourself." : {
 
     },
     "The file was saved, but Paper Trail could not note the export: %@" : {
 
     },
+    "The mail server did not answer in time. Paper Trail will try again at the next check." : {
+
+    },
+    "The mailbox is checked while Paper Trail runs. It keeps running in the menu bar after you close its window." : {
+
+    },
     "There is no Reminders account to create the To pay list in. Turn on Reminders in iCloud settings, then try again." : {
+
+    },
+    "This whole account is only for Paper Trail" : {
 
     },
     "Unpaid bill" : {
@@ -478,6 +617,12 @@
 
     },
     "Where" : {
+
+    },
+    "xxxx-xxxx-xxxx-xxxx" : {
+
+    },
+    "Your main iCloud address, not the alias" : {
 
     }
   },

@@ -27,6 +27,8 @@ protocol BillReminding {
     /// Completion dates of the reminders that are completed, by external identifier.
     func completedReminders(among externalIDs: [String]) async throws -> [String: Date]
     func completeReminder(externalID: String) async throws
+    /// False when the reminder was deleted (or lives in an account this device can't see).
+    func reminderExists(externalID: String) async -> Bool
 }
 
 /// Apple Reminders via EventKit. Each owner has a list "To pay – <Owner>".
@@ -44,12 +46,26 @@ final class EventKitBillReminders: BillReminding {
         }
     }
 
+    /// The account for the To pay lists: iCloud when available. Exchange is avoided because
+    /// its reminder identifiers differ per device, so paid state would not sync.
+    private func reminderSource() throws -> EKSource {
+        let withReminders = store.sources.filter { !$0.calendars(for: .reminder).isEmpty }
+        if let iCloud = withReminders.first(where: { $0.sourceType == .calDAV && $0.title.localizedCaseInsensitiveCompare("iCloud") == .orderedSame }) {
+            return iCloud
+        }
+        if let calDAV = withReminders.first(where: { $0.sourceType == .calDAV }) { return calDAV }
+        if let fallback = store.defaultCalendarForNewReminders()?.source, fallback.sourceType != .exchange { return fallback }
+        if let local = store.sources.first(where: { $0.sourceType == .local }) { return local }
+        guard let any = store.defaultCalendarForNewReminders()?.source else { throw BillReminderError.noReminderAccount }
+        return any
+    }
+
     private func list(for owner: String) throws -> EKCalendar {
         let name = BillReminderText.listName(owner: owner)
-        if let existing = store.calendars(for: .reminder).first(where: { $0.title == name }) {
+        let source = try reminderSource()
+        if let existing = source.calendars(for: .reminder).first(where: { $0.title == name }) {
             return existing
         }
-        guard let source = store.defaultCalendarForNewReminders()?.source else { throw BillReminderError.noReminderAccount }
         let calendar = EKCalendar(for: .reminder, eventStore: store)
         calendar.title = name
         calendar.source = source
@@ -104,6 +120,12 @@ final class EventKitBillReminders: BillReminding {
         return completed
     }
 
+    func reminderExists(externalID: String) async -> Bool {
+        // Without access we can't tell; assume it exists so nothing is created twice.
+        guard EKEventStore.authorizationStatus(for: .reminder) == .fullAccess else { return true }
+        return !reminders(withExternalID: externalID).isEmpty
+    }
+
     func completeReminder(externalID: String) async throws {
         try await ensureAccess()
         for reminder in reminders(withExternalID: externalID) where !reminder.isCompleted {
@@ -126,6 +148,19 @@ struct BillService {
         guard bill.isOpenBill, bill.reminderExternalID == nil else { return }
         bill.reminderExternalID = try await reminders.createReminder(for: bill)
         try context.save()
+    }
+
+    /// Creates a new reminder for a bill whose reminder was deleted, e.g. after removing an
+    /// old To pay list. Only on the user's request, so nothing is ever duplicated silently.
+    func recreateReminder(for bill: DocumentRecord, context: ModelContextSaving) async throws {
+        guard bill.isOpenBill else { return }
+        bill.reminderExternalID = try await reminders.createReminder(for: bill)
+        try context.save()
+    }
+
+    func reminderIsMissing(for bill: DocumentRecord) async -> Bool {
+        guard let id = bill.reminderExternalID else { return false }
+        return await !reminders.reminderExists(externalID: id)
     }
 
     /// Marks bills paid whose reminder was completed (on any device).
