@@ -26,3 +26,14 @@ struct ReviewQueueNamesTests {
         #expect(ReviewQueueNames.savedDate(fromFileName: "2026-02-30 Scan.pdf", calendar: Self.calendar) == nil)
     }
 }
+
+@Suite("InboxEntry")
+struct InboxEntryTests {
+    @Test func classifiesEntries() {
+        #expect(InboxEntry(directoryEntry: "factuur.PDF") == .pdf("factuur.PDF"))
+        #expect(InboxEntry(directoryEntry: "IMG_0001.HEIC") == .image("IMG_0001.HEIC"))
+        #expect(InboxEntry(directoryEntry: ".factuur.pdf.icloud") == .notDownloaded("factuur.pdf"))
+        #expect(InboxEntry(directoryEntry: ".DS_Store") == .ignored)
+        #expect(InboxEntry(directoryEntry: "brief.docx") == .unsupported("brief.docx"))
+    }
+}

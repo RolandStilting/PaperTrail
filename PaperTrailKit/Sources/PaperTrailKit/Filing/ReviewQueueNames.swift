@@ -38,3 +38,38 @@ public enum ReviewQueueNames {
         return date
     }
 }
+
+/// What to do with an entry in `Paper Trail/Inbox/`.
+public enum InboxEntry: Equatable, Sendable {
+    /// A PDF: move it to Needs Review as it is.
+    case pdf(String)
+    /// An image: convert to PDF, then move to Needs Review.
+    case image(String)
+    /// iCloud has only a placeholder; download it and pick it up next time.
+    case notDownloaded(String)
+    /// A file Paper Trail can't read; it stays in Inbox and the user is told.
+    case unsupported(String)
+    /// Hidden system files such as .DS_Store.
+    case ignored
+
+    static let imageExtensions: Set<String> = ["jpg", "jpeg", "png", "heic", "heif", "tif", "tiff"]
+
+    public init(directoryEntry entry: String) {
+        if entry.hasPrefix("."), entry.hasSuffix(".icloud"), entry.count > ".x.icloud".count - 1 {
+            self = .notDownloaded(String(entry.dropFirst().dropLast(".icloud".count)))
+            return
+        }
+        guard !entry.hasPrefix(".") else {
+            self = .ignored
+            return
+        }
+        let ext = FileNamer.splitExtension(entry).ext.lowercased()
+        if ext == "pdf" {
+            self = .pdf(entry)
+        } else if Self.imageExtensions.contains(ext) {
+            self = .image(entry)
+        } else {
+            self = .unsupported(entry)
+        }
+    }
+}

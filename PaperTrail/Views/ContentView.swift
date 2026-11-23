@@ -17,6 +17,9 @@ struct ContentView: View {
     @State private var archiveRoot: ArchiveRoot?
     @State private var reviewItems: [ReviewItem] = []
     @State private var isDropTargeted = false
+    @State private var unreadableInboxFiles: [String] = []
+    /// Inbox problems already shown, so the check every minute doesn't repeat them.
+    @State private var shownInboxFailures: Set<String> = []
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
@@ -25,6 +28,15 @@ struct ContentView: View {
                 if archiveRoot?.isLocalFallback == true {
                     Label("iCloud Drive is not available. This debug build is saving to a local folder.", systemImage: "exclamationmark.icloud")
                         .foregroundStyle(.orange)
+                }
+                if !unreadableInboxFiles.isEmpty {
+                    Section {
+                        ForEach(unreadableInboxFiles, id: \.self) { Label($0, systemImage: "exclamationmark.triangle") }
+                    } header: {
+                        Text("Inbox")
+                    } footer: {
+                        Text("Paper Trail can only read PDFs and images. Move these files out of the Inbox folder in iCloud Drive.")
+                    }
                 }
                 if !reviewItems.isEmpty {
                     Section("Needs Review") {
@@ -121,8 +133,13 @@ struct ContentView: View {
         .onChange(of: pending == nil) { _, closed in
             if closed { Task { await refreshReviewItems() } }
         }
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .active { Task { await refreshReviewItems() } }
+        .task(id: scenePhase) {
+            // While the app is in front, look in Inbox and Needs Review every minute.
+            guard scenePhase == .active else { return }
+            while !Task.isCancelled {
+                await refreshReviewItems()
+                try? await Task.sleep(for: .seconds(60))
+            }
         }
     }
 
@@ -154,6 +171,13 @@ struct ContentView: View {
 
     private func refreshReviewItems() async {
         guard let root = archiveRoot?.url else { return }
+        let report = await filingService.inboxCollector.collect(root: root)
+        unreadableInboxFiles = report.unsupported
+        let newFailures = report.failures.filter { !shownInboxFailures.contains($0) }
+        if !newFailures.isEmpty {
+            shownInboxFailures.formUnion(newFailures)
+            errorMessage = newFailures.joined(separator: "\n\n")
+        }
         do {
             reviewItems = try await filingService.reviewQueue.items(root: root)
         } catch {
