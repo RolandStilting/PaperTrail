@@ -94,8 +94,8 @@ Claude Code can't do these. Ask the user when one is needed:
 
 ## Build phases
 
-1. **Capture and file:** project setup, iCloud container, settings for owners and categories, camera scan, OCR, manual filing with the naming rules. ← start here
-2. **Smart proposals:** on-device classification, review screen, learned rules, duplicate check (content hash + sender/amount/invoice number).
+1. **Capture and file:** project setup, iCloud container, settings for owners and categories, camera scan, OCR, manual filing with the naming rules. ✅ Done 2026-11-23: tested on MacBook Pro and iPhone 17 Pro Max, including two-way sync, name collisions, multi-page scans, Mac PDF import and offline filing.
+2. **Smart proposals:** ← next. Start with a Dutch/English extraction test of the on-device model on synthetic documents. on-device classification, review screen, learned rules, duplicate check (content hash + sender/amount/invoice number).
 3. **More ways in:** Share Extension, watched Inbox folder, Mac drag and drop.
 4. **Bills in Reminders:** create reminder (title `Pay <Sender> · € <amount>`, due date, notes with IBAN/reference/file path, URL back into the app), listen for completion, open-bills overview, copy buttons.
 5. **Email:** Mac menu-bar helper, IMAP fetching, HTML email to PDF.
