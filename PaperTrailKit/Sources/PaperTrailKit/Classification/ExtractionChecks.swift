@@ -59,6 +59,10 @@ public enum ExtractionChecks {
             // Due date: a date after "uiterlijk" or "vóór" beats the model's pick.
             if let deadline = TextDates.date(after: deadlineLabels, in: text) {
                 result.dueDate = deadline
+            } else if let days = TextDates.paymentTermDays(in: text), !result.documentDate.isEmpty,
+                      let due = TextDates.adding(days: days, to: result.documentDate) {
+                // "binnen 14 dagen": count from the date on the document.
+                result.dueDate = due
             } else if !textDates.contains(result.dueDate) {
                 result.dueDate = ""
             }

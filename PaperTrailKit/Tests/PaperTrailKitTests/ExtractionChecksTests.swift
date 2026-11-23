@@ -112,6 +112,30 @@ struct ExtractionValueChecksTests {
         #expect(result.dueDate == "2026-03-31")
     }
 
+    @Test func readsPaymentTerms() {
+        #expect(TextDates.paymentTermDays(in: "over te maken binnen 14 dagen na factuurdatum") == 14)
+        #expect(TextDates.paymentTermDays(in: "Betalingstermijn: 30 dagen") == 30)
+        #expect(TextDates.paymentTermDays(in: "Graag binnen veertien dagen betalen") == 14)
+        #expect(TextDates.paymentTermDays(in: "Please pay within 30 days") == 30)
+        #expect(TextDates.paymentTermDays(in: "Payment terms: net 7") == 7)
+        #expect(TextDates.paymentTermDays(in: "Levering binnen 3 dagen") == nil)
+        #expect(TextDates.paymentTermDays(in: "U kunt binnen 14 dagen bezwaar maken") == nil)
+        #expect(TextDates.paymentTermDays(in: "Totaal € 14,00") == nil)
+        #expect(TextDates.adding(days: 14, to: "2026-03-23") == "2026-04-06")
+        #expect(TextDates.adding(days: 1, to: "2026-12-31") == "2027-01-01")
+    }
+
+    @Test func dueDateFromPaymentTerm() {
+        let text = "Datum: 9 maart 2026\nTotaal € 853,66\nover te maken binnen 14 dagen op NL00TEST0222333444"
+        let result = Self.check(Self.bill(documentDate: "2026-03-09", amount: 853.66, iban: "NL00TEST0222333444"), text)
+        #expect(result.dueDate == "2026-03-23")
+    }
+
+    @Test func explicitDeadlineBeatsPaymentTerm() {
+        let text = "Datum 1 maart 2026. Binnen 14 dagen, uiterlijk 10 maart 2026."
+        #expect(Self.check(Self.bill(documentDate: "2026-03-01"), text).dueDate == "2026-03-10")
+    }
+
     @Test func dropsIbanNotInText() {
         #expect(Self.check(Self.bill(iban: "NL00TEST0123456789"), "Te betalen € 5,00").iban == "")
     }

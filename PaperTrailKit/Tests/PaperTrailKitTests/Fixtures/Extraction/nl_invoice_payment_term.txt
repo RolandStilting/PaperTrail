@@ -1,0 +1,20 @@
+Schildersbedrijf Testkwast
+Penseelstraat 8, 1234 CD Fictiedam
+KvK 00000000 | btw NL000000000B01
+
+R. Testgebruiker
+Voorbeeldstraat 1
+1234 AB Fictiedam
+
+Factuur 2026-0112
+Datum: 9 maart 2026
+
+Schilderwerk kozijnen voorzijde           € 620,00
+Materiaal                                  € 85,50
+Subtotaal                                 € 705,50
+btw 21%                                   € 148,16
+Totaal                                    € 853,66
+
+Wij verzoeken u het bedrag over te maken binnen 14 dagen na factuurdatum
+op rekening NL00TEST0222333444 t.n.v. Schildersbedrijf Testkwast,
+onder vermelding van het factuurnummer 2026-0112.

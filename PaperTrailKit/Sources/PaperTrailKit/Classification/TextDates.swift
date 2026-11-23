@@ -85,4 +85,45 @@ public enum TextDates {
         }
         return nil
     }
+
+    static let numberWords: [String: Int] = [
+        "zeven": 7, "acht": 8, "tien": 10, "veertien": 14, "vijftien": 15, "eenentwintig": 21, "dertig": 30,
+        "seven": 7, "eight": 8, "ten": 10, "fourteen": 14, "fifteen": 15, "twenty-one": 21, "thirty": 30,
+    ]
+
+    /// A payment term written as a number of days, such as "over te maken binnen 14 dagen",
+    /// "betalingstermijn: 30 dagen", "within 30 days", "payment terms: 14 days" or "net 30".
+    public static func paymentTermDays(in text: String) -> Int? {
+        let number = #"(\d{1,3}|"# + numberWords.keys.sorted { $0.count > $1.count }.joined(separator: "|") + ")"
+        let patterns = [
+            // "binnen N dagen" only counts in a sentence about paying, not "levering binnen 3 dagen".
+            #"\b(?:betalen|betaling|over\s+te\s+maken|overmaken|voldoen|voldaan|overgemaakt)\b[^.\n]{0,80}?\bbinnen\s+"# + number + #"\s+dagen"#,
+            #"\bbinnen\s+"# + number + #"\s+dagen\b[^.\n]{0,40}?\b(?:betalen|over\s+te\s+maken|overmaken|voldoen|voldaan)"#,
+            #"\bbetalingstermijn\b[^0-9a-z]{0,3}(?:van\s+|is\s+|bedraagt\s+)?"# + number + #"\s+dagen"#,
+            #"\bwithin\s+"# + number + #"\s+days"#,
+            #"\bpayment\s+terms?\b[^0-9a-z]{0,3}"# + number + #"\s+days"#,
+            #"\bnet\s+(\d{1,3})\b"#,
+        ]
+        let ns = text.lowercased() as NSString
+        for pattern in patterns {
+            guard let regex = try? NSRegularExpression(pattern: pattern),
+                  let match = regex.firstMatch(in: ns as String, range: NSRange(location: 0, length: ns.length))
+            else { continue }
+            let value = ns.substring(with: match.range(at: 1))
+            if let days = Int(value) ?? numberWords[value], (1...120).contains(days) { return days }
+        }
+        return nil
+    }
+
+    /// Adds `days` to a yyyy-MM-dd date.
+    public static func adding(days: Int, to isoDate: String) -> String? {
+        let parts = isoDate.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        guard let start = calendar.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2])),
+              let end = calendar.date(byAdding: .day, value: days, to: start) else { return nil }
+        let c = calendar.dateComponents([.year, .month, .day], from: end)
+        return iso(year: c.year!, month: c.month!, day: c.day!)
+    }
 }
