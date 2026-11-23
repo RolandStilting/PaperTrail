@@ -5,7 +5,7 @@ import SwiftUI
 /// The review screen: the app suggests category, sender, description, dates and payment
 /// details on the device; the user checks them and files the document.
 struct FilingView: View {
-    enum Field: Hashable { case category, documentDate, sender, description, bill }
+    enum Field: Hashable { case owner, category, documentDate, sender, description, bill }
 
     enum SuggestionState: Equatable {
         case waitingForText
@@ -21,6 +21,7 @@ struct FilingView: View {
 
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(\.modelContext) private var modelContext
+    @Query private var ruleRecords: [FilingRuleRecord]
 
     @State private var ownerName = ""
     @State private var categoryName = ""
@@ -40,6 +41,10 @@ struct FilingView: View {
     @State private var suggestion = SuggestionState.waitingForText
     /// Fields the user changed; a late suggestion never overwrites them.
     @State private var edited: Set<Field> = []
+    /// The learned rule that matched this document; its owner, category and sender win over the model.
+    @State private var appliedRule: SenderRule?
+    /// The sender the model suggested, remembered as an alias when a rule is learned.
+    @State private var suggestedSender = ""
 
     @State private var extractedText: String?
     @State private var ocrFailed = false
@@ -82,7 +87,7 @@ struct FilingView: View {
             suggestionSection
 
             Section("Where") {
-                Picker("Owner", selection: $ownerName) {
+                Picker("Owner", selection: tracked($ownerName, .owner)) {
                     ForEach(settingsStore.settings.owners) { Text($0.name).tag($0.name) }
                 }
                 Picker("Category", selection: tracked($categoryName, .category)) {
@@ -182,6 +187,12 @@ struct FilingView: View {
 
     @ViewBuilder
     private var suggestionSection: some View {
+        if let appliedRule {
+            Section {
+                Label("Filed like earlier documents from \(appliedRule.senderName). Change owner or category to update this rule.", systemImage: "arrow.triangle.branch")
+                    .foregroundStyle(.secondary)
+            }
+        }
         switch suggestion {
         case .waitingForText, .working:
             Section {
@@ -228,7 +239,24 @@ struct FilingView: View {
             suggestion = .failed
             return
         }
+        applyRule()
         await suggestDetails()
+    }
+
+    /// Learned rules run before the model, and also work when the model is unavailable.
+    private func applyRule() {
+        guard let text = extractedText,
+              let rule = SenderRules.match(ruleRecords.map(\.rule), text: text) else { return }
+        appliedRule = rule
+        let settings = settingsStore.settings
+        // Skip values whose owner or category was removed from Settings since.
+        if !edited.contains(.owner), settings.owners.contains(where: { $0.name == rule.owner }) {
+            ownerName = rule.owner
+        }
+        if !edited.contains(.category), settings.categories.contains(where: { $0.name == rule.category }) {
+            categoryName = rule.category
+        }
+        if !edited.contains(.sender) { sender = rule.senderName }
     }
 
     /// Asks the on-device model for a proposal. Document text never leaves the device.
@@ -256,8 +284,10 @@ struct FilingView: View {
 
     /// Fills in suggested values, leaving fields the user already changed alone.
     private func apply(_ proposal: Proposal) {
-        if !edited.contains(.category), !proposal.category.isEmpty { categoryName = proposal.category }
-        if !edited.contains(.sender), !proposal.sender.isEmpty { sender = proposal.sender }
+        suggestedSender = proposal.sender
+        let ruleWins = appliedRule != nil
+        if !edited.contains(.category), !ruleWins, !proposal.category.isEmpty { categoryName = proposal.category }
+        if !edited.contains(.sender), !ruleWins, !proposal.sender.isEmpty { sender = proposal.sender }
         if !edited.contains(.description), !proposal.description.isEmpty { descriptionText = proposal.description }
         if !edited.contains(.documentDate), let date = proposal.documentDate {
             documentDate = date
@@ -279,7 +309,7 @@ struct FilingView: View {
         isFiling = true
         defer { isFiling = false }
         do {
-            _ = try await filingService.file(document, request: request, extractedText: extractedText, context: modelContext)
+            _ = try await filingService.file(document, request: request, extractedText: extractedText, suggestedSender: suggestedSender, context: modelContext)
             onDone()
         } catch {
             errorMessage = error.localizedDescription

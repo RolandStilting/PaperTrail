@@ -41,6 +41,12 @@ struct SettingsView: View {
                 Text("Folders inside each owner's year folder.")
             }
 
+            Section {
+                NavigationLink("Learned rules") { RulesView() }
+            } footer: {
+                Text("Paper Trail remembers owner and category for each sender you file.")
+            }
+
             if !errors.isEmpty {
                 Section {
                     ForEach(errors, id: \.self) { Text($0).foregroundStyle(.red) }
