@@ -27,6 +27,15 @@ public final class DocumentRecord {
     /// How the document came in, e.g. "scan" or "import". See `IntakeSource`.
     public var sourceRaw: String = IntakeSource.scan.rawValue
 
+    // Bill details (phase 2). Phase 4 turns unpaid bills into reminders.
+    public var isUnpaidBill: Bool = false
+    /// Amount in euros.
+    public var amount: Double?
+    public var dueDate: Date?
+    /// IBAN to pay to, without spaces.
+    public var iban: String?
+    public var paymentReference: String?
+
     public init(
         relativePath: String,
         ownerName: String,
@@ -38,7 +47,8 @@ public final class DocumentRecord {
         extractedText: String? = nil,
         contentHash: String? = nil,
         filedAt: Date = .now,
-        source: IntakeSource
+        source: IntakeSource,
+        bill: BillDetails? = nil
     ) {
         self.relativePath = relativePath
         self.ownerName = ownerName
@@ -51,6 +61,13 @@ public final class DocumentRecord {
         self.contentHash = contentHash
         self.filedAt = filedAt
         self.sourceRaw = source.rawValue
+        if let bill, !bill.isEmpty {
+            self.isUnpaidBill = bill.isUnpaid
+            self.amount = bill.amount
+            self.dueDate = bill.dueDate
+            self.iban = bill.iban.isEmpty ? nil : bill.iban
+            self.paymentReference = bill.reference.isEmpty ? nil : bill.reference
+        }
     }
 
     public var source: IntakeSource {

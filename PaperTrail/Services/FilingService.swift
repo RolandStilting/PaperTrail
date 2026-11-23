@@ -23,7 +23,8 @@ struct FilingService {
             documentDate: request.documentDate,
             extractedText: extractedText,
             contentHash: stored.contentHash,
-            source: document.source
+            source: document.source,
+            bill: request.bill
         )
         context.insert(record)
         // The file is already safe on disk; an index failure is reported but the index
