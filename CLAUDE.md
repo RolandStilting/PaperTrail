@@ -33,7 +33,7 @@ Full design spec: https://claude.ai/artifact/3xgTR4oqguhXEpCdpx2rCd. When this f
 | Index | SwiftData + CloudKit |
 | Search | Core Spotlight |
 | Bills | EventKit (Reminders) |
-| Email | IMAP: evaluate `apple/swift-nio-imap` first (phase 5) |
+| Email | Own minimal IMAP client on Network.framework (TLS); own MIME parsing in PaperTrailKit. `apple/swift-nio-imap` was evaluated 2026-11-23 and not used: v0.5, README says "not yet ready for use in production", and it adds swift-nio, swift-nio-ssl, swift-nio-extras, swift-log and swift-collections. iCloud: `imap.mail.me.com:993`, TLS, app-specific password ([Apple](https://support.apple.com/en-us/102525)). |
 | Project file | XcodeGen (`project.yml`). Don't hand-edit `.xcodeproj` |
 
 **Deployment targets:** iOS 26 / iPadOS 26 / macOS 26 (needed for Foundation Models). Confirm with the user before lowering.
