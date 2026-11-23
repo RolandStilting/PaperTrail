@@ -95,7 +95,7 @@ Claude Code can't do these. Ask the user when one is needed:
 ## Build phases
 
 1. **Capture and file:** project setup, iCloud container, settings for owners and categories, camera scan, OCR, manual filing with the naming rules. ✅ Done 2026-11-23: tested on MacBook Pro and iPhone 17 Pro Max, including two-way sync, name collisions, multi-page scans, Mac PDF import and offline filing.
-2. **Smart proposals:** ← in progress. Done: Dutch/English model evaluation, on-device classification with `ExtractionChecks`, suggestions in the filing screen (tested on Mac and iPhone 2026-11-23), learned sender rules (`SenderRules`, stored as `FilingRuleRecord`; not yet tested on devices). To do: duplicate check (content hash + sender/amount/invoice number), Needs Review queue.
+2. **Smart proposals:** ← in progress. Done: Dutch/English model evaluation, on-device classification with `ExtractionChecks`, suggestions in the filing screen (tested on Mac and iPhone 2026-11-23), learned sender rules (`SenderRules`, stored as `FilingRuleRecord`; tested on Mac and iPhone 2026-11-23, rules sync and show in Settings). To do: duplicate check (content hash + sender/amount/invoice number), Needs Review queue.
 3. **More ways in:** Share Extension, watched Inbox folder, Mac drag and drop.
 4. **Bills in Reminders:** create reminder (title `Pay <Sender> · € <amount>`, due date, notes with IBAN/reference/file path, URL back into the app), listen for completion, open-bills overview, copy buttons.
 5. **Email:** Mac menu-bar helper, IMAP fetching, HTML email to PDF.

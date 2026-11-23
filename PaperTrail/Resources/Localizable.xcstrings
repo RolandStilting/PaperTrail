@@ -17,6 +17,19 @@
         }
       }
     },
+    "%@ › %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ › %2$@"
+          }
+        }
+      }
+    },
+    "%@ Try again." : {
+
+    },
     "€ 0.00" : {
 
     },
@@ -50,6 +63,9 @@
     "Choose an owner and a category." : {
 
     },
+    "Could not delete the rule" : {
+
+    },
     "Could not file the document" : {
 
     },
@@ -73,6 +89,9 @@
 
     },
     "Date on document" : {
+
+    },
+    "Delete Rule" : {
 
     },
     "Description" : {
@@ -105,6 +124,9 @@
     "File name" : {
 
     },
+    "Filed like earlier documents from %@. Change owner or category to update this rule." : {
+
+    },
     "Folders inside each owner's year folder." : {
 
     },
@@ -120,10 +142,16 @@
     "Import file…" : {
 
     },
+    "Learned rules" : {
+
+    },
     "NL00 BANK 0123 4567 89" : {
 
     },
     "No documents yet" : {
+
+    },
+    "No rules yet" : {
 
     },
     "No text found" : {
@@ -142,6 +170,9 @@
 
     },
     "Paper Trail" : {
+
+    },
+    "Paper Trail remembers owner and category for each sender you file." : {
 
     },
     "Pay before" : {
@@ -192,9 +223,6 @@
     "Suggesting details on this device…" : {
 
     },
-    "Suggestions need Apple Intelligence, which is not available on this device right now. Fill in the details yourself." : {
-
-    },
     "Text recognition failed. You can still file the document." : {
 
     },
@@ -202,6 +230,9 @@
 
     },
     "Unpaid bills will get a reminder in a later version." : {
+
+    },
+    "When you file a document, Paper Trail remembers where documents from that sender go." : {
 
     },
     "Where" : {
