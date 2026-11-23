@@ -43,7 +43,7 @@ struct PaperTrailApp: App {
     /// Uses CloudKit sync when the app has the CloudKit entitlement, and a local store otherwise.
     /// The index can always be rebuilt from the files, so falling back to local is safe.
     private static func makeModelContainer() -> ModelContainer {
-        let schema = Schema([DocumentRecord.self, FilingRuleRecord.self])
+        let schema = Schema(PaperTrailSchema.models)
         do {
             return try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, cloudKitDatabase: .automatic))
         } catch {

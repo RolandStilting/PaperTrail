@@ -52,4 +52,12 @@ struct SenderRuleTests {
         let rule = SenderRule(senderName: "KPN", aliases: ["kpn"], ibans: ["NL00TEST0123456789"], owner: "Company1", category: "Invoices", updatedAt: Self.day)
         #expect(FilingRuleRecord(rule).rule == rule)
     }
+
+    @Test func remembersAndForgetsReimbursement() throws {
+        let first = try #require(SenderRules.learn(from: ConfirmedFiling(sender: "Parkeren Test", owner: "Private", category: "Receipts", reimbursedBy: "Company1"), existing: [], now: Self.day))
+        #expect(first.reimbursedBy == "Company1")
+        #expect(FilingRuleRecord(first).rule.reimbursedBy == "Company1")
+        let second = try #require(SenderRules.learn(from: ConfirmedFiling(sender: "Parkeren Test", owner: "Private", category: "Receipts"), existing: [first], now: Self.day.addingTimeInterval(60)))
+        #expect(second.reimbursedBy == nil)
+    }
 }

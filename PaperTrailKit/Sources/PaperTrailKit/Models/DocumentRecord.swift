@@ -44,6 +44,19 @@ public final class DocumentRecord {
     /// When the bill was last put in a SEPA batch file. Exported is not paid.
     public var exportedAt: Date?
 
+    // Expense claims (phase 6): a document one company pays back, e.g. a personal receipt.
+    /// Owner (company) that reimburses this expense; nil when it isn't a claimable expense.
+    public var reimbursedBy: String?
+    /// The claim it was submitted in; nil while the expense is still open.
+    public var claimID: UUID?
+    public var reimbursedAt: Date?
+
+    public var claimState: ClaimState {
+        guard reimbursedBy != nil else { return .none }
+        if reimbursedAt != nil { return .reimbursed }
+        return claimID == nil ? .open : .submitted
+    }
+
     /// Unpaid bill still waiting for payment.
     public var isOpenBill: Bool { isUnpaidBill && !isPaid }
 
@@ -87,6 +100,10 @@ public final class DocumentRecord {
     public var source: IntakeSource {
         IntakeSource(rawValue: sourceRaw) ?? .scan
     }
+}
+
+public enum ClaimState: String, Sendable {
+    case none, open, submitted, reimbursed
 }
 
 public enum IntakeSource: String, Codable, Sendable, CaseIterable {

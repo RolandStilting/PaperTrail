@@ -35,7 +35,7 @@ struct BillServiceTests {
     var service: BillService { BillService(reminders: reminders) }
 
     init() throws {
-        let schema = Schema([DocumentRecord.self, FilingRuleRecord.self])
+        let schema = Schema(PaperTrailSchema.models)
         container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none))
     }
 

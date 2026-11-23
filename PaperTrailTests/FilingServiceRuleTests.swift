@@ -18,7 +18,7 @@ struct FilingServiceRuleTests {
     let service: FilingService
 
     init() throws {
-        let schema = Schema([DocumentRecord.self, FilingRuleRecord.self])
+        let schema = Schema(PaperTrailSchema.models)
         container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none))
         let root = FileManager.default.temporaryDirectory.appending(path: "PaperTrailTests-\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -49,7 +49,7 @@ struct FilingServiceRuleTests {
 @Suite("FilingService duplicates")
 struct FilingServiceDuplicateTests {
     @Test func findsTheSameFileAndTheSameInvoice() async throws {
-        let schema = Schema([DocumentRecord.self, FilingRuleRecord.self])
+        let schema = Schema(PaperTrailSchema.models)
         let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none))
         let root = FileManager.default.temporaryDirectory.appending(path: "PaperTrailTests-\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -72,7 +72,7 @@ struct FilingServiceDuplicateTests {
 @Suite("Review queue")
 struct ReviewQueueTests {
     @Test func savedDocumentWaitsAndLeavesWhenFiled() async throws {
-        let schema = Schema([DocumentRecord.self, FilingRuleRecord.self])
+        let schema = Schema(PaperTrailSchema.models)
         let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none))
         let root = FileManager.default.temporaryDirectory.appending(path: "PaperTrailTests-\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
