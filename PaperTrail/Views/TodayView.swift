@@ -380,6 +380,6 @@ struct TodayCard: View {
 }
 
 /// Navigation value for a filed document.
-struct DocumentRoute: Hashable {
+struct DocumentRoute: Hashable, Identifiable {
     let id: UUID
 }

@@ -23,6 +23,8 @@ final class AppModel {
     var unreadableInboxFiles: [String] = []
     /// A bill to open from a reminder's link.
     var billToOpen: UUID?
+    /// Document opened from a Spotlight result.
+    var documentToOpen: DocumentRoute?
     var showingBillFromLink = false
     /// Set by Find (⌘F); the archive puts the cursor in its search field and clears it.
     var wantsSearchFocus = false

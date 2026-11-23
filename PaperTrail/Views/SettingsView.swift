@@ -17,6 +17,7 @@ struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @Environment(\.modelContext) private var modelContext
     @State private var errors: [String] = []
+    @AppStorage(SpotlightIndexer.enabledKey) private var spotlightEnabled = true
 
     var body: some View {
         Form {
@@ -103,6 +104,14 @@ struct SettingsView: View {
                 Text("A dedicated mailbox that this Mac checks; its emails go to Needs Review.")
             }
             #endif
+
+            Section {
+                Toggle("Show Documents in Spotlight", isOn: $spotlightEnabled)
+            } header: {
+                Text("Search")
+            } footer: {
+                Text("Find documents by sender, description, amount or their text from the system search. The search index stays on this device; turn this off to remove it.")
+            }
 
             Section {
                 NavigationLink("Learned rules") { RulesView() }

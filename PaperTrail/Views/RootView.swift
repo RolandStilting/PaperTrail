@@ -1,3 +1,4 @@
+import CoreSpotlight
 import EventKit
 import PaperTrailKit
 import SwiftData
@@ -94,7 +95,24 @@ struct RootView: View {
         } message: {
             Text(model.errorMessage ?? "")
         }
+        .sheet(item: $model.documentToOpen) { route in
+            NavigationStack {
+                DocumentDetailView(id: route.id)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { model.documentToOpen = nil }
+                        }
+                    }
+            }
+            #if os(macOS)
+            .frame(minWidth: 720, minHeight: 640)
+            #endif
+        }
         .onOpenURL { model.handle(url: $0) }
+        .onContinueUserActivity(CSSearchableItemActionType) { activity in
+            if let id = SpotlightIndexer.documentID(from: activity) { model.documentToOpen = DocumentRoute(id: id) }
+        }
+        .modifier(SpotlightSync())
         .onChange(of: model.wantsSearchFocus) { _, wants in
             // Find (⌘F) searches the archive; go there first if needed.
             guard wants else { return }

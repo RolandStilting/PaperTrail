@@ -225,6 +225,9 @@
     "Automatic" : {
 
     },
+    "Banking app scans standard QR codes" : {
+
+    },
     "BIC (optional)" : {
 
     },
@@ -413,6 +416,12 @@
 
     },
     "Could not use the Keychain: %@" : {
+
+    },
+    "Couldn't look for QR codes on this device; only links were checked." : {
+
+    },
+    "Couldn't read %@ to look for a payment code. Check that the file is in iCloud Drive and try again." : {
 
     },
     "Create Claim (%lld, %@)" : {
@@ -619,6 +628,12 @@
     "Found in the document's text. Check rate and amounts." : {
 
     },
+    "From the invoice itself: scan the code with your banking app, check the details and confirm there. Paper Trail never sends payments." : {
+
+    },
+    "From the invoice itself: the sender's payment page. Check the details there before you pay. Paper Trail never sends payments." : {
+
+    },
     "From your rule for %@" : {
 
     },
@@ -671,6 +686,12 @@
 
     },
     "Learned rules" : {
+
+    },
+    "Look for Payment Code Again" : {
+
+    },
+    "Looking for a payment code on the invoice…" : {
 
     },
     "Mailbox" : {
@@ -787,6 +808,9 @@
     "Open Paper Trail at login" : {
 
     },
+    "Open Payment Page" : {
+
+    },
     "Opening…" : {
 
     },
@@ -808,7 +832,7 @@
     "Owners" : {
 
     },
-    "Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud." : {
+    "Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud." : {
 
     },
     "Paid" : {
@@ -947,6 +971,9 @@
 
     },
     "Saves the document to Needs Review in iCloud Drive, so you can file it later on any device." : {
+
+    },
+    "Scan" : {
 
     },
     "Scan Document" : {
@@ -1094,6 +1121,9 @@
 
     },
     "These documents are not in Paper Trail anymore (moved or renamed?): %@. Put them back and export again." : {
+
+    },
+    "This invoice has no payment code or link. Use the copy buttons below." : {
 
     },
     "This whole account is only for Paper Trail" : {
