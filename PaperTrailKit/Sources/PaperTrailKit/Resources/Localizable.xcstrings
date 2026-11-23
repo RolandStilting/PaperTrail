@@ -7,6 +7,9 @@
     "\"Inbox\" and \"Needs Review\" are reserved folder names. Pick another owner name." : {
 
     },
+    "* Personal expense reimbursed by %@." : {
+
+    },
     "%@ pays with a SEPA file. Enter the account name and IBAN it pays from." : {
 
     },
@@ -68,6 +71,9 @@
         }
       }
     },
+    "Documents" : {
+
+    },
     "Enter both mailbox folders." : {
 
     },
@@ -77,7 +83,28 @@
     "Every owner needs a name." : {
 
     },
+    "excl. %@" : {
+
+    },
+    "Excl. VAT" : {
+
+    },
+    "Foreign VAT" : {
+
+    },
+    "Foreign VAT (not in the total)" : {
+
+    },
     "IBAN: %@" : {
+
+    },
+    "input VAT to reclaim" : {
+
+    },
+    "Made by Paper Trail from the documents' VAT lines. Check deductibility with your accountant." : {
+
+    },
+    "No VAT found – check" : {
 
     },
     "Paper Trail won't check the Inbox of an account you also use for other mail: it would file and move every email. Use a mail rule that moves the Paper Trail address's emails to their own folder, and enter that folder." : {
@@ -96,10 +123,25 @@
         }
       }
     },
+    "Rate" : {
+
+    },
+    "Rate %@" : {
+
+    },
     "Receipts without a known amount are not in the total." : {
 
     },
+    "Reclaim" : {
+
+    },
+    "Reclaim (reimbursed expense)" : {
+
+    },
     "Reference: %@" : {
+
+    },
+    "Reverse charge – check" : {
 
     },
     "Same sender and the same invoice number or reference." : {
@@ -115,6 +157,9 @@
 
     },
     "Shared document" : {
+
+    },
+    "Status" : {
 
     },
     "The connection to the mail server was closed. Check your internet connection and try again." : {
@@ -151,6 +196,9 @@
     "This is exactly the same file." : {
 
     },
+    "To check (not in the total)" : {
+
+    },
     "To pay – %@" : {
 
     },
@@ -164,6 +212,15 @@
 
     },
     "Use folder names without accents or special letters." : {
+
+    },
+    "VAT" : {
+
+    },
+    "VAT overview %@" : {
+
+    },
+    "VAT to reclaim" : {
 
     }
   },

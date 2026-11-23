@@ -18,6 +18,7 @@ struct VATOverviewView: View {
     @State private var editing: DocumentRecord?
     @State private var export: ExportFiles?
     @State private var errorMessage: String?
+    @State private var confirmingReadAgain = false
 
     private var companies: [Owner] { settingsStore.settings.owners.filter { $0.vatPeriod != nil } }
 
@@ -61,12 +62,17 @@ struct VATOverviewView: View {
                 ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
             }
             .onAppear(perform: setUp)
+            .confirmationDialog("Read VAT again for all documents in this period?", isPresented: $confirmingReadAgain) {
+                Button("Read Again", role: .destructive) { findVAT(overwrite: true) }
+            } message: {
+                Text("VAT lines you corrected by hand in this period are replaced by what Paper Trail reads from the text.")
+            }
             .sheet(item: $editing) { record in
                 VATEditSheet(record: record)
             }
             .sheet(item: $export) { files in
                 ExportReadyView(title: String(localized: "VAT Overview Ready"), files: files.urls,
-                                footer: String(localized: "The PDF summarises the period; the CSV lists every document and VAT line. Check deductibility with your accountant.")) { export = nil }
+                                footer: String(localized: "The PDF has the summary followed by every invoice and receipt; the CSV lists every document and VAT line. Check deductibility with your accountant.")) { export = nil }
             }
             .alert("Something went wrong", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
                 Button("OK", role: .cancel) {}
@@ -111,7 +117,10 @@ struct VATOverviewView: View {
                 LabeledContent("Foreign VAT", value: BillReminderText.amount(report.foreignVAT))
             }
             if records.contains(where: { $0.vatInfo == nil && !($0.extractedText ?? "").isEmpty }) {
-                Button("Find VAT in Documents", systemImage: "text.magnifyingglass") { findVAT() }
+                Button("Find VAT in Documents", systemImage: "text.magnifyingglass") { findVAT(overwrite: false) }
+            }
+            if records.contains(where: { !($0.extractedText ?? "").isEmpty }) {
+                Button("Read VAT Again for This Period…", systemImage: "arrow.clockwise") { confirmingReadAgain = true }
             }
             Button("Export PDF and CSV…", systemImage: "square.and.arrow.up") { exportReport(report) }
                 .disabled(report.items.isEmpty)
@@ -164,28 +173,44 @@ struct VATOverviewView: View {
         period = VATPeriod.containing(.now, kind: kind).previous()
     }
 
-    private func findVAT() {
-        for record in records where record.vatInfo == nil {
+    private func findVAT(overwrite: Bool) {
+        for record in records where overwrite || record.vatInfo == nil {
             guard let text = record.extractedText, !text.isEmpty else { continue }
             let found = VATExtractor.extract(from: text, total: record.amount)
-            if !found.isEmpty { record.vatInfo = found }
+            if !found.isEmpty || overwrite { record.vatInfo = found.isEmpty ? nil : found }
         }
         save()
     }
 
     private func exportReport(_ report: VATReport) {
-        do {
-            let folder = FileManager.default.temporaryDirectory.appending(path: "VAT/\(UUID().uuidString)", directoryHint: .isDirectory)
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-            let base = FileNamer.sanitizeComponent("VAT \(company) \(report.period.label())")
-            let pdf = folder.appending(path: "\(base).pdf")
-            let csv = folder.appending(path: "\(base).csv")
-            try report.pdf().write(to: pdf, options: .atomic)
-            try report.csv().write(to: csv, options: .atomic)
-            export = ExportFiles(urls: [pdf, csv])
-        } catch {
-            errorMessage = String(localized: "Could not make the export: \(error.localizedDescription)")
+        Task {
+            do {
+                let root = try await ICloudArchiveLocation().resolveRoot().url
+                var documents: [Data] = []
+                var missing: [String] = []
+                for item in report.documentsInOrder {
+                    do { documents.append(try InboxCollector.coordinatedRead(root.appending(path: item.relativePath))) } catch { missing.append(item.relativePath) }
+                }
+                guard missing.isEmpty else {
+                    errorMessage = String(localized: "These documents are not in Paper Trail anymore (moved or renamed?): \(missing.joined(separator: ", ")). Put them back and export again.")
+                    return
+                }
+                try writeExport(report, documents: documents)
+            } catch {
+                errorMessage = String(localized: "Could not make the export: \(error.localizedDescription)")
+            }
         }
+    }
+
+    private func writeExport(_ report: VATReport, documents: [Data]) throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "VAT/\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let base = FileNamer.sanitizeComponent("VAT \(company) \(report.period.label())")
+        let pdf = folder.appending(path: "\(base).pdf")
+        let csv = folder.appending(path: "\(base).csv")
+        try report.pdf(documents: documents).write(to: pdf, options: .atomic)
+        try report.csv().write(to: csv, options: .atomic)
+        export = ExportFiles(urls: [pdf, csv])
     }
 
     private func markSubmitted(_ report: VATReport) {

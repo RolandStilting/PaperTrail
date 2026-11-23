@@ -60,18 +60,67 @@ public enum VATExtractor {
         var info = VATInfo()
         let lowered = text.lowercased()
         info.isReverseCharge = reverseChargePhrases.contains { lowered.contains($0) }
+        let lines = lowered.components(separatedBy: .newlines)
+        var found: [VATLine] = []
 
-        for rawLine in lowered.components(separatedBy: .newlines) {
-            let words = Set(rawLine.split { !($0.isLetter || $0 == ".") }.map { String($0).trimmingCharacters(in: CharacterSet(charactersIn: ".")) })
-            let hasDutch = dutchWords.contains { words.contains($0.trimmingCharacters(in: CharacterSet(charactersIn: "."))) } || rawLine.contains("b.t.w.")
-            let hasForeign = foreignWords.contains { words.contains($0) }
-            guard hasDutch || hasForeign, let (rate, rest) = percentage(in: rawLine) else { continue }
-            let amounts = moneyAmounts(in: rest)
-            guard let line = vatLine(rate: rate, amounts: amounts, total: total) else { continue }
-            if !info.lines.contains(line) { info.lines.append(line) }
-            if hasForeign || !dutchRates.contains(rate) { info.isForeign = true }
+        for (index, rawLine) in lines.enumerated() {
+            let (hasDutch, hasForeign) = vatWords(in: rawLine)
+            guard hasDutch || hasForeign else { continue }
+
+            var line: VATLine?
+            if let (rate, rest) = percentage(in: rawLine) {
+                line = vatLine(rate: rate, amounts: moneyAmounts(in: rest), total: total)
+                // PDF tables often put the amount on the next line: "BTW 21%" / "€ 5,03".
+                if line == nil, index + 1 < lines.count, percentage(in: lines[index + 1]) == nil,
+                   !vatWords(in: lines[index + 1]).0, !vatWords(in: lines[index + 1]).1 {
+                    line = vatLine(rate: rate, amounts: moneyAmounts(in: lines[index + 1]), total: total)
+                }
+                if let rate = line?.rate, hasForeign || !dutchRates.contains(rate) { info.isForeign = true }
+            } else if let total, !rawLine.contains("incl"), !rawLine.contains("excl") {
+                // "BTW € 5,03" without a rate: accept it only when it fits a Dutch rate of the total.
+                let amounts = moneyAmounts(in: rawLine)
+                for rate in [21.0, 9.0] {
+                    if let vat = amounts.first(where: { abs(total * rate / (100 + rate) - $0) <= 0.02 }) {
+                        line = VATLine(rate: rate, base: ((total - vat) * 100).rounded() / 100, amount: vat)
+                        break
+                    }
+                }
+                if line != nil, hasForeign { info.isForeign = true }
+            }
+            if let line, !found.contains(line) { found.append(line) }
         }
+        info.lines = merged(found)
         return info
+    }
+
+    static func vatWords(in line: String) -> (dutch: Bool, foreign: Bool) {
+        let words = Set(line.split { !$0.isLetter }.map(String.init))
+        let dutch = ["btw", "vat", "omzetbelasting"].contains(where: words.contains) || line.contains("b.t.w.")
+        let foreign = foreignWords.contains(where: words.contains)
+        return (dutch, foreign)
+    }
+
+    /// One line per rate. When a line equals the sum of the others with that rate (item lines
+    /// plus a total line), only that line counts, so VAT is never counted twice; otherwise the
+    /// lines are added up.
+    static func merged(_ lines: [VATLine]) -> [VATLine] {
+        var result: [VATLine] = []
+        for rate in lines.map(\.rate).reduce(into: [Double](), { if !$0.contains($1) { $0.append($1) } }) {
+            let group = lines.filter { $0.rate == rate }
+            guard group.count > 1 else { result += group; continue }
+            let cents = group.map { Int(($0.amount * 100).rounded()) }
+            if let index = cents.indices.first(where: { cents[$0] * 2 == cents.reduce(0, +) }) {
+                result.append(group[index])
+                continue
+            }
+            let bases = group.compactMap(\.base)
+            result.append(VATLine(
+                rate: rate,
+                base: bases.count == group.count ? Double(bases.map { Int(($0 * 100).rounded()) }.reduce(0, +)) / 100 : nil,
+                amount: Double(cents.reduce(0, +)) / 100
+            ))
+        }
+        return result
     }
 
     /// The first percentage in the line, and the line with it removed (so "21" isn't read as money).
@@ -119,6 +168,10 @@ public enum VATExtractor {
         if let total, let vat = amounts.first(where: { abs(total * rate / (100 + rate) - $0) <= 0.02 }) {
             return VATLine(rate: rate, base: (total * 100 - vat * 100).rounded() / 100, amount: vat)
         }
-        return amounts.count == 1 ? VATLine(rate: rate, amount: amounts[0]) : nil
+        // A lone amount is the VAT only if it can be: never more than the rate of the total
+        // (so "Totaal incl. 21% btw € 121,00" is not read as VAT).
+        guard amounts.count == 1 else { return nil }
+        if let total, amounts[0] > total * rate / 100 + 0.02 { return nil }
+        return VATLine(rate: rate, amount: amounts[0])
     }
 }

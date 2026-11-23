@@ -20,6 +20,16 @@
         }
       }
     },
+    "%@ · %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@"
+          }
+        }
+      }
+    },
     "%@ › %@" : {
       "localizations" : {
         "en" : {
@@ -36,6 +46,16 @@
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ An earlier document is in your archive:\n%2$@"
+          }
+        }
+      }
+    },
+    "%@ over %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ over %2$@"
           }
         }
       }
@@ -94,7 +114,13 @@
     "Add owner" : {
 
     },
+    "Add VAT Line" : {
+
+    },
     "All %lld expenses in it are cleared at once." : {
+
+    },
+    "All documents in Paper Trail in iCloud Drive (every owner, Inbox and Needs Review) move to the Trash on this Mac." : {
 
     },
     "Allow Paper Trail in System Settings → General → Login Items." : {
@@ -104,6 +130,12 @@
 
     },
     "Already filed?" : {
+
+    },
+    "Also delete the bills' reminders" : {
+
+    },
+    "Also forget learned rules" : {
 
     },
     "Amount" : {
@@ -128,6 +160,9 @@
 
     },
     "Bills" : {
+
+    },
+    "By the date on each document. Paper Trail counts the VAT lines; whether VAT is deductible is for you and your accountant to decide." : {
 
     },
     "Can't be paid by file" : {
@@ -163,6 +198,15 @@
     "Claim Ready" : {
 
     },
+    "Clear All Documents" : {
+
+    },
+    "Clear All Documents…" : {
+
+    },
+    "Company" : {
+
+    },
     "Completing the bill's reminder in Reminders also marks it paid." : {
 
     },
@@ -188,6 +232,9 @@
 
     },
     "Could not find a free file name for \"%@\". Change the description and try again." : {
+
+    },
+    "Could not make the export: %@" : {
 
     },
     "Could not make the QR code. Use the copy buttons instead." : {
@@ -222,6 +269,9 @@
           }
         }
       }
+    },
+    "Could not move these to the Trash: %@. Nothing was cleared from the index. Check iCloud Drive and try again." : {
+
     },
     "Could not read \"%@\". Make sure the file is downloaded and not damaged, then try again." : {
 
@@ -294,8 +344,21 @@
     "Document date" : {
 
     },
+    "Documents" : {
+
+    },
     "Done" : {
 
+    },
+    "Done: %lld folders moved to the Trash, %lld documents cleared from the list." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Done: %1$lld folders moved to the Trash, %2$lld documents cleared from the list."
+          }
+        }
+      }
     },
     "Due" : {
 
@@ -310,9 +373,6 @@
 
     },
     "Each owner gets a top-level folder. Renaming only affects documents filed afterwards." : {
-
-    },
-    "Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud." : {
 
     },
     "Email" : {
@@ -349,6 +409,12 @@
     "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email." : {
 
     },
+    "Excl. VAT" : {
+
+    },
+    "expense" : {
+
+    },
     "Expense" : {
 
     },
@@ -362,6 +428,9 @@
 
     },
     "Export" : {
+
+    },
+    "Export PDF and CSV…" : {
 
     },
     "Export SEPA File…" : {
@@ -391,6 +460,9 @@
     "Filed, but no reminder" : {
 
     },
+    "Find VAT in Documents" : {
+
+    },
     "Folder to file from" : {
 
     },
@@ -401,6 +473,18 @@
 
     },
     "For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed." : {
+
+    },
+    "Foreign VAT" : {
+
+    },
+    "Foreign VAT (not in the Dutch return)" : {
+
+    },
+    "Foreign VAT (not in the total)" : {
+
+    },
+    "Found in the document's text. Check rate and amounts." : {
 
     },
     "IBAN" : {
@@ -427,6 +511,9 @@
     "Its reminder is completed too." : {
 
     },
+    "Kept: owners, categories, payment and email settings. Emails in your mailbox are not touched." : {
+
+    },
     "Learned rules" : {
 
     },
@@ -436,7 +523,13 @@
     "Mark a document \"To be reimbursed by\" a company when filing it, or from the document list." : {
 
     },
+    "Mark as Not Reimbursed" : {
+
+    },
     "Mark as Paid" : {
+
+    },
+    "Mark as Submitted" : {
 
     },
     "Mark Reimbursed" : {
@@ -448,7 +541,13 @@
     "Mark this claim as reimbursed?" : {
 
     },
+    "Monthly" : {
+
+    },
     "Move filed emails to" : {
+
+    },
+    "Moves all documents to the Trash and clears the lists, for example after testing. Settings stay." : {
 
     },
     "Name on the paying account" : {
@@ -458,6 +557,9 @@
 
     },
     "New owner" : {
+
+    },
+    "Next" : {
 
     },
     "NL00 BANK 0123 4567 89" : {
@@ -475,6 +577,9 @@
     "No open bills" : {
 
     },
+    "No owner files VAT returns yet. Set \"VAT return\" for your companies in Settings → Paying bills and VAT." : {
+
+    },
     "No QR code: the amount is missing or not valid." : {
 
     },
@@ -490,7 +595,13 @@
     "No text found" : {
 
     },
+    "No VAT line found in the text. Add one if the document shows VAT." : {
+
+    },
     "Nobody" : {
+
+    },
+    "None" : {
 
     },
     "OK" : {
@@ -515,6 +626,9 @@
 
     },
     "Owners" : {
+
+    },
+    "Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud." : {
 
     },
     "Paper Trail" : {
@@ -547,7 +661,7 @@
     "Paying account" : {
 
     },
-    "Paying bills" : {
+    "Paying bills and VAT" : {
 
     },
     "Payment" : {
@@ -565,10 +679,19 @@
     "Preparing document…" : {
 
     },
+    "Previous" : {
+
+    },
     "QR code and copy buttons" : {
 
     },
+    "Quarterly" : {
+
+    },
     "Quit Paper Trail" : {
+
+    },
+    "Rate" : {
 
     },
     "Received" : {
@@ -590,6 +713,12 @@
 
     },
     "Reminder Not Found – Create Again" : {
+
+    },
+    "Remove" : {
+
+    },
+    "Reverse charge (BTW verlegd)" : {
 
     },
     "Review Later" : {
@@ -661,10 +790,22 @@
     "Signed in to the mailbox. Save to start checking it." : {
 
     },
+    "Some reminders could not be deleted; remove them in Reminders: %@" : {
+
+    },
     "Something went wrong" : {
 
     },
+    "Start over" : {
+
+    },
+    "Submitted" : {
+
+    },
     "Suggesting details on this device…" : {
+
+    },
+    "Summary" : {
 
     },
     "Test Connection" : {
@@ -677,6 +818,9 @@
 
     },
     "The alias your rule filters on (optional)" : {
+
+    },
+    "The document list, bills and expense claims are cleared on all your devices." : {
 
     },
     "The email \"%@\" has no PDF, image or text to file. It stays in the mailbox; move it out yourself." : {
@@ -694,6 +838,9 @@
     "The PDF has a summary page and all receipts; the CSV opens in Excel or Numbers. The expenses are now marked as submitted." : {
 
     },
+    "The PDF summarises the period; the CSV lists every document and VAT line. Check deductibility with your accountant." : {
+
+    },
     "The receipt \"%@\" is not in Paper Trail anymore (moved or renamed?). Put it back or remove it from the claim, then try again." : {
 
     },
@@ -709,7 +856,19 @@
     "To Be Reimbursed By" : {
 
     },
+    "To check (not in the total)" : {
+
+    },
+    "Total" : {
+
+    },
+    "Type %@ to confirm" : {
+
+    },
     "Undo Claim" : {
+
+    },
+    "Undo Submitted" : {
 
     },
     "Unpaid bill" : {
@@ -724,6 +883,24 @@
     "Upload the file in your bank's business internet banking, check the payments there and sign. Nothing is paid until you sign at the bank. Bills stay open until their reminder is completed." : {
 
     },
+    "VAT" : {
+
+    },
+    "VAT Overview" : {
+
+    },
+    "VAT Overview Ready" : {
+
+    },
+    "VAT return" : {
+
+    },
+    "VAT to reclaim" : {
+
+    },
+    "What happens" : {
+
+    },
     "When you file a document, Paper Trail remembers where documents from that sender go." : {
 
     },
@@ -731,6 +908,12 @@
 
     },
     "xxxx-xxxx-xxxx-xxxx" : {
+
+    },
+    "Yearly" : {
+
+    },
+    "You can put files back from the Trash; deleted iCloud Drive files can usually also be recovered for a while on iCloud.com. Empty the Trash only when you're sure." : {
 
     },
     "Your main iCloud address, not the alias" : {

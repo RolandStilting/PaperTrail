@@ -61,3 +61,32 @@ struct VATExtractorTests {
         #expect(VATInfo().encoded == "")
     }
 }
+
+@Suite("VATExtractor layouts")
+struct VATExtractorLayoutTests {
+    @Test func amountOnTheNextLine() throws {
+        let info = VATExtractor.extract(from: try VATExtractorTests.fixture("VAT", "pdf_table_split_lines"), total: 34.98)
+        #expect(info.lines == [VATLine(rate: 21, base: 28.91, amount: 6.07)])
+    }
+
+    @Test func itemLinesPlusTotalLineCountOnce() throws {
+        let info = VATExtractor.extract(from: try VATExtractorTests.fixture("VAT", "item_and_total_vat_lines"), total: 11.98)
+        #expect(info.lines.count == 1)
+        #expect(info.total == 2.08)
+    }
+
+    @Test func twoItemsWithTheSameRateAreAddedUp() {
+        let lines = [VATLine(rate: 21, base: 10, amount: 2.10), VATLine(rate: 21, base: 20, amount: 4.20)]
+        #expect(VATExtractor.merged(lines) == [VATLine(rate: 21, base: 30, amount: 6.30)])
+    }
+
+    @Test func vatWithoutRateIsDerivedFromTheTotal() throws {
+        let info = VATExtractor.extract(from: try VATExtractorTests.fixture("VAT", "vat_without_rate"), total: 12.10)
+        #expect(info.lines == [VATLine(rate: 21, base: 10, amount: 2.10)])
+    }
+
+    @Test func inclusiveTotalIsNotReadAsVAT() throws {
+        let info = VATExtractor.extract(from: try VATExtractorTests.fixture("VAT", "incl_vat_total_only"), total: 25)
+        #expect(info.lines.isEmpty)
+    }
+}

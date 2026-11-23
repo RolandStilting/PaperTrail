@@ -42,8 +42,10 @@ struct VATReportTests {
     @Test func csvHasALinePerRateAndTotals() {
         let text = String(decoding: Self.report.csv(locale: Locale(identifier: "nl_NL"), calendar: Self.calendar).dropFirst(3), as: UTF8.self)
         let rows = text.components(separatedBy: "\r\n")
-        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;9%;4,49;0,40;17,39;Reclaim (reimbursed expense);b.pdf"))
-        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;21%;10,33;2,17;;Reclaim (reimbursed expense);b.pdf"))
+        #expect(rows[0] == "Date;Sender;Description;Rate;Excl. VAT;VAT;Incl. VAT;Status;Document")
+        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;9%;4,49;0,40;4,89;Reclaim (reimbursed expense);b.pdf"))
+        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;21%;10,33;2,17;12,50;Reclaim (reimbursed expense);b.pdf"))
+        #expect(rows.contains("2026-01-15;Proefzorg;Polis;;;;148,50;No VAT found – check;e.pdf"))
         #expect(rows.contains(";VAT to reclaim;;;;150,73;;;"))
         #expect(rows.contains(";Foreign VAT (not in the total);;;;11,78;;;"))
     }
@@ -51,5 +53,22 @@ struct VATReportTests {
     @Test func pdfRenders() throws {
         let pdf = try Self.report.pdf(calendar: Self.calendar)
         #expect(CGPDFDocument(CGDataProvider(data: pdf as CFData)!)?.numberOfPages == 1)
+    }
+
+    @Test func pdfAppendsEveryDocumentInListOrder() throws {
+        let page = try PDFBuilder.makePDF(from: [ExpenseClaimTests.image()])
+        let twoPages = try PDFBuilder.makePDF(from: [ExpenseClaimTests.image(), ExpenseClaimTests.image()])
+        #expect(Self.report.documentsInOrder.map(\.sender) == ["Schildersbedrijf Testkwast", "Drogisterij Voorbeeld", "Gasthof Beispiel", "Proefzorg", "Example Software"])
+        let pdf = try Self.report.pdf(documents: [page, twoPages, page, page, page], calendar: Self.calendar)
+        #expect(CGPDFDocument(CGDataProvider(data: pdf as CFData)!)?.numberOfPages == 1 + 6)
+    }
+
+    @Test func missingBaseIsCalculatedFromTheTotal() {
+        let item = VATReportItem(date: Self.day(3, 1), sender: "Parkeergarage Proef", description: "Parkeren", amount: 12.10,
+                                 vat: VATInfo(lines: [VATLine(rate: 21, amount: 2.10)]), isReimbursedExpense: false, relativePath: "p.pdf")
+        let amounts = VATReport.amounts(of: item.vat.lines[0], in: item)
+        #expect(amounts.excl == 10.00 && amounts.incl == 12.10)
+        let report = VATReport(company: "Company1", period: .containing(Self.day(3, 1), kind: .quarter, calendar: Self.calendar), items: [item])
+        #expect(report.totalsPerRate == [VATReport.RateTotal(rate: 21, base: 10, vat: 2.10)])
     }
 }

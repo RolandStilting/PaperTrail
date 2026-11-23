@@ -114,12 +114,22 @@ public struct VATReport: Sendable {
     /// Totals per Dutch rate for the domestic documents, highest rate first.
     public var totalsPerRate: [RateTotal] {
         var cents: [Double: (base: Int, vat: Int)] = [:]
-        for line in domestic.flatMap(\.vat.lines) {
-            let current = cents[line.rate] ?? (0, 0)
-            cents[line.rate] = (current.base + Int(((line.base ?? 0) * 100).rounded()), current.vat + Int((line.amount * 100).rounded()))
+        for item in domestic {
+            for line in item.vat.lines {
+                let current = cents[line.rate] ?? (0, 0)
+                let base = Self.amounts(of: line, in: item).excl ?? 0
+                cents[line.rate] = (current.base + Int((base * 100).rounded()), current.vat + Int((line.amount * 100).rounded()))
+            }
         }
         return cents.map { RateTotal(rate: $0.key, base: Double($0.value.base) / 100, vat: Double($0.value.vat) / 100) }
             .sorted { $0.rate > $1.rate }
+    }
+
+    /// Amount excluding and including VAT for one VAT line. When the document doesn't state the
+    /// base, it is calculated: for a single VAT line, total minus VAT; incl. is always excl. + VAT.
+    public static func amounts(of line: VATLine, in item: VATReportItem) -> (excl: Double?, incl: Double?) {
+        let excl = line.base ?? (item.vat.lines.count == 1 ? item.amount.map { (($0 - line.amount) * 100).rounded() / 100 } : nil)
+        return (excl, excl.map { (($0 + line.amount) * 100).rounded() / 100 })
     }
 
     public var totalToReclaim: Double {
@@ -155,18 +165,22 @@ public struct VATReport: Sendable {
         }
         var rows = [[String(localized: "Date", bundle: .module), String(localized: "Sender", bundle: .module), String(localized: "Description", bundle: .module),
                      String(localized: "Rate", bundle: .module), String(localized: "Excl. VAT", bundle: .module), String(localized: "VAT", bundle: .module),
-                     String(localized: "Total", bundle: .module), String(localized: "Status", bundle: .module), String(localized: "Document", bundle: .module)]]
+                     String(localized: "Incl. VAT", bundle: .module), String(localized: "Status", bundle: .module), String(localized: "Document", bundle: .module)]]
         for item in items {
-            let lines = item.vat.lines.isEmpty ? [nil] : item.vat.lines.map(Optional.some)
-            for (index, line) in lines.enumerated() {
-                rows.append([namer.dateString(item.date), item.sender, item.description,
-                             line.map { rateText($0.rate) } ?? "", number(line?.base), number(line?.amount),
-                             index == 0 ? number(item.amount) : "", status(item), item.relativePath])
+            if item.vat.lines.isEmpty {
+                rows.append([namer.dateString(item.date), item.sender, item.description, "", "", "", number(item.amount), status(item), item.relativePath])
+                continue
+            }
+            for line in item.vat.lines {
+                let amounts = Self.amounts(of: line, in: item)
+                rows.append([namer.dateString(item.date), item.sender, item.description, rateText(line.rate),
+                             number(amounts.excl), number(line.amount), number(amounts.incl), status(item), item.relativePath])
             }
         }
         rows.append([])
         for total in totalsPerRate {
-            rows.append(["", String(localized: "Total", bundle: .module) + " " + rateText(total.rate), "", rateText(total.rate), number(total.base), number(total.vat), "", "", ""])
+            rows.append(["", String(localized: "Total", bundle: .module) + " " + rateText(total.rate), "", rateText(total.rate),
+                         number(total.base), number(total.vat), number(((total.base + total.vat) * 100).rounded() / 100), "", ""])
         }
         rows.append(["", String(localized: "VAT to reclaim", bundle: .module), "", "", "", number(totalToReclaim), "", "", ""])
         if !foreign.isEmpty {
@@ -176,8 +190,12 @@ public struct VATReport: Sendable {
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
 
-    /// A printable summary: totals per rate, then the documents per group.
-    public func pdf(locale: Locale = .current, calendar: Calendar? = nil) throws(PDFBuilderError) -> Data {
+    /// The documents in the order the PDF lists them: reclaim, foreign, to check.
+    public var documentsInOrder: [VATReportItem] { domestic + foreign + toCheck }
+
+    /// A printable summary: totals per rate, then the documents per group, then (if given) every
+    /// document itself, in `documentsInOrder` order.
+    public func pdf(documents: [Data] = [], locale: Locale = .current, calendar: Calendar? = nil) throws(PDFBuilderError) -> Data {
         let namer = FileNamer(calendar: calendar ?? FileNamer.defaultCalendar())
         func money(_ value: Double) -> String { value.formatted(.currency(code: "EUR").locale(locale)) }
         func rateText(_ rate: Double) -> String { rate == rate.rounded() ? "\(Int(rate)) %" : "\(rate) %" }
@@ -214,7 +232,10 @@ public struct VATReport: Sendable {
         }
         writer.space(8)
         writer.text(String(localized: "Made by Paper Trail from the documents' VAT lines. Check deductibility with your accountant.", bundle: .module), size: 9)
-        return writer.finish()
+        if !documents.isEmpty {
+            writer.text(String(localized: "The documents follow on the next pages, in the order listed.", bundle: .module), size: 9)
+        }
+        return writer.finish(appending: documents)
     }
 }
 
@@ -279,8 +300,20 @@ struct SimplePDFWriter {
         y -= 18
     }
 
-    mutating func finish() -> Data {
+    /// Ends the text pages, then adds every page of each document unchanged.
+    mutating func finish(appending documents: [Data] = []) -> Data {
         context.endPDFPage()
+        for data in documents {
+            guard let provider = CGDataProvider(data: data as CFData), let document = CGPDFDocument(provider), document.numberOfPages > 0 else { continue }
+            for number in 1...document.numberOfPages {
+                guard let page = document.page(at: number) else { continue }
+                var box = page.getBoxRect(.mediaBox)
+                let boxData = Data(bytes: &box, count: MemoryLayout<CGRect>.size)
+                context.beginPDFPage([kCGPDFContextMediaBox as String: boxData] as CFDictionary)
+                context.drawPDFPage(page)
+                context.endPDFPage()
+            }
+        }
         context.closePDF()
         return output as Data
     }

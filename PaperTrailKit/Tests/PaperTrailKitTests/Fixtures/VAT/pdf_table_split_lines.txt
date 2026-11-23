@@ -1,0 +1,16 @@
+Webwinkel Voorbeeld B.V.
+Factuur 2026-55123
+Factuurdatum: 3 november 2026
+
+Omschrijving
+Bedrag
+USB-C kabel
+19,99
+Hoesje
+14,99
+Subtotaal excl. btw
+28,91
+BTW 21%
+6,07
+Totaal
+34,98
