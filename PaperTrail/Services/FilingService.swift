@@ -8,10 +8,22 @@ struct FilingService {
     var store: any ArchiveFileStoring
     var namer = FileNamer()
 
+    var reviewQueue: ReviewQueue { ReviewQueue(store: store) }
+
+    /// Saves the document to Needs Review to file later.
+    func saveForReview(_ document: PendingDocument) async throws {
+        let root = try await location.resolveRoot()
+        _ = try await reviewQueue.add(document, root: root.url)
+    }
+
     func file(_ document: PendingDocument, request: FilingRequest, extractedText: String?, suggestedSender: String = "", context: ModelContext) async throws -> DocumentRecord {
         let plan = try FilingPlanner.plan(for: request, namer: namer)
         let root = try await location.resolveRoot()
-        let stored = try await store.store(document.pdfData, plan: plan, root: root.url, removingSource: nil)
+        if let queued = document.reviewItemURL, !FileManager.default.fileExists(atPath: queued.path(percentEncoded: false)) {
+            // Filed or removed elsewhere in the meantime; don't create a second copy.
+            throw ReviewQueueError.alreadyHandled(queued.lastPathComponent)
+        }
+        let stored = try await store.store(document.pdfData, plan: plan, root: root.url, removingSource: document.reviewItemURL)
 
         let record = DocumentRecord(
             relativePath: stored.relativePath,

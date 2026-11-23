@@ -11,6 +11,10 @@ nonisolated struct PendingDocument: Identifiable, Sendable {
     var originalName: String?
     /// Page images to OCR when the PDF has no text layer; empty for text PDFs.
     var pageImages: [CGImage] = []
+    /// Set when the document comes from Needs Review; filing removes it from there.
+    var reviewItemURL: URL?
+    /// When the document came in, if earlier than now (queued documents).
+    var receivedDate: Date?
 }
 
 nonisolated enum CaptureError: LocalizedError {

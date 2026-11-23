@@ -142,6 +142,15 @@ struct FilingView: View {
                 }
             }
 
+            if document.reviewItemURL == nil {
+                Section {
+                    Button("Review Later", systemImage: "tray.and.arrow.down") { Task { await saveForReview() } }
+                        .disabled(isFiling)
+                } footer: {
+                    Text("Saves the document to Needs Review in iCloud Drive, so you can file it later on any device.")
+                }
+            }
+
             Section("Recognised text") {
                 if let extractedText {
                     DisclosureGroup(extractedText.isEmpty ? "No text found" : "Show text") {
@@ -227,7 +236,19 @@ struct FilingView: View {
         }
     }
 
+    private func saveForReview() async {
+        isFiling = true
+        defer { isFiling = false }
+        do {
+            try await filingService.saveForReview(document)
+            onDone()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
     private func applyDefaults() {
+        if let received = document.receivedDate { receivedDate = received }
         if ownerName.isEmpty { ownerName = settingsStore.settings.owners.first?.name ?? "" }
         if categoryName.isEmpty { categoryName = settingsStore.settings.categories.first?.name ?? "" }
     }

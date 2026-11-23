@@ -65,3 +65,36 @@ struct FilingServiceDuplicateTests {
         #expect(try service.duplicates(of: emailed, request: request, context: context).first?.reason == .sameReference)
     }
 }
+
+@MainActor
+@Suite("Review queue")
+struct ReviewQueueTests {
+    @Test func savedDocumentWaitsAndLeavesWhenFiled() async throws {
+        let schema = Schema([DocumentRecord.self, FilingRuleRecord.self])
+        let container = try ModelContainer(for: schema, configurations: ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none))
+        let root = FileManager.default.temporaryDirectory.appending(path: "PaperTrailTests-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        let service = FilingService(location: FilingServiceRuleTests.TempLocation(url: root), store: CoordinatedFileStore())
+
+        #expect(try await service.reviewQueue.items(root: root).isEmpty)
+        let scan = PendingDocument(pdfData: Data("%PDF-1.7 synthetic queued scan".utf8), source: .scan)
+        try await service.saveForReview(scan)
+
+        let items = try await service.reviewQueue.items(root: root)
+        let item = try #require(items.first)
+        #expect(items.count == 1)
+        #expect(item.name.hasSuffix(" Scan.pdf"))
+        #expect(item.isDownloaded)
+
+        let opened = try await service.reviewQueue.open(item)
+        #expect(opened.pdfData == scan.pdfData)
+        #expect(opened.reviewItemURL == item.url)
+        let request = FilingRequest(owner: "Private", category: "Letters", receivedDate: opened.receivedDate ?? .now, sender: "Gemeente", description: "Brief")
+        _ = try await service.file(opened, request: request, extractedText: nil, context: container.mainContext)
+
+        #expect(try await service.reviewQueue.items(root: root).isEmpty)
+        await #expect(throws: ReviewQueueError.self) {
+            _ = try await service.file(opened, request: request, extractedText: nil, context: container.mainContext)
+        }
+    }
+}

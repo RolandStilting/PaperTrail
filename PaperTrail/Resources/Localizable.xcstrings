@@ -27,6 +27,16 @@
         }
       }
     },
+    "%@ An earlier document is in your archive:\n%@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ An earlier document is in your archive:\n%2$@"
+          }
+        }
+      }
+    },
     "%@ Try again." : {
 
     },
@@ -40,6 +50,9 @@
 
     },
     "Add owner" : {
+
+    },
+    "Already filed?" : {
 
     },
     "Amount" : {
@@ -116,6 +129,9 @@
 
     },
     "File" : {
+
+    },
+    "File Anyway" : {
 
     },
     "File document" : {

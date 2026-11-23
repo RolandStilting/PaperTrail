@@ -15,6 +15,8 @@ struct ContentView: View {
     @State private var isPreparing = false
     @State private var errorMessage: String?
     @State private var archiveRoot: ArchiveRoot?
+    @State private var reviewItems: [ReviewItem] = []
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         NavigationStack {
@@ -23,7 +25,23 @@ struct ContentView: View {
                     Label("iCloud Drive is not available. This debug build is saving to a local folder.", systemImage: "exclamationmark.icloud")
                         .foregroundStyle(.orange)
                 }
-                if records.isEmpty {
+                if !reviewItems.isEmpty {
+                    Section("Needs Review") {
+                        ForEach(reviewItems) { item in
+                            Button { Task { await openReviewItem(item) } } label: {
+                                Label {
+                                    Text(item.name)
+                                        .lineLimit(1)
+                                        .truncationMode(.middle)
+                                } icon: {
+                                    Image(systemName: item.isDownloaded ? "doc.badge.clock" : "icloud.and.arrow.down")
+                                }
+                            }
+                            .disabled(isPreparing)
+                        }
+                    }
+                }
+                if records.isEmpty && reviewItems.isEmpty {
                     ContentUnavailableView(
                         "No documents yet",
                         systemImage: "doc.text.viewfinder",
@@ -42,6 +60,7 @@ struct ContentView: View {
                     }
                 }
             }
+            .refreshable { await refreshReviewItems() }
             .navigationTitle("Paper Trail")
             .toolbar { toolbarContent }
             .overlay {
@@ -82,7 +101,16 @@ struct ContentView: View {
         } message: {
             Text(errorMessage ?? "")
         }
-        .task { await resolveArchive() }
+        .task {
+            await resolveArchive()
+            await refreshReviewItems()
+        }
+        .onChange(of: pending == nil) { _, closed in
+            if closed { Task { await refreshReviewItems() } }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { Task { await refreshReviewItems() } }
+        }
     }
 
     @ToolbarContentBuilder
@@ -106,6 +134,25 @@ struct ContentView: View {
     private func resolveArchive() async {
         do {
             archiveRoot = try await filingService.location.resolveRoot()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func refreshReviewItems() async {
+        guard let root = archiveRoot?.url else { return }
+        do {
+            reviewItems = try await filingService.reviewQueue.items(root: root)
+        } catch {
+            errorMessage = String(localized: "Could not read the Needs Review folder: \(error.localizedDescription). Pull down to try again.")
+        }
+    }
+
+    private func openReviewItem(_ item: ReviewItem) async {
+        isPreparing = true
+        defer { isPreparing = false }
+        do {
+            pending = try await filingService.reviewQueue.open(item)
         } catch {
             errorMessage = error.localizedDescription
         }
