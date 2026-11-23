@@ -95,7 +95,7 @@ Claude Code can't do these. Ask the user when one is needed:
 ## Build phases
 
 1. **Capture and file:** project setup, iCloud container, settings for owners and categories, camera scan, OCR, manual filing with the naming rules. ✅ Done 2026-11-23: tested on MacBook Pro and iPhone 17 Pro Max, including two-way sync, name collisions, multi-page scans, Mac PDF import and offline filing.
-2. **Smart proposals:** ← next. Start with a Dutch/English extraction test of the on-device model on synthetic documents. on-device classification, review screen, learned rules, duplicate check (content hash + sender/amount/invoice number).
+2. **Smart proposals:** ← in progress. Done: Dutch/English model evaluation, on-device classification with `ExtractionChecks`, suggestions in the filing screen (tested on Mac and iPhone 2026-11-23). To do: learned rules, duplicate check (content hash + sender/amount/invoice number), Needs Review queue.
 3. **More ways in:** Share Extension, watched Inbox folder, Mac drag and drop.
 4. **Bills in Reminders:** create reminder (title `Pay <Sender> · € <amount>`, due date, notes with IBAN/reference/file path, URL back into the app), listen for completion, open-bills overview, copy buttons.
 5. **Email:** Mac menu-bar helper, IMAP fetching, HTML email to PDF.
@@ -105,7 +105,7 @@ Finish and test one phase before starting the next. Commit in small, working ste
 
 ## Open questions (ask the user, don't assume)
 
-- ~~How well does the on-device model handle Dutch?~~ First test 2026-11-23 (macOS 27.0.1, 10 synthetic docs, `PAPERTRAIL_MODEL_EVAL=1 swift test --filter ModelEvaluation`): Dutch is officially supported and reads well (amounts 10/10, sender 9/10, document date 9/10). Weak spots are judgement, not language: it invents due dates (3/10), treats direct debits as unpaid and takes the recipient's own IBAN, and files receipts as invoices. Rules in `ExtractionChecks` now validate the output against the text (2026-11-23: with checks 10/10 on every field except category 8 and reference 9). Remaining misses: a direct-debit year statement filed as Tax, a bank letter as Letters. Re-run the evaluation after each change. Still to check on real documents on the user's own devices.
+- ~~How well does the on-device model handle Dutch?~~ First test 2026-11-23 (macOS 27.0.1, 10 synthetic docs, `PAPERTRAIL_MODEL_EVAL=1 swift test --filter ModelEvaluation`): Dutch is officially supported and reads well (amounts 10/10, sender 9/10, document date 9/10). Weak spots are judgement, not language: it invents due dates (3/10), treats direct debits as unpaid and takes the recipient's own IBAN, and files receipts as invoices. Rules in `ExtractionChecks` now validate the output against the text (2026-11-23: with checks 10/10 on every field except category 8 and reference 9). Remaining misses: a direct-debit year statement filed as Tax, a bank letter as Letters. Re-run the evaluation after each change. Real-document test on Mac and iPhone (2026-11-23) went well; two misses there led to fixes: a shop receipt saying "te betalen" (receipt check) and a "binnen 14 dagen" payment term (due date = document date + term). Apple Intelligence on iPhone needs the device and Siri languages to match.
 - ~~Which devices does the user have?~~ Answered 2026-11-22: MacBook Pro M4 Max and iPhone 17 Pro Max, both with Apple Intelligence support. No iPad mentioned yet; keep the iPad layout working, but it is untested on hardware.
 - One "To pay" list or one per owner? (Default: one list.)
 - Direct-debit bills: a "check the debit" reminder, or none?
