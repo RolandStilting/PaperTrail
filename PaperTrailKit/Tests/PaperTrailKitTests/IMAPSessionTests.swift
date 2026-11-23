@@ -35,6 +35,7 @@ final class ScriptedIMAPServer: IMAPTransport, @unchecked Sendable {
 
 @Suite("IMAPSession")
 struct IMAPSessionTests {
+    static let account = MailAccount(isEnabled: true, address: "archief@icloud.example", username: "archief")
     static let message = "From: a@example.com\r\nSubject: Bon\r\n\r\nBedrag 12,50\r\n"
 
     static func server(move: Bool = true, failFetchOf failing: UInt32? = nil) -> ScriptedIMAPServer {
@@ -44,12 +45,14 @@ struct IMAPSessionTests {
                 c == #"LOGIN "archief" "abcd-efgh-ijkl-mnop""# ? "TAG OK logged in\r\n" : "TAG NO [AUTHENTICATIONFAILED] Invalid credentials\r\n"
             case "CAPABILITY":
                 "* CAPABILITY IMAP4rev1 UIDPLUS\(move ? " MOVE" : "")\r\nTAG OK\r\n"
-            case #"CREATE "Processed""#:
+            case #"CREATE "Paper Trail Processed""#:
                 "TAG NO [ALREADYEXISTS] Mailbox exists\r\n"
-            case #"LIST "" "Processed""#:
-                "* LIST () \"/\" Processed\r\nTAG OK\r\n"
-            case #"SELECT "INBOX""#:
+            case #"LIST "" "Paper Trail Processed""#:
+                "* LIST () \"/\" \"Paper Trail Processed\"\r\nTAG OK\r\n"
+            case #"SELECT "Paper Trail""#:
                 "* 2 EXISTS\r\nTAG OK [READ-WRITE] selected\r\n"
+            case let c where c.hasPrefix("SELECT"):
+                "TAG NO [NONEXISTENT] Unknown Mailbox\r\n"
             case "UID SEARCH ALL":
                 "* SEARCH 7 9\r\nTAG OK\r\n"
             case let c where c.hasPrefix("UID FETCH"):
@@ -64,36 +67,36 @@ struct IMAPSessionTests {
     @Test func processesAndMovesEveryEmail() async throws {
         let server = Self.server()
         let received = LockedList()
-        let report = try await MailboxProcessor.run(session: IMAPSession(transport: server), user: "archief", password: "abcd-efgh-ijkl-mnop") { raw in
+        let report = try await MailboxProcessor.run(session: IMAPSession(transport: server), account: Self.account, password: "abcd-efgh-ijkl-mnop") { raw in
             received.append(raw)
         }
         #expect(report == MailboxReport(processed: 2))
         #expect(received.items.map { String(decoding: $0, as: UTF8.self) } == [Self.message, Self.message])
-        #expect(server.commands.contains(#"UID MOVE 7 "Processed""#))
-        #expect(server.commands.contains(#"UID MOVE 9 "Processed""#))
+        #expect(server.commands.contains(#"UID MOVE 7 "Paper Trail Processed""#))
+        #expect(server.commands.contains(#"UID MOVE 9 "Paper Trail Processed""#))
         #expect(server.commands.last == "LOGOUT")
     }
 
     @Test func withoutMoveCopiesFlagsAndExpunges() async throws {
         let server = Self.server(move: false)
-        _ = try await MailboxProcessor.run(session: IMAPSession(transport: server), user: "archief", password: "abcd-efgh-ijkl-mnop") { _ in }
-        #expect(server.commands.contains(#"UID COPY 7 "Processed""#))
+        _ = try await MailboxProcessor.run(session: IMAPSession(transport: server), account: Self.account, password: "abcd-efgh-ijkl-mnop") { _ in }
+        #expect(server.commands.contains(#"UID COPY 7 "Paper Trail Processed""#))
         #expect(server.commands.contains(#"UID STORE 7 +FLAGS.SILENT (\Deleted)"#))
         #expect(server.commands.contains("UID EXPUNGE 7"))
     }
 
     @Test func failedEmailStaysInInbox() async throws {
         let server = Self.server(failFetchOf: 9)
-        let report = try await MailboxProcessor.run(session: IMAPSession(transport: server), user: "archief", password: "abcd-efgh-ijkl-mnop") { _ in }
+        let report = try await MailboxProcessor.run(session: IMAPSession(transport: server), account: Self.account, password: "abcd-efgh-ijkl-mnop") { _ in }
         #expect(report.processed == 1)
         #expect(report.failures.count == 1)
-        #expect(!server.commands.contains(#"UID MOVE 9 "Processed""#))
+        #expect(!server.commands.contains(#"UID MOVE 9 "Paper Trail Processed""#))
     }
 
     @Test func handlerFailureKeepsEmail() async throws {
         let server = Self.server()
         struct Boom: Error {}
-        let report = try await MailboxProcessor.run(session: IMAPSession(transport: server), user: "archief", password: "abcd-efgh-ijkl-mnop") { _ in throw Boom() }
+        let report = try await MailboxProcessor.run(session: IMAPSession(transport: server), account: Self.account, password: "abcd-efgh-ijkl-mnop") { _ in throw Boom() }
         #expect(report.processed == 0)
         #expect(!server.commands.contains { $0.hasPrefix("UID MOVE") })
     }
@@ -101,7 +104,7 @@ struct IMAPSessionTests {
     @Test func wrongPasswordIsALoginErrorWithoutThePassword() async throws {
         let server = Self.server()
         do {
-            _ = try await MailboxProcessor.run(session: IMAPSession(transport: server), user: "archief", password: "wrong-secret") { _ in }
+            _ = try await MailboxProcessor.run(session: IMAPSession(transport: server), account: Self.account, password: "wrong-secret") { _ in }
             Issue.record("expected a login error")
         } catch let error as IMAPError {
             #expect(error == .loginFailed("NO [AUTHENTICATIONFAILED] Invalid credentials"))
@@ -113,6 +116,47 @@ struct IMAPSessionTests {
         #expect(IMAPSession.quoted(#"a"b\c"#) == #""a\"b\\c""#)
         #expect(IMAPSession.literalSize(atEndOf: "* 1 FETCH (BODY[] {123}") == 123)
         #expect(IMAPSession.literalSize(atEndOf: "* OK done") == nil)
+    }
+}
+
+@Suite("Mailbox safety")
+struct MailboxSafetyTests {
+    @Test func refusesInboxOfSharedAccountWithoutConnecting() async throws {
+        let server = IMAPSessionTests.server()
+        var account = IMAPSessionTests.account
+        account.folder = "INBOX"
+        await #expect(throws: MailboxError.self) {
+            _ = try await MailboxProcessor.run(session: IMAPSession(transport: server), account: account, password: "abcd-efgh-ijkl-mnop") { _ in }
+        }
+        #expect(server.commands.isEmpty)
+        account.accountIsDedicated = true
+        #expect(account.validationErrors.isEmpty)
+    }
+
+    @Test func missingFolderIsReportedAndNothingIsCreated() async throws {
+        let server = IMAPSessionTests.server()
+        var account = IMAPSessionTests.account
+        account.folder = "Facturen"
+        await #expect(throws: MailboxError.folderNotFound("Facturen")) {
+            _ = try await MailboxProcessor.run(session: IMAPSession(transport: server), account: account, password: "abcd-efgh-ijkl-mnop") { _ in }
+        }
+        #expect(!server.commands.contains { $0.hasPrefix("CREATE") })
+    }
+
+    @Test func folderRules() {
+        var account = IMAPSessionTests.account
+        #expect(account.folder == "Paper Trail")
+        account.processedFolder = "paper trail"
+        #expect(account.validationErrors.count == 1)
+        account.processedFolder = "Verwerkt é"
+        #expect(account.validationErrors.count == 1)
+    }
+
+    @Test func oldSettingsGetSafeFolders() throws {
+        let json = Data(#"{"isEnabled":true,"address":"a@icloud.com","username":"a","server":"imap.mail.me.com","port":993,"checkIntervalMinutes":5}"#.utf8)
+        let account = try JSONDecoder().decode(MailAccount.self, from: json)
+        #expect(account.folder == "Paper Trail")
+        #expect(!account.accountIsDedicated)
     }
 }
 

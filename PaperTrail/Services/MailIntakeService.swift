@@ -93,6 +93,7 @@ final class MailIntakeService {
 
     /// Signs in and out again, to check the settings.
     func testConnection(_ account: MailAccount, password: String) async -> String? {
+        if let problem = account.validationErrors.first { return problem }
         do {
             let transport = try await TLSTransport.connect(host: account.server, port: account.port)
             let watchdog = Self.closeAfter(seconds: 30, transport)
@@ -100,7 +101,14 @@ final class MailIntakeService {
             let session = IMAPSession(transport: transport)
             try await session.start()
             try await session.login(user: account.username, password: password)
-            try await session.select("INBOX")
+            let folder = account.folder.trimmingCharacters(in: .whitespaces)
+            do {
+                // Read-only check: SELECT doesn't change anything in the folder.
+                try await session.select(folder)
+            } catch IMAPError.commandFailed {
+                await session.logout()
+                return MailboxError.folderNotFound(folder).localizedDescription
+            }
             await session.logout()
             return nil
         } catch {
@@ -113,7 +121,7 @@ final class MailIntakeService {
         let transport = try await TLSTransport.connect(host: account.server, port: account.port)
         let watchdog = closeAfter(seconds: limit, transport)
         defer { watchdog.cancel(); transport.close() }
-        return try await MailboxProcessor.run(session: IMAPSession(transport: transport), user: account.username, password: password, handle: handle)
+        return try await MailboxProcessor.run(session: IMAPSession(transport: transport), account: account, password: password, handle: handle)
     }
 
     /// Closing the connection ends any read that is still waiting, so a silent server

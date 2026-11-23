@@ -29,7 +29,20 @@ struct MailSettingsView: View {
             } header: {
                 Text("Mailbox")
             } footer: {
-                Text("Use a mailbox only for Paper Trail: every email in its inbox is filed to Needs Review and then moved to a Processed folder. For iCloud, create an app-specific password at account.apple.com → Sign-In and Security. If signing in fails, try the full email address as user name.")
+                Text("For iCloud, create an app-specific password at account.apple.com → Sign-In and Security. It gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this Mac's Keychain. If signing in fails, try the full email address as user name.")
+            }
+
+            Section {
+                TextField("Folder to file from", text: $draft.folder)
+                TextField("Move filed emails to", text: $draft.processedFolder)
+                Toggle("This whole account is only for Paper Trail", isOn: $draft.accountIsDedicated)
+                ForEach(draft.validationErrors, id: \.self) { error in
+                    Label(error, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
+                }
+            } header: {
+                Text("Folders")
+            } footer: {
+                Text("Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into \(MailAccount.defaultFolder). Paper Trail creates the second folder if needed, and never deletes email.")
             }
 
             Section("Server") {
@@ -58,6 +71,7 @@ struct MailSettingsView: View {
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save Email Settings") { save() }
+                    .disabled(draft.isEnabled && !draft.validationErrors.isEmpty)
             }
         }
         .onAppear { draft = mail.account }
@@ -67,6 +81,8 @@ struct MailSettingsView: View {
         draft.address = draft.address.trimmingCharacters(in: .whitespaces)
         draft.username = draft.username.trimmingCharacters(in: .whitespaces)
         draft.server = draft.server.trimmingCharacters(in: .whitespaces)
+        draft.folder = draft.folder.trimmingCharacters(in: .whitespaces)
+        draft.processedFolder = draft.processedFolder.trimmingCharacters(in: .whitespaces)
         do {
             try mail.update(draft, password: password)
             password = ""
