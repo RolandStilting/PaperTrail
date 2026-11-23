@@ -100,7 +100,7 @@ final class MailIntakeService {
             defer { watchdog.cancel(); transport.close() }
             let session = IMAPSession(transport: transport)
             try await session.start()
-            try await session.login(user: account.username, password: password)
+            try await MailboxProcessor.signIn(session: session, account: account, password: password)
             let folder = account.folder.trimmingCharacters(in: .whitespaces)
             do {
                 // Read-only check: SELECT doesn't change anything in the folder.

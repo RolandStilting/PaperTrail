@@ -14,12 +14,21 @@ final class ScriptedIMAPServer: IMAPTransport, @unchecked Sendable {
         pending = [Data(greeting.utf8)]
     }
 
+    private var continuationTag: String?
+
     func send(_ data: Data) async throws {
         let line = String(decoding: data, as: UTF8.self).trimmingCharacters(in: .newlines)
-        let tag = String(line.prefix { $0 != " " })
-        let command = String(line.dropFirst(tag.count + 1))
         lock.withLock {
+            var tag = String(line.prefix { $0 != " " })
+            var command = String(line.dropFirst(tag.count + 1))
+            if let waiting = continuationTag {
+                // A continuation line has no tag of its own.
+                tag = waiting
+                command = "CONTINUATION " + line
+                continuationTag = nil
+            }
             commands.append(command)
+            if answer(command).hasPrefix("+") { continuationTag = tag }
             // Split long responses in two chunks to exercise buffering.
             let response = Data(answer(command).replacingOccurrences(of: "TAG", with: tag).utf8)
             let half = response.count / 2
@@ -116,6 +125,62 @@ struct IMAPSessionTests {
         #expect(IMAPSession.quoted(#"a"b\c"#) == #""a\"b\\c""#)
         #expect(IMAPSession.literalSize(atEndOf: "* 1 FETCH (BODY[] {123}") == 123)
         #expect(IMAPSession.literalSize(atEndOf: "* OK done") == nil)
+    }
+}
+
+@Suite("IMAP sign-in")
+struct IMAPSignInTests {
+    static let plain = Data("\u{0}archief\u{0}abcd-efgh-ijkl-mnop".utf8).base64EncodedString()
+
+    static func server(capabilities: String, acceptedUser: String = "archief") -> ScriptedIMAPServer {
+        let accepted = Data("\u{0}\(acceptedUser)\u{0}abcd-efgh-ijkl-mnop".utf8).base64EncodedString()
+        return ScriptedIMAPServer { command in
+            switch command {
+            case "CAPABILITY": "* CAPABILITY IMAP4rev1 \(capabilities)\r\nTAG OK\r\n"
+            case "AUTHENTICATE PLAIN": "+ \r\n"
+            case "CONTINUATION \(accepted)", "AUTHENTICATE PLAIN \(accepted)": "TAG OK authenticated\r\n"
+            case let c where c.hasPrefix("AUTHENTICATE") || c.hasPrefix("CONTINUATION") || c.hasPrefix("LOGIN"):
+                "TAG NO [AUTHENTICATIONFAILED] Authentication failed.\r\n"
+            default: "TAG OK\r\n"
+            }
+        }
+    }
+
+    @Test func usesSaslPlainWithInitialResponse() async throws {
+        let server = Self.server(capabilities: "AUTH=PLAIN SASL-IR")
+        let session = IMAPSession(transport: server)
+        try await session.start()
+        try await session.login(user: "archief", password: "abcd-efgh-ijkl-mnop")
+        #expect(server.commands.contains("AUTHENTICATE PLAIN \(Self.plain)"))
+        #expect(!server.commands.contains { $0.hasPrefix("LOGIN") })
+    }
+
+    @Test func usesSaslPlainWithContinuation() async throws {
+        let server = Self.server(capabilities: "AUTH=PLAIN")
+        let session = IMAPSession(transport: server)
+        try await session.start()
+        try await session.login(user: "archief", password: "abcd-efgh-ijkl-mnop")
+        #expect(server.commands.contains("CONTINUATION \(Self.plain)"))
+    }
+
+    @Test func iCloudRetriesWithFullAddress() async throws {
+        let server = Self.server(capabilities: "AUTH=PLAIN SASL-IR", acceptedUser: "archief@icloud.com")
+        let session = IMAPSession(transport: server)
+        try await session.start()
+        try await MailboxProcessor.signIn(session: session, account: IMAPSessionTests.account, password: "abcd-efgh-ijkl-mnop")
+        #expect(server.commands.filter { $0.hasPrefix("AUTHENTICATE") }.count == 2)
+    }
+
+    @Test func otherServersDontRetry() async throws {
+        let server = Self.server(capabilities: "AUTH=PLAIN SASL-IR", acceptedUser: "archief@icloud.com")
+        var account = IMAPSessionTests.account
+        account.server = "imap.example.com"
+        let session = IMAPSession(transport: server)
+        try await session.start()
+        await #expect(throws: IMAPError.self) {
+            try await MailboxProcessor.signIn(session: session, account: account, password: "abcd-efgh-ijkl-mnop")
+        }
+        #expect(server.commands.filter { $0.hasPrefix("AUTHENTICATE") }.count == 1)
     }
 }
 

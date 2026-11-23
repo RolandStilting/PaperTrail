@@ -17,22 +17,19 @@ struct MailSettingsView: View {
         Form {
             Section {
                 Toggle("Check this mailbox", isOn: $draft.isEnabled)
-                TextField("Email address", text: $draft.address, prompt: Text("name@icloud.com"))
-                    .textContentType(.emailAddress)
-                    .onChange(of: draft.address) { _, address in
-                        if draft.username.isEmpty || address.hasPrefix(draft.username) {
-                            draft.username = MailAccount.iCloud(address: address).username
-                        }
-                    }
-                TextField("User name", text: $draft.username)
+                TextField("Sign in with", text: $draft.username, prompt: Text("Your main iCloud address, not the alias"))
+                    .textContentType(.username)
+                    .autocorrectionDisabled()
                 SecureField("App-specific password", text: $password, prompt: Text(mail.hasPassword ? "Saved – type to replace" : "xxxx-xxxx-xxxx-xxxx"))
             } header: {
                 Text("Mailbox")
             } footer: {
-                Text("For iCloud, create an app-specific password at account.apple.com → Sign-In and Security. It gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this Mac's Keychain. If signing in fails, try the full email address as user name.")
+                Text("Sign in with your main iCloud address (an alias can't sign in) and an app-specific password from account.apple.com → Sign-In and Security; your normal password doesn't work with two-factor authentication. For iCloud, Paper Trail also tries the full @icloud.com address. The password gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this Mac's Keychain.")
             }
 
             Section {
+                TextField("Paper Trail address", text: $draft.address, prompt: Text("The alias your rule filters on (optional)"))
+                    .autocorrectionDisabled()
                 TextField("Folder to file from", text: $draft.folder)
                 TextField("Move filed emails to", text: $draft.processedFolder)
                 Toggle("This whole account is only for Paper Trail", isOn: $draft.accountIsDedicated)

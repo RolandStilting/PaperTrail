@@ -37,6 +37,9 @@
     "Could not create the PDF. Try scanning again; if it keeps failing, restart the app." : {
 
     },
+    "Could not sign in to the mailbox (%@). Check the user name and use an app-specific password." : {
+
+    },
     "Document: %@/%@" : {
       "localizations" : {
         "en" : {
@@ -47,6 +50,9 @@
         }
       }
     },
+    "Enter both mailbox folders." : {
+
+    },
     "Every category needs a name." : {
 
     },
@@ -54,6 +60,9 @@
 
     },
     "IBAN: %@" : {
+
+    },
+    "Paper Trail won't check the Inbox of an account you also use for other mail: it would file and move every email. Use a mail rule that moves the Paper Trail address's emails to their own folder, and enter that folder." : {
 
     },
     "Pay %@" : {
@@ -84,7 +93,29 @@
     "Shared document" : {
 
     },
+    "The connection to the mail server was closed. Check your internet connection and try again." : {
+
+    },
+    "The folder to check and the Processed folder must be different." : {
+
+    },
     "The IBAN for %@ is not valid. Check it for typos." : {
+
+    },
+    "The mail folder \"%@\" doesn't exist. Create it (or the mail rule that fills it) on icloud.com, or check the folder name in Settings → Email." : {
+
+    },
+    "The mail server refused %@: %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "The mail server refused %1$@: %2$@"
+          }
+        }
+      }
+    },
+    "The mail server sent something Paper Trail didn't expect: %@" : {
 
     },
     "The scan has no pages. Scan the document again." : {
@@ -103,6 +134,9 @@
 
     },
     "Two owners have the same name. Make each owner name unique." : {
+
+    },
+    "Use folder names without accents or special letters." : {
 
     }
   },

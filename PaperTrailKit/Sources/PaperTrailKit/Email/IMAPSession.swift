@@ -19,7 +19,7 @@ public enum IMAPError: LocalizedError, Equatable, Sendable {
         case .commandFailed(let command, let response):
             String(localized: "The mail server refused \(command): \(response)", bundle: .module)
         case .loginFailed(let response):
-            String(localized: "Could not sign in to the mailbox (\(response)). Check the user name and use an app-specific password.", bundle: .module)
+            String(localized: "Could not sign in to the mailbox (\(response)). For iCloud: sign in with your main iCloud address, not an alias, and an app-specific password; your normal Apple Account password doesn't work with two-factor authentication.", bundle: .module)
         case .unexpectedResponse(let text):
             String(localized: "The mail server sent something Paper Trail didn't expect: \(text)", bundle: .module)
         case .connectionClosed:
@@ -55,13 +55,32 @@ public actor IMAPSession {
         }
     }
 
+    /// Signs in with SASL PLAIN (RFC 4616) when the server offers it, else with LOGIN.
+    /// Both send the credentials only over the TLS connection.
     public func login(user: String, password: String) async throws {
+        try await refreshCapabilities()
         do {
-            _ = try await run("LOGIN \(Self.quoted(user)) \(Self.quoted(password))", display: "LOGIN")
+            if capabilities.contains("AUTH=PLAIN") {
+                let credentials = Data("\u{0}\(user)\u{0}\(password)".utf8).base64EncodedString()
+                if capabilities.contains("SASL-IR") {
+                    _ = try await run("AUTHENTICATE PLAIN \(credentials)", display: "AUTHENTICATE")
+                } else {
+                    _ = try await run("AUTHENTICATE PLAIN", display: "AUTHENTICATE", continuation: credentials)
+                }
+            } else if capabilities.contains("LOGINDISABLED") {
+                throw IMAPError.loginFailed("the server offers no sign-in method Paper Trail supports")
+            } else {
+                _ = try await run("LOGIN \(Self.quoted(user)) \(Self.quoted(password))", display: "LOGIN")
+            }
         } catch IMAPError.commandFailed(_, let response) {
             throw IMAPError.loginFailed(response)
         }
         try await refreshCapabilities()
+    }
+
+    /// The sign-in method the server will be asked for, for diagnostics (no credentials).
+    public var signInMethod: String {
+        capabilities.contains("AUTH=PLAIN") ? "AUTHENTICATE PLAIN" : "LOGIN"
     }
 
     public func refreshCapabilities() async throws {
@@ -129,13 +148,20 @@ public actor IMAPSession {
     /// Sends a tagged command and returns its untagged responses. Throws on NO or BAD.
     /// `display` replaces the command in errors, so passwords never end up in messages.
     @discardableResult
-    func run(_ command: String, display: String? = nil) async throws -> [IMAPUntagged] {
+    func run(_ command: String, display: String? = nil, continuation: String? = nil) async throws -> [IMAPUntagged] {
         tagNumber += 1
         let tag = String(format: "A%03d", tagNumber)
         try await transport.send(Data("\(tag) \(command)\r\n".utf8))
         var untagged: [IMAPUntagged] = []
+        var pendingContinuation = continuation
         while true {
             let response = try await readResponse()
+            if response.text.hasPrefix("+") {
+                // The server asks for more: send it once, or cancel with "*" (RFC 3501 6.2.2).
+                try await transport.send(Data("\(pendingContinuation ?? "*")\r\n".utf8))
+                pendingContinuation = nil
+                continue
+            }
             if response.text.hasPrefix("\(tag) ") {
                 let status = response.text.dropFirst(tag.count + 1)
                 if status.uppercased().hasPrefix("OK") { return untagged }
@@ -143,7 +169,6 @@ public actor IMAPSession {
                 throw IMAPError.commandFailed(command: name, response: String(status))
             }
             if response.text.hasPrefix("*") { untagged.append(response) }
-            // "+" continuation requests are not used by these commands; ignore them.
         }
     }
 

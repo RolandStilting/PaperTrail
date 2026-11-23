@@ -11,8 +11,10 @@ public struct MailAccount: Codable, Hashable, Sendable {
     public static let defaultProcessedFolder = "Paper Trail Processed"
 
     public var isEnabled: Bool
+    /// The address emails are sent to (for iCloud: the alias). Only informational.
     public var address: String
-    /// iCloud: usually the part before @icloud.com; some clients need the full address.
+    /// The account to sign in with. For iCloud this is the *main* iCloud address (or the part
+    /// before @icloud.com), never an alias.
     public var username: String
     public var server: String
     public var port: Int
@@ -68,6 +70,8 @@ public struct MailAccount: Codable, Hashable, Sendable {
         !username.trimmingCharacters(in: .whitespaces).isEmpty && !server.trimmingCharacters(in: .whitespaces).isEmpty
             && (1...65535).contains(port) && validationErrors.isEmpty
     }
+
+    public var isICloud: Bool { server.trimmingCharacters(in: .whitespaces).lowercased() == "imap.mail.me.com" }
 
     public var watchesInbox: Bool { folder.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare("INBOX") == .orderedSame }
 

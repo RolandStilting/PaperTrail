@@ -38,7 +38,7 @@ public enum MailboxProcessor {
         let processedMailbox = account.processedFolder.trimmingCharacters(in: .whitespaces)
 
         try await session.start()
-        try await session.login(user: account.username, password: password)
+        try await signIn(session: session, account: account, password: password)
         do {
             try await session.select(folder)
         } catch IMAPError.commandFailed {
@@ -64,5 +64,20 @@ public enum MailboxProcessor {
         }
         await session.logout()
         return report
+    }
+
+    /// Apple's iCloud Mail help: the user name is usually the name before @icloud.com, but
+    /// some apps need the full address. For iCloud, a failed short name is retried in full.
+    public static func signIn(session: IMAPSession, account: MailAccount, password: String) async throws {
+        let user = account.username.trimmingCharacters(in: .whitespaces)
+        do {
+            try await session.login(user: user, password: password)
+        } catch IMAPError.loginFailed(let first) where account.isICloud && !user.contains("@") {
+            do {
+                try await session.login(user: "\(user)@icloud.com", password: password)
+            } catch IMAPError.loginFailed {
+                throw IMAPError.loginFailed(first)
+            }
+        }
     }
 }
