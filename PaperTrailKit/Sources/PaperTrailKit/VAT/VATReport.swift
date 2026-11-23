@@ -37,6 +37,16 @@ public struct VATPeriod: Hashable, Sendable, Identifiable {
 
     public func contains(_ date: Date) -> Bool { date >= start && date < end }
 
+    /// The usual Dutch deadline for a monthly or quarterly return: the last day of the month
+    /// after the period. nil for yearly returns, whose deadline differs. General information
+    /// only; the tax agency's letter or the accountant decides.
+    public func usualDeadline(calendar: Calendar? = nil) -> Date? {
+        guard kind != .year else { return nil }
+        let calendar = calendar ?? FileNamer.defaultCalendar()
+        let afterNextMonth = calendar.date(byAdding: .month, value: 1, to: end)!
+        return calendar.date(byAdding: .day, value: -1, to: afterNextMonth)
+    }
+
     /// "March 2026", "Q1 2026" or "2026".
     public func label(locale: Locale = .current, calendar: Calendar? = nil) -> String {
         let calendar = calendar ?? FileNamer.defaultCalendar()
