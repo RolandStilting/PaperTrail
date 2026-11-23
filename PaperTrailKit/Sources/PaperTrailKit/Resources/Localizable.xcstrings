@@ -16,6 +16,15 @@
     "Add at least one owner." : {
 
     },
+    "Amount" : {
+
+    },
+    "Amount (EUR)" : {
+
+    },
+    "amount missing" : {
+
+    },
     "Amount: %@" : {
 
     },
@@ -38,6 +47,15 @@
 
     },
     "Could not sign in to the mailbox (%@). For iCloud: sign in with your main iCloud address, not an alias, and an app-specific password; your normal Apple Account password doesn't work with two-factor authentication." : {
+
+    },
+    "Date" : {
+
+    },
+    "Description" : {
+
+    },
+    "Document" : {
 
     },
     "Document: %@/%@" : {
@@ -78,6 +96,9 @@
         }
       }
     },
+    "Receipts without a known amount are not in the total." : {
+
+    },
     "Reference: %@" : {
 
     },
@@ -88,6 +109,9 @@
 
     },
     "Scan" : {
+
+    },
+    "Sender" : {
 
     },
     "Shared document" : {
@@ -128,6 +152,9 @@
 
     },
     "To pay – %@" : {
+
+    },
+    "Total" : {
 
     },
     "Two categories have the same name. Make each category name unique." : {

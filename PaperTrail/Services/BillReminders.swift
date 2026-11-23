@@ -29,6 +29,8 @@ protocol BillReminding {
     func completeReminder(externalID: String) async throws
     /// False when the reminder was deleted (or lives in an account this device can't see).
     func reminderExists(externalID: String) async -> Bool
+    /// Removes the reminder (used only by Clear All Documents, on the user's request).
+    func deleteReminder(externalID: String) async throws
 }
 
 /// Apple Reminders via EventKit. Each owner has a list "To pay – <Owner>".
@@ -124,6 +126,17 @@ final class EventKitBillReminders: BillReminding {
         // Without access we can't tell; assume it exists so nothing is created twice.
         guard EKEventStore.authorizationStatus(for: .reminder) == .fullAccess else { return true }
         return !reminders(withExternalID: externalID).isEmpty
+    }
+
+    func deleteReminder(externalID: String) async throws {
+        try await ensureAccess()
+        for reminder in reminders(withExternalID: externalID) {
+            do {
+                try store.remove(reminder, commit: true)
+            } catch {
+                throw BillReminderError.saveFailed(error.localizedDescription)
+            }
+        }
     }
 
     func completeReminder(externalID: String) async throws {

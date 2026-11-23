@@ -78,6 +78,13 @@ struct ExpenseService {
         try context.save()
     }
 
+    /// Undoes "Mark Reimbursed": the claim and its expenses are submitted again.
+    func markNotReimbursed(_ claim: ExpenseClaimRecord, expenses: [DocumentRecord], context: ModelContext) throws {
+        claim.reimbursedAt = nil
+        for expense in expenses where expense.claimID == claim.id { expense.reimbursedAt = nil }
+        try context.save()
+    }
+
     /// Takes the claim back: its expenses are open again.
     func undo(_ claim: ExpenseClaimRecord, expenses: [DocumentRecord], context: ModelContext) throws {
         for expense in expenses where expense.claimID == claim.id {

@@ -43,6 +43,29 @@
     "%@ Try again." : {
 
     },
+    "%lld expenses · reimbursed %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld expenses · reimbursed %2$@"
+          }
+        }
+      }
+    },
+    "%lld expenses · submitted" : {
+
+    },
+    "%lld expenses, created %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld expenses, created %2$@"
+          }
+        }
+      }
+    },
     "%lld payments, total %@, from %@." : {
       "localizations" : {
         "en" : {
@@ -71,6 +94,9 @@
     "Add owner" : {
 
     },
+    "All %lld expenses in it are cleared at once." : {
+
+    },
     "Allow Paper Trail in System Settings → General → Login Items." : {
 
     },
@@ -81,6 +107,9 @@
 
     },
     "Amount" : {
+
+    },
+    "amount missing" : {
 
     },
     "Amount missing" : {
@@ -126,6 +155,12 @@
 
     },
     "Choose an owner and a category." : {
+
+    },
+    "Claim of %@" : {
+
+    },
+    "Claim Ready" : {
 
     },
     "Completing the bill's reminder in Reminders also marks it paid." : {
@@ -207,6 +242,9 @@
         }
       }
     },
+    "Could not save the change: %@" : {
+
+    },
     "Could not save the file: %@ Try another folder." : {
 
     },
@@ -221,6 +259,16 @@
     },
     "Could not use the Keychain: %@" : {
 
+    },
+    "Create Claim (%lld, %@)" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Create Claim (%1$lld, %2$@)"
+          }
+        }
+      }
     },
     "Create Reminder" : {
 
@@ -292,10 +340,25 @@
     "Email: waiting for the first check" : {
 
     },
+    "Email…" : {
+
+    },
     "Enter the app-specific password first." : {
 
     },
     "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email." : {
+
+    },
+    "Expense" : {
+
+    },
+    "Expense claim %@" : {
+
+    },
+    "Expenses" : {
+
+    },
+    "Expenses (%lld)" : {
 
     },
     "Export" : {
@@ -337,6 +400,9 @@
     "Folders inside each owner's year folder." : {
 
     },
+    "For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed." : {
+
+    },
     "IBAN" : {
 
     },
@@ -367,10 +433,19 @@
     "Mailbox" : {
 
     },
+    "Mark a document \"To be reimbursed by\" a company when filing it, or from the document list." : {
+
+    },
     "Mark as Paid" : {
 
     },
+    "Mark Reimbursed" : {
+
+    },
     "Mark this bill as paid?" : {
+
+    },
+    "Mark this claim as reimbursed?" : {
 
     },
     "Move filed emails to" : {
@@ -389,6 +464,9 @@
 
     },
     "No documents yet" : {
+
+    },
+    "No expenses" : {
 
     },
     "No mailbox password is saved. Enter the app-specific password in Settings → Email." : {
@@ -410,6 +488,9 @@
 
     },
     "No text found" : {
+
+    },
+    "Nobody" : {
 
     },
     "OK" : {
@@ -502,6 +583,12 @@
     "Reference" : {
 
     },
+    "Reimbursed by %@" : {
+
+    },
+    "Reimbursed claims (%lld)" : {
+
+    },
     "Reminder Not Found – Create Again" : {
 
     },
@@ -535,6 +622,9 @@
     "Scanning failed: %@. Try again." : {
 
     },
+    "Select at least one expense for the claim." : {
+
+    },
     "Sender" : {
 
     },
@@ -551,6 +641,12 @@
 
     },
     "Settings" : {
+
+    },
+    "Share Again" : {
+
+    },
+    "Share…" : {
 
     },
     "Show text" : {
@@ -595,10 +691,25 @@
     "The mailbox is checked while Paper Trail runs. It keeps running in the menu bar after you close its window." : {
 
     },
+    "The PDF has a summary page and all receipts; the CSV opens in Excel or Numbers. The expenses are now marked as submitted." : {
+
+    },
+    "The receipt \"%@\" is not in Paper Trail anymore (moved or renamed?). Put it back or remove it from the claim, then try again." : {
+
+    },
     "There is no Reminders account to create the To pay list in. Turn on Reminders in iCloud settings, then try again." : {
 
     },
     "This whole account is only for Paper Trail" : {
+
+    },
+    "To be reimbursed by" : {
+
+    },
+    "To Be Reimbursed By" : {
+
+    },
+    "Undo Claim" : {
 
     },
     "Unpaid bill" : {

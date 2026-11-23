@@ -124,6 +124,10 @@ struct ExpensesView: View {
                     Button("Undo Claim", systemImage: "arrow.uturn.backward", role: .destructive) {
                         run { try expenseService.undo(claim, expenses: expenses, context: modelContext) }
                     }
+                } else {
+                    Button("Mark as Not Reimbursed", systemImage: "arrow.uturn.backward") {
+                        run { try expenseService.markNotReimbursed(claim, expenses: expenses, context: modelContext) }
+                    }
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")

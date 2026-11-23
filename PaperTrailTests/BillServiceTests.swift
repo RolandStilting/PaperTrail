@@ -25,6 +25,7 @@ final class FakeReminders: BillReminding {
 
     var deleted: Set<String> = []
     func reminderExists(externalID: String) async -> Bool { !deleted.contains(externalID) }
+    func deleteReminder(externalID: String) async throws { deleted.insert(externalID) }
 }
 
 @MainActor
