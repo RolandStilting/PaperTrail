@@ -59,8 +59,12 @@ struct DocumentDetailView: View {
                         OwnerDot(owner: record.ownerName)
                         Text(record.ownerName)
                         Text("›").foregroundStyle(.tertiary)
-                        Label(record.categoryName, systemImage: CategoryStyle.symbol(for: record.categoryName))
+                        // Image + Text, not a Label: a Label here took the list's icon layout
+                        // and made the row several times too tall on iPhone.
+                        Image(systemName: CategoryStyle.symbol(for: record.categoryName))
+                        Text(record.categoryName)
                     }
+                    .lineLimit(1)
                     .foregroundStyle(.secondary)
                 }
                 LabeledContent("Received", value: record.receivedDate.formatted(date: .long, time: .omitted))
