@@ -359,15 +359,20 @@ struct FilingView: View {
                         .disabled(isFiling)
                 }
             }
-            ToolbarItem(placement: .confirmationAction) {
-                if isFiling {
-                    ProgressView()
-                } else {
-                    Button(editing == nil ? "File" : "Save") { Task { await checkAndFile() } }
-                        .keyboardShortcut(.return, modifiers: .command)
-                        .disabled(previewPath == nil)
+            if !usesActionBar {
+                ToolbarItem(placement: .confirmationAction) {
+                    if isFiling {
+                        ProgressView()
+                    } else {
+                        Button(editing == nil ? "File" : "Save") { Task { await checkAndFile() } }
+                            .keyboardShortcut(.return, modifiers: .command)
+                            .disabled(previewPath == nil)
+                    }
                 }
             }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if usesActionBar { actionBar }
         }
         .alert(editing == nil ? "Could not file the document" : "Could not save the changes", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK", role: .cancel) {}
@@ -390,6 +395,58 @@ struct FilingView: View {
             if let editing { prefill(from: editing) } else { applyDefaults() }
         }
         .task { if editing == nil { await recognizeText() } }
+    }
+
+    /// On the Mac, and beside the review list on iPad, a toolbar button is easy to miss: the
+    /// main action gets a large button at the bottom, with where the document will go.
+    private var usesActionBar: Bool {
+        #if os(macOS)
+        true
+        #else
+        embedded
+        #endif
+    }
+
+    private var actionBar: some View {
+        HStack(spacing: 12) {
+            if let previewPath {
+                Label {
+                    Text(previewPath)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                } icon: {
+                    Image(systemName: "folder")
+                }
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .help(previewPath)
+            } else {
+                Text("Choose an owner and a category.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            if isFiling { ProgressView().controlSize(.small) }
+            Button {
+                Task { await checkAndFile() }
+            } label: {
+                Label(editing == nil ? "File Document" : "Save Changes",
+                      systemImage: editing == nil ? "tray.and.arrow.down.fill" : "checkmark")
+                    .padding(.horizontal, 6)
+                    .lineLimit(1)
+            }
+            // The button keeps its full label; the path above gives way.
+            .fixedSize()
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .keyboardShortcut(.return, modifiers: .command)
+            .disabled(previewPath == nil || isFiling)
+            .help(editing == nil ? "File Document (⌘↩)" : "Save Changes (⌘↩)")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.bar)
+        .overlay(alignment: .top) { Divider() }
     }
 
     @ViewBuilder
