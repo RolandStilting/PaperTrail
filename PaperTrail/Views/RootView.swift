@@ -201,6 +201,19 @@ struct RootView: View {
             }
             .navigationTitle("Paper Trail")
             #if os(macOS)
+            // Settings live in their own window on the Mac (also Paper Trail → Settings…, ⌘,).
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                SettingsLink {
+                    Label("Settings", systemImage: "gearshape")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .help("Settings (⌘,)")
+            }
             .navigationSplitViewColumnWidth(min: 180, ideal: 210)
             // The own button below replaces the standard one; it must be removed on the sidebar.
             .toolbar(removing: .sidebarToggle)
