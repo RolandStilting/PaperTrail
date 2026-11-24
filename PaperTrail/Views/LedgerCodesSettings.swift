@@ -1,8 +1,9 @@
 import PaperTrailKit
 import SwiftUI
 
-/// Settings sections for ledger codes: one list per owner (its chart of accounts), and which
-/// categories use them. Edits go into the settings draft, which Settings saves automatically.
+/// Settings section for ledger codes: one list per owner (its chart of accounts). Which
+/// categories use them is switched in the Categories list. Edits go into the settings draft,
+/// which Settings saves automatically.
 struct LedgerCodesSection: View {
     @Binding var draft: ArchiveSettings
 
@@ -21,17 +22,7 @@ struct LedgerCodesSection: View {
         } header: {
             Text("Ledger codes")
         } footer: {
-            Text("Optional. Each owner's ledger codes, as its administration books them. When filing, you pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names.")
-        }
-
-        Section {
-            ForEach($draft.categories) { $category in
-                Toggle(category.name.isEmpty ? String(localized: "New category") : category.name, isOn: $category.usesLedgerCodes)
-            }
-        } header: {
-            Text("Categories with ledger codes")
-        } footer: {
-            Text("Documents in these categories get a ledger code, such as invoices and receipts. The codes are the same for every category.")
+            Text("Optional. Each owner's ledger codes, as its administration books them. When filing, you pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names. Switch them on per category under Categories.")
         }
     }
 }

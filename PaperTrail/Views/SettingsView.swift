@@ -114,7 +114,17 @@ struct SettingsView: View {
 
             Section {
                 ForEach($draft.categories) { $category in
-                    TextField("Category name", text: $category.name)
+                    HStack {
+                        TextField("Category name", text: $category.name)
+                        Text("Ledger codes")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
+                        Toggle("Ledger codes", isOn: $category.usesLedgerCodes)
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                            .accessibilityLabel(Text("Ledger codes for \(category.name)"))
+                    }
                 }
                 .onDelete { draft.categories.remove(atOffsets: $0) }
                 .onMove { draft.categories.move(fromOffsets: $0, toOffset: $1) }
@@ -124,7 +134,7 @@ struct SettingsView: View {
             } header: {
                 Text("Categories")
             } footer: {
-                Text("Folders inside each owner's year folder.")
+                Text("Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are per owner, below.")
             }
 
             LedgerCodesSection(draft: $draft)

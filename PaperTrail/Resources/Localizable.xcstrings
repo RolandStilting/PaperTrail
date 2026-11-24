@@ -316,9 +316,6 @@
     "Categories" : {
 
     },
-    "Categories with ledger codes" : {
-
-    },
     "Category" : {
 
     },
@@ -537,9 +534,6 @@
     "Documents" : {
 
     },
-    "Documents in these categories get a ledger code, such as invoices and receipts. The codes are the same for every category." : {
-
-    },
     "Documents you file appear here." : {
 
     },
@@ -722,7 +716,7 @@
     "Folders" : {
 
     },
-    "Folders inside each owner's year folder." : {
+    "Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are per owner, below." : {
 
     },
     "For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed." : {
@@ -824,6 +818,9 @@
     "Ledger codes %@" : {
 
     },
+    "Ledger codes for %@" : {
+
+    },
     "Lock" : {
 
     },
@@ -873,9 +870,6 @@
 
     },
     "Needs Review" : {
-
-    },
-    "New category" : {
 
     },
     "New owner" : {
@@ -983,7 +977,7 @@
     "Opens the next document waiting in Needs Review so you can file it." : {
 
     },
-    "Optional. Each owner's ledger codes, as its administration books them. When filing, you pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names." : {
+    "Optional. Each owner's ledger codes, as its administration books them. When filing, you pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names. Switch them on per category under Categories." : {
 
     },
     "Orange" : {
