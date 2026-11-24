@@ -65,7 +65,7 @@ struct PaperTrailApp: App {
         #if os(macOS)
         // Paper Trail → Settings… (⌘,), the standard place on the Mac.
         Settings {
-            NavigationStack { SettingsView(embedded: true) }
+            NavigationStack { SettingsView() }
                 .environment(settingsStore)
                 .environment(model)
                 .environment(appLock)

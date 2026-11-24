@@ -2,18 +2,15 @@ import PaperTrailKit
 import SwiftData
 import SwiftUI
 
-/// Edit the owners and categories that make up the folder structure.
+/// Edit the owners and categories that make up the folder structure. Changes are saved
+/// automatically a moment after the last edit, as long as the settings are valid.
 struct SettingsView: View {
-    /// In a tab or the Mac Settings window: no Cancel, and Save stays on the screen.
-    var embedded = false
     @Environment(SettingsStore.self) private var settingsStore
     #if os(macOS)
     @Environment(MailIntakeService.self) private var mail
     #endif
-    @Environment(\.dismiss) private var dismiss
 
     @State private var draft = ArchiveSettings.defaults
-    @State private var savedMessage = false
     @State private var loadedDraft = false
     @Environment(AppModel.self) private var model
     @Environment(\.modelContext) private var modelContext
@@ -70,6 +67,17 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            if !errors.isEmpty {
+                Section {
+                    ForEach(errors, id: \.self) { Text($0).foregroundStyle(.red) }
+                } header: {
+                    Label("Not saved", systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.red)
+                } footer: {
+                    Text("Your changes stay here and are saved as soon as this is fixed.")
+                }
+            }
+
             Section {
                 ForEach($draft.owners) { $owner in
                     HStack {
@@ -197,42 +205,10 @@ struct SettingsView: View {
                 Text("Debug builds only. Files a few made-up documents to try the screens.")
             }
             #endif
-
-            if savedMessage, errors.isEmpty {
-                Section { Label("Settings saved", systemImage: "checkmark.circle").foregroundStyle(.green) }
-            }
-
-            if !errors.isEmpty {
-                Section {
-                    ForEach(errors, id: \.self) { Text($0).foregroundStyle(.red) }
-                }
-            }
         }
         .formStyle(.grouped)
         .keyboardDismissal()
         .navigationTitle("Settings")
-        .toolbar {
-            if !embedded {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    for index in draft.owners.indices {
-                        draft.owners[index].payingAccount.iban = IBAN.normalize(draft.owners[index].payingAccount.iban)
-                        draft.owners[index].payingAccount.bic = IBAN.normalize(draft.owners[index].payingAccount.bic)
-                        draft.owners[index].payingAccount.name = draft.owners[index].payingAccount.name.trimmingCharacters(in: .whitespaces)
-                    }
-                    // Empty ledger code rows are dropped from what's saved; the draft keeps
-                    // them until Settings opens again, so "Settings saved" stays visible.
-                    errors = settingsStore.update(draft.cleaningLedgerCodes())
-                    if errors.isEmpty {
-                        if embedded { savedMessage = true } else { dismiss() }
-                    }
-                }
-            }
-        }
         // Load the draft once: onAppear also runs when coming back from a pushed screen (such as
         // the ledger code editor), and reloading then would throw away the edits made there.
         .onAppear {
@@ -242,8 +218,37 @@ struct SettingsView: View {
         }
         // Settings changed on another device: take them over while nothing here is unsaved.
         .onChange(of: settingsStore.settings) { old, new in
-            if draft == old { draft = new }
+            if Self.saveable(draft) == old { draft = new }
         }
-        .onChange(of: draft) { _, _ in savedMessage = false }
+        // Save a moment after the last change, so a half-typed name doesn't sync to other devices.
+        .task(id: draft) {
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            save()
+        }
+        // Leaving the screen (or opening a sub-screen) saves at once.
+        .onDisappear { save() }
+    }
+
+    /// The draft as it is saved: IBAN and BIC without spaces, names trimmed, empty ledger code
+    /// rows dropped. The draft itself keeps what was typed, so fields don't change while typing.
+    private static func saveable(_ draft: ArchiveSettings) -> ArchiveSettings {
+        var settings = draft
+        for index in settings.owners.indices {
+            settings.owners[index].payingAccount.iban = IBAN.normalize(settings.owners[index].payingAccount.iban)
+            settings.owners[index].payingAccount.bic = IBAN.normalize(settings.owners[index].payingAccount.bic)
+            settings.owners[index].payingAccount.name = settings.owners[index].payingAccount.name.trimmingCharacters(in: .whitespaces)
+        }
+        return settings.cleaningLedgerCodes()
+    }
+
+    private func save() {
+        guard loadedDraft else { return }
+        let settings = Self.saveable(draft)
+        guard settings != settingsStore.settings else {
+            errors = []
+            return
+        }
+        errors = settingsStore.update(settings)
     }
 }

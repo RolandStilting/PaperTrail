@@ -163,7 +163,7 @@ struct RootView: View {
                 NavigationStack { MoneyView() }
             }
             Tab("Settings", systemImage: "gearshape") {
-                NavigationStack { SettingsView(embedded: true) }
+                NavigationStack { SettingsView() }
             }
         }
     }
@@ -252,7 +252,7 @@ struct RootView: View {
         case .toPay: OpenBillsView(billService: model.billService, embedded: true)
         case .expenses: ExpensesView(expenseService: model.expenseService, embedded: true)
         case .vat: VATOverviewView(embedded: true)
-        case .settings: SettingsView(embedded: true)
+        case .settings: SettingsView()
         }
     }
 }

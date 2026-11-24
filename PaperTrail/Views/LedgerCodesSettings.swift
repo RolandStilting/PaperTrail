@@ -2,7 +2,7 @@ import PaperTrailKit
 import SwiftUI
 
 /// Settings section: per owner, optional ledger code lists for some categories. Edits go into
-/// the settings draft and are kept with Save, like the rest of Settings.
+/// the settings draft, which Settings saves automatically.
 struct LedgerCodesSection: View {
     @Binding var draft: ArchiveSettings
 
@@ -84,7 +84,7 @@ struct LedgerCodeListEditor: View {
                     codes.append(LedgerCode(code: ""))
                 }
             } footer: {
-                Text("Each code once. Empty rows are removed when you save the settings.")
+                Text("Each code once. Empty rows are ignored.")
             }
         }
         .formStyle(.grouped)

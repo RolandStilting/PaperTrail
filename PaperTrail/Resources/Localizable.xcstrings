@@ -577,7 +577,7 @@
     "e.g. Telephone and internet" : {
 
     },
-    "Each code once. Empty rows are removed when you save the settings." : {
+    "Each code once. Empty rows are ignored." : {
 
     },
     "Each owner gets a top-level folder and a colour in lists. Renaming only affects documents filed afterwards." : {
@@ -921,6 +921,9 @@
 
     },
     "None" : {
+
+    },
+    "Not saved" : {
 
     },
     "Not yet" : {
@@ -1440,6 +1443,9 @@
 
     },
     "You can put files back from the Trash; deleted iCloud Drive files can usually also be recovered for a while on iCloud.com. Empty the Trash only when you're sure." : {
+
+    },
+    "Your changes stay here and are saved as soon as this is fixed." : {
 
     },
     "Your main iCloud address, not the alias" : {
