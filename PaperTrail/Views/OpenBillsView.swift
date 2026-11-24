@@ -88,26 +88,13 @@ struct OpenBillsView: View {
     }
 
     private func billList(split: Bool) -> some View {
-        List(selection: $selection) {
-            if bills.isEmpty {
-                ContentUnavailableView("No open bills", systemImage: "checkmark.seal", description: Text("Unpaid bills you file show up here until their reminder is completed."))
-            }
-            ForEach(owners, id: \.self) { owner in
-                Section(owner) {
-                    ForEach(bills(of: owner)) { bill in
-                        Group {
-                            if split {
-                                BillRow(bill: bill)
-                            } else {
-                                NavigationLink(value: bill.id) { BillRow(bill: bill) }
-                            }
-                        }
-                        .tag(bill.id)
-                    }
-                    if let settings = settingsStore.settings.owners.first(where: { $0.name == owner }), settings.paymentMethod == .sepaFile {
-                        Button("Export SEPA File…", systemImage: "square.and.arrow.up") { exportingOwner = settings }
-                    }
-                }
+        Group {
+            // Only the split layout selects. In a selectable list the selection would take the
+            // tap meant for the row's link (both are bill IDs), so on a phone nothing opened.
+            if split {
+                List(selection: $selection) { billRows(split: true) }
+            } else {
+                List { billRows(split: false) }
             }
         }
         .arrowKeySelection($selection, in: orderedIDs)
@@ -115,6 +102,32 @@ struct OpenBillsView: View {
         .onChange(of: orderedIDs) { _, ids in
             // A bill marked paid leaves the list: select the next one.
             if split, let selection, !ids.contains(selection) { self.selection = ids.first }
+        }
+    }
+
+    @ViewBuilder
+    private func billRows(split: Bool) -> some View {
+        if bills.isEmpty {
+            ContentUnavailableView("No open bills", systemImage: "checkmark.seal", description: Text("Unpaid bills you file show up here until their reminder is completed."))
+        }
+        ForEach(owners, id: \.self) { owner in
+            Section(owner) {
+                ForEach(bills(of: owner)) { bill in
+                    Group {
+                        if split {
+                            BillRow(bill: bill)
+                        } else {
+                            // A direct link: this list is often pushed by another link (Money,
+                            // Today), where a value link finds no destination and does nothing.
+                            NavigationLink { BillDetailView(bill: bill, billService: billService) } label: { BillRow(bill: bill) }
+                        }
+                    }
+                    .tag(bill.id)
+                }
+                if let settings = settingsStore.settings.owners.first(where: { $0.name == owner }), settings.paymentMethod == .sepaFile {
+                    Button("Export SEPA File…", systemImage: "square.and.arrow.up") { exportingOwner = settings }
+                }
+            }
         }
     }
 }

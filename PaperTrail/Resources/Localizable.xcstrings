@@ -7,6 +7,9 @@
     "\"%@\" is no longer in Needs Review. It was probably filed on another device. Pull down to refresh the list." : {
 
     },
+    "\"%@\" is no longer where Paper Trail filed it. It may have been moved or renamed on another device; wait for iCloud Drive to catch up and try again." : {
+
+    },
     "\"%@\" is not a PDF or image. Paper Trail can import PDFs and images." : {
 
     },
@@ -43,6 +46,9 @@
         }
       }
     },
+    "%@ is in Needs Review." : {
+
+    },
     "%@ over %@" : {
       "localizations" : {
         "en" : {
@@ -70,6 +76,15 @@
 
     },
     "%lld documents" : {
+
+    },
+    "%lld documents are already in the index and stay as they are." : {
+
+    },
+    "%lld documents are skipped because their PDF is no longer in iCloud Drive." : {
+
+    },
+    "%lld documents waiting." : {
 
     },
     "%lld due this week" : {
@@ -144,6 +159,9 @@
     "Add" : {
 
     },
+    "Add ${document} to Paper Trail" : {
+
+    },
     "Add Amount or Payment Details" : {
 
     },
@@ -156,7 +174,35 @@
     "Add owner" : {
 
     },
+    "Add to Paper Trail" : {
+
+    },
     "Add VAT Line" : {
+
+    },
+    "Adds %lld documents, %lld expense claims, %lld submitted VAT periods and %lld learned rules." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Adds %1$lld documents, %2$lld expense claims, %3$lld submitted VAT periods and %4$lld learned rules."
+          }
+        }
+      }
+    },
+    "Adds a PDF or image to Needs Review in Paper Trail, to file on any of your devices." : {
+
+    },
+    "After 1 hour" : {
+
+    },
+    "After 1 minute" : {
+
+    },
+    "After 5 minutes" : {
+
+    },
+    "After 15 minutes" : {
 
     },
     "All %lld expenses in it are cleared at once." : {
@@ -225,6 +271,12 @@
     "Automatic" : {
 
     },
+    "Backup" : {
+
+    },
+    "Banking app scans standard QR codes" : {
+
+    },
     "BIC (optional)" : {
 
     },
@@ -232,6 +284,9 @@
 
     },
     "Bills" : {
+
+    },
+    "Bills to Pay" : {
 
     },
     "Blue" : {
@@ -378,6 +433,9 @@
     "Could not move these to the Trash: %@. Nothing was cleared from the index. Check iCloud Drive and try again." : {
 
     },
+    "Could not read \"%@\". Make sure it is downloaded from iCloud Drive and try again." : {
+
+    },
     "Could not read \"%@\". Make sure the file is downloaded and not damaged, then try again." : {
 
     },
@@ -400,6 +458,9 @@
     "Could not save the change: %@" : {
 
     },
+    "Could not save the changes" : {
+
+    },
     "Could not save the file: %@ Try another folder." : {
 
     },
@@ -413,6 +474,15 @@
 
     },
     "Could not use the Keychain: %@" : {
+
+    },
+    "Could not write the index export: %@. Check that iCloud Drive has free space and try again." : {
+
+    },
+    "Couldn't look for QR codes on this device; only links were checked." : {
+
+    },
+    "Couldn't read %@ to look for a payment code. Check that the file is in iCloud Drive and try again." : {
 
     },
     "Create Claim (%lld, %@)" : {
@@ -495,6 +565,15 @@
     "Each owner gets a top-level folder and a colour in lists. Renaming only affects documents filed afterwards." : {
 
     },
+    "Edit" : {
+
+    },
+    "Edit Details" : {
+
+    },
+    "Edit Details (⌘E)" : {
+
+    },
     "Edit VAT" : {
 
     },
@@ -532,6 +611,9 @@
     "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email." : {
 
     },
+    "Every week Paper Trail writes everything that isn't in the PDFs (amounts, VAT, paid bills, expense claims, learned rules) to Paper Trail/Export in iCloud Drive, as JSON and as a CSV for Excel or Numbers. The last 8 weeks are kept in Export/Backups. Import adds back documents and records that are missing from the index; it never changes or removes anything." : {
+
+    },
     "Everything is paid." : {
 
     },
@@ -550,7 +632,13 @@
     "Expenses" : {
 
     },
+    "Expenses to Claim" : {
+
+    },
     "Export" : {
+
+    },
+    "Export Index Now" : {
 
     },
     "Export PDF and CSV…" : {
@@ -560,6 +648,9 @@
 
     },
     "Exported" : {
+
+    },
+    "Exported %lld documents to Paper Trail/Export in iCloud Drive." : {
 
     },
     "Exported in a SEPA file; open until its reminder is completed" : {
@@ -572,6 +663,12 @@
 
     },
     "File document" : {
+
+    },
+    "File Document" : {
+
+    },
+    "File Document (⌘↩)" : {
 
     },
     "File it right here." : {
@@ -590,6 +687,9 @@
 
     },
     "Find Documents" : {
+
+    },
+    "Find documents by sender, description, amount or their text from the system search. The search index stays on this device; turn this off to remove it." : {
 
     },
     "Find VAT in Documents" : {
@@ -619,6 +719,12 @@
     "Found in the document's text. Check rate and amounts." : {
 
     },
+    "From the invoice itself: scan the code with your banking app, check the details and confirm there. Paper Trail never sends payments." : {
+
+    },
+    "From the invoice itself: the sender's payment page. Check the details there before you pay. Paper Trail never sends payments." : {
+
+    },
     "From your rule for %@" : {
 
     },
@@ -646,10 +752,22 @@
     "IMAP server" : {
 
     },
+    "Immediately" : {
+
+    },
     "Import" : {
 
     },
     "Import File…" : {
+
+    },
+    "Import index?" : {
+
+    },
+    "Import Index…" : {
+
+    },
+    "Imported. %@" : {
 
     },
     "In iCloud Drive" : {
@@ -670,7 +788,19 @@
     "Kept: owners, categories, payment and email settings. Emails in your mailbox are not touched." : {
 
     },
+    "Last export" : {
+
+    },
     "Learned rules" : {
+
+    },
+    "Lock" : {
+
+    },
+    "Look for Payment Code Again" : {
+
+    },
+    "Looking for a payment code on the invoice…" : {
 
     },
     "Mailbox" : {
@@ -769,7 +899,16 @@
     "None" : {
 
     },
+    "Not yet" : {
+
+    },
+    "Nothing is waiting in Needs Review." : {
+
+    },
     "Nothing received yet this month." : {
+
+    },
+    "Nothing to add: everything in this export is already in the index." : {
 
     },
     "Nothing to pay" : {
@@ -781,13 +920,31 @@
     "OK" : {
 
     },
+    "Open Bills" : {
+
+    },
+    "Open Bills to Pay" : {
+
+    },
     "Open Paper Trail" : {
 
     },
     "Open Paper Trail at login" : {
 
     },
+    "Open Paper Trail first, then try again." : {
+
+    },
+    "Open Payment Page" : {
+
+    },
     "Opening…" : {
+
+    },
+    "Opens the list of open bills in Paper Trail, with payment codes and details." : {
+
+    },
+    "Opens the next document waiting in Needs Review so you can file it." : {
 
     },
     "Orange" : {
@@ -808,7 +965,7 @@
     "Owners" : {
 
     },
-    "Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud." : {
+    "Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud." : {
 
     },
     "Paid" : {
@@ -823,10 +980,22 @@
     "Paper Trail adds a reminder to the To pay list of this owner in Reminders." : {
 
     },
+    "Paper Trail asks for %@ when it opens and after it has been away for the chosen time; your passcode works too. This device only. Files in iCloud Drive aren't locked, and Spotlight can still show document titles; turn Spotlight off below to hide them." : {
+
+    },
     "Paper Trail can't use Reminders. Allow full access for Paper Trail in Settings → Privacy & Security → Reminders, then tap Create Reminder on the bill." : {
 
     },
+    "Paper Trail is locked" : {
+
+    },
     "Paper Trail remembers owner and category for each sender you file." : {
+
+    },
+    "Passcode" : {
+
+    },
+    "Password" : {
 
     },
     "Pay" : {
@@ -925,10 +1094,16 @@
     "Remove" : {
 
     },
+    "Require %@" : {
+
+    },
     "Reverse charge (BTW verlegd)" : {
 
     },
     "Review %lld" : {
+
+    },
+    "Review Documents" : {
 
     },
     "Review Later" : {
@@ -937,16 +1112,28 @@
     "Save" : {
 
     },
+    "Save Changes" : {
+
+    },
+    "Save Changes (⌘↩)" : {
+
+    },
     "Save Email Settings" : {
 
     },
     "Saved – type to replace" : {
 
     },
+    "Saved, but the reminder wasn't updated" : {
+
+    },
     "Saved." : {
 
     },
     "Saves the document to Needs Review in iCloud Drive, so you can file it later on any device." : {
+
+    },
+    "Scan" : {
 
     },
     "Scan Document" : {
@@ -959,6 +1146,9 @@
 
     },
     "Scanning failed: %@. Try again." : {
+
+    },
+    "Search" : {
 
     },
     "Select a bill" : {
@@ -988,7 +1178,13 @@
     "Server" : {
 
     },
+    "Set a passcode on this device to use the lock." : {
+
+    },
     "Settings" : {
+
+    },
+    "Settings (⌘,)" : {
 
     },
     "Settings saved" : {
@@ -1004,6 +1200,9 @@
 
     },
     "Shared, emailed and Inbox documents wait here until you file them." : {
+
+    },
+    "Show Documents in Spotlight" : {
 
     },
     "Show in Finder" : {
@@ -1054,6 +1253,12 @@
     "Teal" : {
 
     },
+    "Tells how many bills are open in Paper Trail, their total and which are overdue." : {
+
+    },
+    "Tells per company how many expenses are waiting to be claimed and their total." : {
+
+    },
     "Test Connection" : {
 
     },
@@ -1096,6 +1301,15 @@
     "These documents are not in Paper Trail anymore (moved or renamed?): %@. Put them back and export again." : {
 
     },
+    "This document is in a VAT return marked as submitted. Its owner, dates, amount and VAT can't be changed; use Undo Submitted in the VAT overview first." : {
+
+    },
+    "This expense is in a submitted claim. Its amount and company can't be changed; undo the claim under Expenses first." : {
+
+    },
+    "This invoice has no payment code or link. Use the copy buttons below." : {
+
+    },
     "This whole account is only for Paper Trail" : {
 
     },
@@ -1126,6 +1340,12 @@
     "Total" : {
 
     },
+    "Turn off the lock for Paper Trail." : {
+
+    },
+    "Turn on the lock for Paper Trail." : {
+
+    },
     "Type %@ to confirm" : {
 
     },
@@ -1133,6 +1353,12 @@
 
     },
     "Undo Submitted" : {
+
+    },
+    "Unlock with %@" : {
+
+    },
+    "Unlock your documents." : {
 
     },
     "Unpaid bill" : {

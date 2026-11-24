@@ -52,11 +52,16 @@ enum DocumentCapture {
         guard coordinationError == nil, let data = try? readResult.get() else { throw CaptureError.unreadableFile(name) }
 
         let type = (try? url.resourceValues(forKeys: [.contentTypeKey]))?.contentType
-        if type?.conforms(to: .pdf) == true || data.starts(with: Data("%PDF".utf8)) {
-            return PendingDocument(pdfData: data, source: .fileImport, originalName: name)
+        return try fromData(data, name: name, isPDF: type?.conforms(to: .pdf) == true, source: .fileImport)
+    }
+
+    /// A PDF or image given as data, e.g. by a Shortcuts action.
+    nonisolated static func fromData(_ data: Data, name: String, isPDF: Bool = false, source: IntakeSource) throws -> PendingDocument {
+        if isPDF || data.starts(with: Data("%PDF".utf8)) {
+            return PendingDocument(pdfData: data, source: source, originalName: name)
         }
         let images = PDFBuilder.images(fromImageData: data)
         guard !images.isEmpty else { throw CaptureError.unsupportedType(name) }
-        return PendingDocument(pdfData: try PDFBuilder.makePDF(from: images), source: .fileImport, originalName: name, pageImages: images)
+        return PendingDocument(pdfData: try PDFBuilder.makePDF(from: images), source: source, originalName: name, pageImages: images)
     }
 }

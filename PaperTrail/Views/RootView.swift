@@ -1,3 +1,4 @@
+import CoreSpotlight
 import EventKit
 import PaperTrailKit
 import SwiftData
@@ -22,6 +23,7 @@ struct RootView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(AppLock.self) private var appLock
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
@@ -94,7 +96,29 @@ struct RootView: View {
         } message: {
             Text(model.errorMessage ?? "")
         }
+        .sheet(item: $model.documentToOpen) { route in
+            NavigationStack {
+                DocumentDetailView(id: route.id)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { model.documentToOpen = nil }
+                        }
+                    }
+            }
+            #if os(macOS)
+            .frame(minWidth: 720, minHeight: 640)
+            #endif
+        }
+        .onAppear { appLock.updateCovers() }
+        #if os(iOS)
+        .onChange(of: scenePhase, initial: true) { _, phase in appLock.scenePhaseChanged(to: phase) }
+        #endif
         .onOpenURL { model.handle(url: $0) }
+        .onContinueUserActivity(CSSearchableItemActionType) { activity in
+            if let id = SpotlightIndexer.documentID(from: activity) { model.documentToOpen = DocumentRoute(id: id) }
+        }
+        .modifier(SpotlightSync())
+        .modifier(WidgetSync())
         .onChange(of: model.wantsSearchFocus) { _, wants in
             // Find (⌘F) searches the archive; go there first if needed.
             guard wants else { return }
@@ -118,6 +142,7 @@ struct RootView: View {
             while !Task.isCancelled {
                 await model.refreshReviewItems()
                 await model.syncBills(context: modelContext)
+                await model.indexBackup.exportIfDue(context: modelContext, settings: settingsStore.settings)
                 try? await Task.sleep(for: .seconds(60))
             }
         }
@@ -177,6 +202,19 @@ struct RootView: View {
             }
             .navigationTitle("Paper Trail")
             #if os(macOS)
+            // Settings live in their own window on the Mac (also Paper Trail → Settings…, ⌘,).
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                SettingsLink {
+                    Label("Settings", systemImage: "gearshape")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(.rect)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .help("Settings (⌘,)")
+            }
             .navigationSplitViewColumnWidth(min: 180, ideal: 210)
             // The own button below replaces the standard one; it must be removed on the sidebar.
             .toolbar(removing: .sidebarToggle)

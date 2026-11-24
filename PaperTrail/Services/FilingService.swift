@@ -17,14 +17,25 @@ struct FilingService {
         _ = try await reviewQueue.add(document, root: root.url)
     }
 
-    func file(_ document: PendingDocument, request: FilingRequest, extractedText: String?, suggestedSender: String = "", context: ModelContext) async throws -> DocumentRecord {
+    /// - Parameter textLayer: For scans, the recognised lines with their place on each page;
+    ///   they are added to the PDF as invisible text so the filed file is searchable everywhere.
+    func file(_ document: PendingDocument, request: FilingRequest, extractedText: String?, textLayer: [[RecognizedLine]]? = nil,
+              suggestedSender: String = "", context: ModelContext) async throws -> DocumentRecord {
         let plan = try FilingPlanner.plan(for: request, namer: namer)
         let root = try await location.resolveRoot()
         if let queued = document.reviewItemURL, !FileManager.default.fileExists(atPath: queued.path(percentEncoded: false)) {
             // Filed or removed elsewhere in the meantime; don't create a second copy.
             throw ReviewQueueError.alreadyHandled(queued.lastPathComponent)
         }
-        let stored = try await store.store(document.pdfData, plan: plan, root: root.url, removingSource: document.reviewItemURL)
+        var pdf = document.pdfData
+        if let textLayer {
+            let scan = pdf
+            // If the layer can't be added (e.g. rotated pages), the scan is filed as it is.
+            if let searchable = await Task.detached(operation: { SearchablePDF.addingTextLayer(to: scan, pages: textLayer) }).value {
+                pdf = searchable
+            }
+        }
+        let stored = try await store.store(pdf, plan: plan, root: root.url, removingSource: document.reviewItemURL)
 
         let record = DocumentRecord(
             relativePath: stored.relativePath,
@@ -49,6 +60,46 @@ struct FilingService {
         return record
     }
 
+    /// Saves changed details of a filed document. The file is moved or renamed first when its
+    /// owner, category, received date, sender or description changed; then the index follows.
+    /// The correction also updates the learned rule for the sender, with the old name as alias.
+    func update(_ record: DocumentRecord, request: FilingRequest, context: ModelContext) async throws {
+        let plan = try FilingPlanner.plan(for: request, namer: namer)
+        if !DocumentEdit.isAlreadyAt(record.relativePath, plan: plan) {
+            let root = try await location.resolveRoot()
+            record.relativePath = try await store.move(record.relativePath, to: plan, root: root.url)
+        }
+        let previousSender = record.sender
+        record.ownerName = plan.folderComponents[0]
+        record.categoryName = plan.folderComponents[2]
+        record.sender = namer.cleanSender(request.sender)
+        record.documentDescription = namer.cleanDescription(request.description)
+        record.receivedDate = request.receivedDate
+        record.documentDate = request.documentDate
+        let bill = request.bill ?? BillDetails()
+        record.isUnpaidBill = bill.isUnpaid
+        record.amount = bill.amount
+        record.dueDate = bill.dueDate
+        record.iban = bill.iban.isEmpty ? nil : bill.iban
+        record.paymentReference = bill.reference.isEmpty ? nil : bill.reference
+        record.reimbursedBy = request.reimbursedBy
+        record.vatInfo = request.vat
+        if let learned = learnRule(from: record, request: request, suggestedSender: previousSender, context: context),
+           previousSender.lowercased() != record.sender.lowercased() {
+            forgetOldName(previousSender, keeping: learned, context: context)
+        }
+        try context.save()
+    }
+
+    /// Other rules stop matching the sender's old (wrong) name; empty rules are removed.
+    private func forgetOldName(_ name: String, keeping kept: UUID, context: ModelContext) {
+        let records = (try? context.fetch(FetchDescriptor<FilingRuleRecord>())) ?? []
+        for changed in SenderRules.releasing(oldName: name, keeping: kept, in: records.map(\.rule)) {
+            guard let record = records.first(where: { $0.id == changed.id }) else { continue }
+            if changed.aliases.isEmpty { context.delete(record) } else { record.update(from: changed) }
+        }
+    }
+
     /// Documents already in the index that look like this one. Only warns; the user decides.
     func duplicates(of document: PendingDocument, request: FilingRequest, context: ModelContext) throws -> [DuplicateMatch] {
         let candidate = DuplicateFacts(
@@ -65,7 +116,8 @@ struct FilingService {
 
     /// Remembers owner and category for this sender, so the next document from them is
     /// filed the same way. Saved together with the record.
-    private func learnRule(from record: DocumentRecord, request: FilingRequest, suggestedSender: String, context: ModelContext) {
+    @discardableResult
+    private func learnRule(from record: DocumentRecord, request: FilingRequest, suggestedSender: String, context: ModelContext) -> UUID? {
         // A failed fetch only means no rule is learned this time; filing itself is unaffected.
         let records = (try? context.fetch(FetchDescriptor<FilingRuleRecord>())) ?? []
         let payTo = request.bill?.isUnpaid == true ? request.bill?.iban ?? "" : ""
@@ -74,11 +126,12 @@ struct FilingService {
             owner: record.ownerName, category: record.categoryName, payToIban: payTo,
             reimbursedBy: request.reimbursedBy
         )
-        guard let rule = SenderRules.learn(from: filing, existing: records.map(\.rule)) else { return }
+        guard let rule = SenderRules.learn(from: filing, existing: records.map(\.rule)) else { return nil }
         if let existing = records.first(where: { $0.id == rule.id }) {
             existing.update(from: rule)
         } else {
             context.insert(FilingRuleRecord(rule))
         }
+        return rule.id
     }
 }

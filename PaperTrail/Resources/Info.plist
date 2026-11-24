@@ -33,6 +33,8 @@
 	<string>1</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Paper Trail uses the camera to scan receipts, invoices and letters.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Paper Trail uses Face ID to unlock your documents when you turn on the lock in Settings.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>Paper Trail adds unpaid bills to your To pay lists in Reminders and marks a bill paid when you complete its reminder.</string>
 	<key>NSUbiquitousContainers</key>

@@ -3,7 +3,8 @@ import SwiftData
 import SwiftUI
 
 /// The review screen: the app suggests category, sender, description, dates and payment
-/// details on the device; the user checks them and files the document.
+/// details on the device; the user checks them and files the document. With `editing` set, the
+/// same screen changes the details of a document already filed (no suggestions).
 struct FilingView: View {
     enum Field: Hashable { case owner, category, documentDate, sender, description, bill, reimbursement, vat }
 
@@ -20,11 +21,14 @@ struct FilingView: View {
     let billService: BillService
     /// Beside the Needs Review list instead of a sheet: no Cancel, no window title of its own.
     var embedded = false
+    /// A filed document whose details are being changed.
+    var editing: DocumentRecord?
     var onDone: () -> Void
 
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(\.modelContext) private var modelContext
     @Query private var ruleRecords: [FilingRuleRecord]
+    @Query private var vatReturns: [VATReturnRecord]
 
     @State private var ownerName = ""
     @State private var categoryName = ""
@@ -62,6 +66,8 @@ struct FilingView: View {
     @State private var reminderProblem: String?
 
     @State private var extractedText: String?
+    /// For scans: where each recognised line is, to make the filed PDF searchable.
+    @State private var recognizedLines: [[RecognizedLine]]?
     @State private var ocrFailed = false
     @State private var isFiling = false
     @State private var errorMessage: String?
@@ -71,9 +77,13 @@ struct FilingView: View {
             owner: ownerName, category: categoryName, receivedDate: receivedDate,
             documentDate: hasDocumentDate ? documentDate : nil, sender: sender, description: descriptionText,
             bill: bill, reimbursedBy: reimbursedBy.isEmpty || reimbursedBy == ownerName ? nil : reimbursedBy,
-            vat: tracksVAT && !vat.isEmpty ? vat : nil
+            vat: showsVAT && !vat.isEmpty ? vat : nil
         )
     }
+
+    /// VAT shows for owners that track it, and when editing a document that already has VAT
+    /// (so saving never drops VAT that was entered before).
+    private var showsVAT: Bool { tracksVAT || editing?.vatInfo != nil }
 
     /// VAT matters when the owner files VAT returns, or a company that does reimburses the expense.
     private var tracksVAT: Bool {
@@ -94,6 +104,44 @@ struct FilingView: View {
         Binding(get: { binding.wrappedValue }, set: { binding.wrappedValue = $0; edited.insert(field) })
     }
 
+    // MARK: Editing a filed document
+
+    /// The expense is in a submitted (or reimbursed) claim: its company and amount stay as claimed.
+    private var claimLocked: Bool {
+        guard let editing else { return false }
+        return editing.claimState == .submitted || editing.claimState == .reimbursed
+    }
+
+    /// The document counts in a VAT return marked as submitted: owner, dates, amount and VAT
+    /// stay as submitted. Undo Submitted in the VAT overview to change them.
+    private var vatLocked: Bool {
+        guard let editing else { return false }
+        let returns = vatReturns.map { DocumentEdit.SubmittedReturn(owner: $0.ownerName, start: $0.periodStart, end: $0.periodEnd) }
+        return DocumentEdit.isInSubmittedVATReturn(owner: editing.ownerName, reimbursedBy: editing.reimbursedBy, vatDate: editing.vatDate, returns: returns)
+    }
+
+    private var amountLocked: Bool { claimLocked || vatLocked }
+
+    private func prefill(from record: DocumentRecord) {
+        ownerName = record.ownerName
+        categoryName = record.categoryName
+        receivedDate = record.receivedDate
+        hasDocumentDate = record.documentDate != nil
+        documentDate = record.documentDate ?? record.receivedDate
+        sender = record.sender
+        descriptionText = record.documentDescription
+        isUnpaidBill = record.isUnpaidBill
+        amount = record.amount
+        hasDueDate = record.dueDate != nil
+        dueDate = record.dueDate ?? .now
+        iban = record.iban ?? ""
+        paymentReference = record.paymentReference ?? ""
+        reimbursedBy = record.reimbursedBy ?? ""
+        vat = record.vatInfo ?? VATInfo()
+        extractedText = record.extractedText ?? ""
+        suggestion = .done
+    }
+
     private var previewPath: String? {
         try? FilingPlanner.plan(for: request, namer: filingService.namer).relativePath
     }
@@ -107,18 +155,30 @@ struct FilingView: View {
                 }
             }
 
-            suggestionSection
+            if editing == nil {
+                suggestionSection
+            } else {
+                lockNotice
+            }
 
             Section("Where") {
                 HStack {
                     Picker("Owner", selection: tracked($ownerName, .owner)) {
                         ForEach(settingsStore.settings.owners) { Text($0.name).tag($0.name) }
+                        // A filed document may use an owner since removed from Settings.
+                        if !ownerName.isEmpty, !settingsStore.settings.owners.contains(where: { $0.name == ownerName }) {
+                            Text(ownerName).tag(ownerName)
+                        }
                     }
+                    .disabled(vatLocked)
                     mark(.owner)
                 }
                 HStack {
                     Picker("Category", selection: tracked($categoryName, .category)) {
                         ForEach(settingsStore.settings.categories) { Text($0.name).tag($0.name) }
+                        if !categoryName.isEmpty, !settingsStore.settings.categories.contains(where: { $0.name == categoryName }) {
+                            Text(categoryName).tag(categoryName)
+                        }
                     }
                     mark(.category)
                 }
@@ -126,12 +186,15 @@ struct FilingView: View {
 
             Section("Details") {
                 DatePicker("Received", selection: $receivedDate, displayedComponents: .date)
+                    .disabled(vatLocked)
                 Toggle("Date on document", isOn: tracked($hasDocumentDate, .documentDate))
+                    .disabled(vatLocked)
                 if hasDocumentDate {
                     HStack {
                         DatePicker("Document date", selection: tracked($documentDate, .documentDate), displayedComponents: .date)
                         mark(.documentDate)
                     }
+                    .disabled(vatLocked)
                 }
                 HStack {
                     TextField("Sender", text: tracked($sender, .sender), prompt: Text("e.g. Acme Energy"))
@@ -153,6 +216,7 @@ struct FilingView: View {
                         #if os(iOS)
                         .keyboardType(.decimalPad)
                         #endif
+                        .disabled(amountLocked)
                     if isUnpaidBill {
                         Toggle("Due date", isOn: tracked($hasDueDate, .bill))
                         if hasDueDate {
@@ -185,6 +249,7 @@ struct FilingView: View {
                         }
                         mark(.reimbursement)
                     }
+                    .disabled(claimLocked)
                 } header: {
                     Text("Expense")
                 } footer: {
@@ -192,9 +257,10 @@ struct FilingView: View {
                 }
             }
 
-            if tracksVAT {
+            if showsVAT {
                 Section {
                     VATEditor(vat: tracked($vat, .vat))
+                        .disabled(vatLocked)
                 } header: {
                     Text("VAT")
                 } footer: {
@@ -213,7 +279,7 @@ struct FilingView: View {
                 }
             }
 
-            if document.reviewItemURL == nil {
+            if document.reviewItemURL == nil, editing == nil {
                 Section {
                     Button("Review Later", systemImage: "tray.and.arrow.down") { Task { await saveForReview() } }
                         .disabled(isFiling)
@@ -285,7 +351,7 @@ struct FilingView: View {
                 form(showsPDF: true)
             }
         }
-        .titleUnlessEmbedded(embedded, String(localized: "File document"))
+        .titleUnlessEmbedded(embedded, editing == nil ? String(localized: "File document") : String(localized: "Edit Details"))
         .toolbar {
             if !embedded {
                 ToolbarItem(placement: .cancellationAction) {
@@ -293,17 +359,22 @@ struct FilingView: View {
                         .disabled(isFiling)
                 }
             }
-            ToolbarItem(placement: .confirmationAction) {
-                if isFiling {
-                    ProgressView()
-                } else {
-                    Button("File") { Task { await checkAndFile() } }
-                        .keyboardShortcut(.return, modifiers: .command)
-                        .disabled(previewPath == nil)
+            if !usesActionBar {
+                ToolbarItem(placement: .confirmationAction) {
+                    if isFiling {
+                        ProgressView()
+                    } else {
+                        Button(editing == nil ? "File" : "Save") { Task { await checkAndFile() } }
+                            .keyboardShortcut(.return, modifiers: .command)
+                            .disabled(previewPath == nil)
+                    }
                 }
             }
         }
-        .alert("Could not file the document", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if usesActionBar { actionBar }
+        }
+        .alert(editing == nil ? "Could not file the document" : "Could not save the changes", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
@@ -314,14 +385,83 @@ struct FilingView: View {
         } message: { match in
             Text("\(match.reason.message) An earlier document is in your archive:\n\(match.existing.relativePath)")
         }
-        .alert("Filed, but no reminder", isPresented: Binding(get: { reminderProblem != nil }, set: { if !$0 { reminderProblem = nil; onDone() } })) {
+        .alert(editing == nil ? "Filed, but no reminder" : "Saved, but the reminder wasn't updated", isPresented: Binding(get: { reminderProblem != nil }, set: { if !$0 { reminderProblem = nil; onDone() } })) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(reminderProblem ?? "")
         }
         .interactiveDismissDisabled(isFiling)
-        .onAppear(perform: applyDefaults)
-        .task { await recognizeText() }
+        .onAppear {
+            if let editing { prefill(from: editing) } else { applyDefaults() }
+        }
+        .task { if editing == nil { await recognizeText() } }
+    }
+
+    /// On the Mac, and beside the review list on iPad, a toolbar button is easy to miss: the
+    /// main action gets a large button at the bottom, with where the document will go.
+    private var usesActionBar: Bool {
+        #if os(macOS)
+        true
+        #else
+        embedded
+        #endif
+    }
+
+    private var actionBar: some View {
+        HStack(spacing: 12) {
+            if let previewPath {
+                Label {
+                    Text(previewPath)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                } icon: {
+                    Image(systemName: "folder")
+                }
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .help(previewPath)
+            } else {
+                Text("Choose an owner and a category.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            if isFiling { ProgressView().controlSize(.small) }
+            Button {
+                Task { await checkAndFile() }
+            } label: {
+                Label(editing == nil ? "File Document" : "Save Changes",
+                      systemImage: editing == nil ? "tray.and.arrow.down.fill" : "checkmark")
+                    .padding(.horizontal, 6)
+                    .lineLimit(1)
+            }
+            // The button keeps its full label; the path above gives way.
+            .fixedSize()
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .keyboardShortcut(.return, modifiers: .command)
+            .disabled(previewPath == nil || isFiling)
+            .help(editing == nil ? "File Document (⌘↩)" : "Save Changes (⌘↩)")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.bar)
+        .overlay(alignment: .top) { Divider() }
+    }
+
+    @ViewBuilder
+    private var lockNotice: some View {
+        if vatLocked {
+            Section {
+                Label("This document is in a VAT return marked as submitted. Its owner, dates, amount and VAT can't be changed; use Undo Submitted in the VAT overview first.", systemImage: "lock")
+                    .foregroundStyle(.secondary)
+            }
+        } else if claimLocked {
+            Section {
+                Label("This expense is in a submitted claim. Its amount and company can't be changed; undo the claim under Expenses first.", systemImage: "lock")
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 
     @ViewBuilder
@@ -378,11 +518,11 @@ struct FilingView: View {
     private func recognizeText() async {
         let recognizer = VisionTextRecognizer()
         do {
-            if document.pageImages.isEmpty {
-                extractedText = try await PDFTextExtractor(recognizer: recognizer).extractText(from: document.pdfData)
-            } else {
-                extractedText = try await recognizer.recognizeText(in: document.pageImages)
-            }
+            let result = document.pageImages.isEmpty
+                ? try await PDFTextExtractor(recognizer: recognizer).extract(from: document.pdfData)
+                : try await recognizer.recognizeText(in: document.pageImages)
+            extractedText = result.text
+            recognizedLines = result.lines
         } catch is CancellationError {
             return
         } catch {
@@ -475,6 +615,10 @@ struct FilingView: View {
     /// Warns about a probable duplicate before filing. If the check itself fails, filing
     /// goes ahead: a missed warning is better than a document that can't be filed.
     private func checkAndFile() async {
+        if let editing {
+            await saveEdits(editing)
+            return
+        }
         if let match = try? filingService.duplicates(of: document, request: request, context: modelContext).first {
             duplicate = match
             return
@@ -482,11 +626,37 @@ struct FilingView: View {
         await file()
     }
 
+    /// Moves or renames the file if needed, updates the index, then the bill's reminder.
+    private func saveEdits(_ record: DocumentRecord) async {
+        isFiling = true
+        defer { isFiling = false }
+        let before = record.reminderFacts
+        let wasUnpaidBill = record.isUnpaidBill
+        let hadReminder = record.reminderExternalID != nil
+        do {
+            try await filingService.update(record, request: request, context: modelContext)
+        } catch {
+            errorMessage = error.localizedDescription
+            return
+        }
+        let change = DocumentEdit.reminderChange(before: before, after: record.reminderFacts, wasUnpaidBill: wasUnpaidBill,
+                                                 isUnpaidBill: record.isUnpaidBill, isPaid: record.isPaid, hasReminder: hadReminder)
+        do {
+            try await billService.updateReminder(for: record, change: change, context: modelContext)
+        } catch {
+            // The changes are saved; only the reminder is out of date.
+            reminderProblem = error.localizedDescription
+            return
+        }
+        onDone()
+    }
+
     private func file() async {
         isFiling = true
         defer { isFiling = false }
         do {
-            let record = try await filingService.file(document, request: request, extractedText: extractedText, suggestedSender: suggestedSender, context: modelContext)
+            let record = try await filingService.file(document, request: request, extractedText: extractedText, textLayer: recognizedLines,
+                                                      suggestedSender: suggestedSender, context: modelContext)
             do {
                 try await billService.addReminder(for: record, context: modelContext)
             } catch {
