@@ -14,8 +14,8 @@ public struct SenderRule: Sendable, Hashable, Identifiable {
     public var category: String
     /// Company that reimburses expenses from this sender, if the user marked them so.
     public var reimbursedBy: String?
-    /// The ledger code last chosen for this sender, per owner and category (a sender's invoices
-    /// and receipts can each have their own).
+    /// The ledger code last chosen for this sender, per owner (each company has its own codes;
+    /// a sender's invoices and receipts share one).
     public var ledgerCodes: [LedgerChoice]
     public var updatedAt: Date
 
@@ -32,28 +32,26 @@ public struct SenderRule: Sendable, Hashable, Identifiable {
         self.updatedAt = updatedAt
     }
 
-    /// The code this sender's documents for `owner` and `category` were last booked on.
-    public func ledgerCode(owner: String, category: String) -> String? {
-        ledgerCodes.first { $0.owner == owner && $0.category == category }?.code
+    /// The code this sender's documents for `owner` were last booked on.
+    public func ledgerCode(owner: String) -> String? {
+        ledgerCodes.last { $0.owner == owner }?.code
     }
 
-    /// Remembers `code` for the combination; an empty code forgets it.
-    public mutating func setLedgerCode(_ code: String, owner: String, category: String) {
-        ledgerCodes.removeAll { $0.owner == owner && $0.category == category }
+    /// Remembers `code` for the owner; an empty code forgets it.
+    public mutating func setLedgerCode(_ code: String, owner: String) {
+        ledgerCodes.removeAll { $0.owner == owner }
         let code = code.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !code.isEmpty { ledgerCodes.append(LedgerChoice(owner: owner, category: category, code: code)) }
+        if !code.isEmpty { ledgerCodes.append(LedgerChoice(owner: owner, code: code)) }
     }
 }
 
-/// A ledger code remembered for one owner and category.
+/// A ledger code remembered for one owner.
 public struct LedgerChoice: Codable, Hashable, Sendable {
     public var owner: String
-    public var category: String
     public var code: String
 
-    public init(owner: String, category: String, code: String) {
+    public init(owner: String, code: String) {
         self.owner = owner
-        self.category = category
         self.code = code
     }
 }
@@ -71,7 +69,7 @@ public struct ConfirmedFiling: Sendable, Hashable {
     /// The company the user chose to reimburse this expense; nil when not reimbursable.
     public var reimbursedBy: String?
     /// The ledger code chosen; "" when the user left it empty (forget the learned one), nil
-    /// when the owner has no codes for the category (leave the rule's codes alone).
+    /// when no code could be chosen (no codes, or a category without them): leave the rule alone.
     public var ledgerCode: String?
 
     public init(sender: String, suggestedSender: String = "", owner: String, category: String, payToIban: String = "", reimbursedBy: String? = nil,
@@ -162,7 +160,7 @@ public enum SenderRules {
         rule.owner = filing.owner
         rule.category = filing.category
         rule.reimbursedBy = filing.reimbursedBy
-        if let code = filing.ledgerCode { rule.setLedgerCode(code, owner: filing.owner, category: filing.category) }
+        if let code = filing.ledgerCode { rule.setLedgerCode(code, owner: filing.owner) }
         rule.updatedAt = now
         for name in names where !rule.aliases.contains(name) { rule.aliases.append(name) }
         if !payTo.isEmpty, !rule.ibans.contains(payTo) { rule.ibans.append(payTo) }

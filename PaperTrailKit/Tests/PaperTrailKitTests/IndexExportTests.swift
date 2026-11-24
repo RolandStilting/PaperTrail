@@ -33,7 +33,7 @@ struct IndexExportTests {
                     expenseClaims: [ExpenseClaimRecord(ownerName: "Company1", createdAt: date(10), expenseCount: 2, total: 30).exported],
                     vatReturns: [], senderRules: [IndexExport.Rule(SenderRule(senderName: "Voorbeeld Energie", aliases: ["voorbeeld energie"],
                                                                                owner: "Company1", category: "Invoices",
-                                                                               ledgerCodes: [LedgerChoice(owner: "Company1", category: "Invoices", code: "4300")],
+                                                                               ledgerCodes: [LedgerChoice(owner: "Company1", code: "4300")],
                                                                                updatedAt: date(23)))],
                     settings: .defaults)
     }
@@ -51,7 +51,7 @@ struct IndexExportTests {
         #expect(restored.reminderExternalID == "reminder-1")
         #expect(restored.ledgerCode == "4300")
         #expect(restored.ledgerDescription == "Energie")
-        #expect(read.senderRules[0].rule.ledgerCode(owner: "Company1", category: "Invoices") == "4300")
+        #expect(read.senderRules[0].rule.ledgerCode(owner: "Company1") == "4300")
     }
 
     @Test func readsExportsMadeBeforeLedgerCodes() throws {

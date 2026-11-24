@@ -52,7 +52,7 @@
     "1 day overdue" : {
 
     },
-    "A ledger code for %@ › %@ has a description but no code. Enter the code or remove the row." : {
+    "A ledger code for %@ has a description but no code. Enter the code or remove the row." : {
 
     },
     "Add at least one category." : {
@@ -302,7 +302,7 @@
     "Two categories have the same name. Make each category name unique." : {
 
     },
-    "Two ledger codes for %@ › %@ are the same. Make each code unique." : {
+    "Two ledger codes for %@ are the same. Make each code unique." : {
 
     },
     "Two owners have the same name. Make each owner name unique." : {

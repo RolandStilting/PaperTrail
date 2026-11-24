@@ -13,6 +13,15 @@ public struct ArchiveSettings: Codable, Hashable, Sendable {
         self.categories = categories
     }
 
+    enum CodingKeys: String, CodingKey { case owners, categories }
+
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        owners = try container.decode([Owner].self, forKey: .owners)
+        categories = try container.decode([DocumentCategory].self, forKey: .categories)
+        moveLegacyLedgerLists()
+    }
+
     public static let defaults = ArchiveSettings(
         owners: ["Company1", "Company2", "Private"].map { Owner(name: $0) },
         categories: ["Invoices", "Receipts", "Letters", "Contracts", "Tax", "Insurance", "Bank", "Other"]

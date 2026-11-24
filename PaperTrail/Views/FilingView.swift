@@ -87,7 +87,7 @@ struct FilingView: View {
 
     // MARK: Ledger code
 
-    /// The owner's codes for the chosen category; empty when it has none.
+    /// The owner's codes when the chosen category uses ledger codes; else empty.
     private var ledgerCodes: [LedgerCode] {
         settingsStore.settings.ledgerCodes(owner: ownerName, category: categoryName)
     }
@@ -133,7 +133,7 @@ struct FilingView: View {
         guard editing == nil, ledgerCode.isEmpty, !edited.contains(.ledger), !codes.isEmpty else { return }
         suggested.remove(.ledger)
         fromRule.remove(.ledger)
-        if let learned = appliedRule?.ledgerCode(owner: ownerName, category: categoryName),
+        if let learned = appliedRule?.ledgerCode(owner: ownerName),
            let code = codes.first(where: { $0.matches(learned) }) {
             ledgerCode = code.code
             fromRule.insert(.ledger)

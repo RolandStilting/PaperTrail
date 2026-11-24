@@ -27,7 +27,7 @@ struct RulesView: View {
                         .foregroundStyle(.secondary)
                     let codes = rule.rule.ledgerCodes
                     if !codes.isEmpty {
-                        Text(codes.map { "\($0.owner) › \($0.category): \($0.code)" }.joined(separator: ", "))
+                        Text(codes.map { "\($0.owner): \($0.code)" }.joined(separator: ", "))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

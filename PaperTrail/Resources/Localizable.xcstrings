@@ -316,7 +316,7 @@
     "Categories" : {
 
     },
-    "Categories without codes show no ledger code when filing." : {
+    "Categories with ledger codes" : {
 
     },
     "Category" : {
@@ -535,6 +535,9 @@
 
     },
     "Documents" : {
+
+    },
+    "Documents in these categories get a ledger code, such as invoices and receipts. The codes are the same for every category." : {
 
     },
     "Documents you file appear here." : {
@@ -818,6 +821,9 @@
     "Ledger codes" : {
 
     },
+    "Ledger codes %@" : {
+
+    },
     "Lock" : {
 
     },
@@ -867,6 +873,9 @@
 
     },
     "Needs Review" : {
+
+    },
+    "New category" : {
 
     },
     "New owner" : {
@@ -974,7 +983,7 @@
     "Opens the next document waiting in Needs Review so you can file it." : {
 
     },
-    "Optional. Add the ledger codes your administration books on for some categories, such as Invoices and Receipts. When filing, you then pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names." : {
+    "Optional. Each owner's ledger codes, as its administration books them. When filing, you pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names." : {
 
     },
     "Orange" : {
@@ -1215,9 +1224,6 @@
 
     },
     "Settings (⌘,)" : {
-
-    },
-    "Settings saved" : {
 
     },
     "Share Again" : {

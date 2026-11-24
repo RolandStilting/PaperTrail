@@ -1,8 +1,8 @@
 import PaperTrailKit
 import SwiftUI
 
-/// Settings section: per owner, optional ledger code lists for some categories. Edits go into
-/// the settings draft, which Settings saves automatically.
+/// Settings sections for ledger codes: one list per owner (its chart of accounts), and which
+/// categories use them. Edits go into the settings draft, which Settings saves automatically.
 struct LedgerCodesSection: View {
     @Binding var draft: ArchiveSettings
 
@@ -10,58 +10,33 @@ struct LedgerCodesSection: View {
         Section {
             ForEach($draft.owners) { $owner in
                 NavigationLink {
-                    LedgerOwnerView(owner: $owner, categories: draft.categories)
+                    LedgerCodeListEditor(codes: $owner.ledgerCodes,
+                                         title: String(localized: "Ledger codes \(owner.name)"))
                 } label: {
+                    let count = owner.ledgerCodes.filter { !$0.code.trimmingCharacters(in: .whitespaces).isEmpty }.count
                     LabeledContent(owner.name.isEmpty ? String(localized: "New owner") : owner.name,
-                                   value: Self.summary(owner, categories: draft.categories))
+                                   value: count == 0 ? String(localized: "None") : count.formatted())
                 }
             }
         } header: {
             Text("Ledger codes")
         } footer: {
-            Text("Optional. Add the ledger codes your administration books on for some categories, such as Invoices and Receipts. When filing, you then pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names.")
+            Text("Optional. Each owner's ledger codes, as its administration books them. When filing, you pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names.")
         }
-    }
 
-    /// "None", or "Invoices, Receipts".
-    static func summary(_ owner: Owner, categories: [DocumentCategory]) -> String {
-        let names = categories.filter { !owner.ledgerCodes(categoryID: $0.id).isEmpty }.map(\.name)
-        return names.isEmpty ? String(localized: "None") : names.formatted(.list(type: .and))
-    }
-}
-
-/// One owner's categories, each with its own list of codes.
-struct LedgerOwnerView: View {
-    @Binding var owner: Owner
-    let categories: [DocumentCategory]
-
-    var body: some View {
-        Form {
-            Section {
-                ForEach(categories) { category in
-                    NavigationLink {
-                        LedgerCodeListEditor(codes: codes(for: category),
-                                             title: String(localized: "\(owner.name) › \(category.name)"))
-                    } label: {
-                        let count = owner.ledgerCodes(categoryID: category.id).filter { !$0.code.isEmpty }.count
-                        LabeledContent(category.name, value: count == 0 ? String(localized: "None") : count.formatted())
-                    }
-                }
-            } footer: {
-                Text("Categories without codes show no ledger code when filing.")
+        Section {
+            ForEach($draft.categories) { $category in
+                Toggle(category.name.isEmpty ? String(localized: "New category") : category.name, isOn: $category.usesLedgerCodes)
             }
+        } header: {
+            Text("Categories with ledger codes")
+        } footer: {
+            Text("Documents in these categories get a ledger code, such as invoices and receipts. The codes are the same for every category.")
         }
-        .formStyle(.grouped)
-        .navigationTitle(owner.name)
-    }
-
-    private func codes(for category: DocumentCategory) -> Binding<[LedgerCode]> {
-        Binding(get: { owner.ledgerCodes(categoryID: category.id) },
-                set: { owner.setLedgerCodes($0, categoryID: category.id) })
     }
 }
 
-/// The codes of one owner and category: code and description, in the order shown when filing.
+/// One owner's codes: code and description, in the order shown when filing.
 struct LedgerCodeListEditor: View {
     @Binding var codes: [LedgerCode]
     let title: String

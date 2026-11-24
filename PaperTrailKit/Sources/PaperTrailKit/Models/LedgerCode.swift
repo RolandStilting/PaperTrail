@@ -29,76 +29,65 @@ public struct LedgerCode: Codable, Hashable, Identifiable, Sendable {
     }
 }
 
-/// The ledger codes one owner uses for one category. Keyed by the category's ID, so renaming
-/// the category keeps its list.
-public struct LedgerCodeList: Codable, Hashable, Sendable {
-    public var categoryID: UUID
-    public var codes: [LedgerCode]
-
-    public init(categoryID: UUID, codes: [LedgerCode] = []) {
-        self.categoryID = categoryID
-        self.codes = codes
-    }
-}
-
-extension Owner {
-    /// The owner's codes for a category; empty when it has none.
-    public func ledgerCodes(categoryID: UUID) -> [LedgerCode] {
-        ledgerLists.first { $0.categoryID == categoryID }?.codes ?? []
-    }
-
-    /// Replaces the codes for a category; an empty list removes it.
-    public mutating func setLedgerCodes(_ codes: [LedgerCode], categoryID: UUID) {
-        ledgerLists.removeAll { $0.categoryID == categoryID }
-        if !codes.isEmpty { ledgerLists.append(LedgerCodeList(categoryID: categoryID, codes: codes)) }
-    }
+/// Ledger codes as stored before they moved from per category to per owner (2026-11-24).
+/// Only read, to move old lists into the owner's single list.
+struct LegacyLedgerCodeList: Codable, Hashable, Sendable {
+    var categoryID: UUID
+    var codes: [LedgerCode]
 }
 
 extension ArchiveSettings {
-    /// Codes for documents of `owner` in `category` (by name, as stored on documents).
-    /// Empty when that combination has no list: then there is no ledger code to choose.
+    /// Codes for documents of `owner` in `category` (by name, as stored on documents): the
+    /// owner's list when the category uses ledger codes, else empty (no code to choose).
     public func ledgerCodes(owner: String, category: String) -> [LedgerCode] {
         guard let owner = owners.first(where: { $0.name == owner }),
-              let category = categories.first(where: { $0.name == category }) else { return [] }
-        return owner.ledgerCodes(categoryID: category.id)
+              categories.first(where: { $0.name == category })?.usesLedgerCodes == true else { return [] }
+        return owner.ledgerCodes
     }
 
     /// Settings ready to save: rows without code or description dropped, codes and
-    /// descriptions trimmed, lists of removed categories and empty lists removed.
+    /// descriptions trimmed.
     public func cleaningLedgerCodes() -> ArchiveSettings {
         var settings = self
-        let categoryIDs = Set(categories.map(\.id))
         for index in settings.owners.indices {
-            settings.owners[index].ledgerLists = settings.owners[index].ledgerLists.compactMap { list in
-                guard categoryIDs.contains(list.categoryID) else { return nil }
-                let codes = list.codes.compactMap { code -> LedgerCode? in
-                    var code = code
-                    code.code = code.code.trimmingCharacters(in: .whitespacesAndNewlines)
-                    code.description = code.description.trimmingCharacters(in: .whitespacesAndNewlines)
-                    return code.code.isEmpty && code.description.isEmpty ? nil : code
-                }
-                return codes.isEmpty ? nil : LedgerCodeList(categoryID: list.categoryID, codes: codes)
+            settings.owners[index].ledgerCodes = settings.owners[index].ledgerCodes.compactMap { code in
+                var code = code
+                code.code = code.code.trimmingCharacters(in: .whitespacesAndNewlines)
+                code.description = code.description.trimmingCharacters(in: .whitespacesAndNewlines)
+                return code.code.isEmpty && code.description.isEmpty ? nil : code
             }
         }
         return settings
     }
 
-    /// Problems with the ledger code lists, as user-facing messages.
+    /// Problems with the ledger codes, as user-facing messages.
     var ledgerCodeErrors: [String] {
         var errors: [String] = []
         for owner in owners {
-            for list in owner.ledgerLists {
-                let category = categories.first { $0.id == list.categoryID }?.name ?? ""
-                let codes = list.codes.map { LedgerCode.key($0.code) }
-                if list.codes.contains(where: { LedgerCode.key($0.code).isEmpty && !$0.description.trimmingCharacters(in: .whitespaces).isEmpty }) {
-                    errors.append(String(localized: "A ledger code for \(owner.name) › \(category) has a description but no code. Enter the code or remove the row.", bundle: .module))
-                }
-                let filled = codes.filter { !$0.isEmpty }
-                if Set(filled).count != filled.count {
-                    errors.append(String(localized: "Two ledger codes for \(owner.name) › \(category) are the same. Make each code unique.", bundle: .module))
-                }
+            if owner.ledgerCodes.contains(where: { LedgerCode.key($0.code).isEmpty && !$0.description.trimmingCharacters(in: .whitespaces).isEmpty }) {
+                errors.append(String(localized: "A ledger code for \(owner.name) has a description but no code. Enter the code or remove the row.", bundle: .module))
+            }
+            let filled = owner.ledgerCodes.map { LedgerCode.key($0.code) }.filter { !$0.isEmpty }
+            if Set(filled).count != filled.count {
+                errors.append(String(localized: "Two ledger codes for \(owner.name) are the same. Make each code unique.", bundle: .module))
             }
         }
         return errors
+    }
+
+    /// Settings saved with per-category lists: each owner gets one list (all codes, the first
+    /// of each code kept), and the categories that had a list use ledger codes.
+    mutating func moveLegacyLedgerLists() {
+        for index in owners.indices where !owners[index].legacyLedgerLists.isEmpty {
+            for list in owners[index].legacyLedgerLists {
+                for code in list.codes where !owners[index].ledgerCodes.contains(where: { $0.matches(code.code) }) {
+                    owners[index].ledgerCodes.append(code)
+                }
+                if let category = categories.firstIndex(where: { $0.id == list.categoryID }) {
+                    categories[category].usesLedgerCodes = true
+                }
+            }
+            owners[index].legacyLedgerLists = []
+        }
     }
 }
