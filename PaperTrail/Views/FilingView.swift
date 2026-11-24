@@ -6,7 +6,7 @@ import SwiftUI
 /// details on the device; the user checks them and files the document. With `editing` set, the
 /// same screen changes the details of a document already filed (no suggestions).
 struct FilingView: View {
-    enum Field: Hashable { case owner, category, documentDate, sender, description, bill, reimbursement, vat }
+    enum Field: Hashable { case owner, category, ledger, documentDate, sender, description, bill, reimbursement, vat }
 
     enum SuggestionState: Equatable {
         case waitingForText
@@ -47,6 +47,8 @@ struct FilingView: View {
     /// Empty: not a reimbursable expense.
     @State private var reimbursedBy = ""
     @State private var vat = VATInfo()
+    /// The chosen ledger code; empty for none.
+    @State private var ledgerCode = ""
 
     @State private var suggestion = SuggestionState.waitingForText
     /// Fields filled in by the on-device suggestion, and by a learned rule.
@@ -73,12 +75,80 @@ struct FilingView: View {
     @State private var errorMessage: String?
 
     private var request: FilingRequest {
-        FilingRequest(
+        var request = FilingRequest(
             owner: ownerName, category: categoryName, receivedDate: receivedDate,
             documentDate: hasDocumentDate ? documentDate : nil, sender: sender, description: descriptionText,
             bill: bill, reimbursedBy: reimbursedBy.isEmpty || reimbursedBy == ownerName ? nil : reimbursedBy,
-            vat: showsVAT && !vat.isEmpty ? vat : nil
+            vat: showsVAT && !vat.isEmpty ? vat : nil, ledger: chosenLedger
         )
+        request.offersLedgerCodes = !ledgerCodes.isEmpty
+        return request
+    }
+
+    // MARK: Ledger code
+
+    /// The owner's codes for the chosen category; empty when it has none.
+    private var ledgerCodes: [LedgerCode] {
+        settingsStore.settings.ledgerCodes(owner: ownerName, category: categoryName)
+    }
+
+    /// The document's own code when editing, kept even if it's no longer in the list.
+    private var originalLedger: LedgerCode? {
+        guard let editing, !editing.ledgerCode.isEmpty else { return nil }
+        return LedgerCode(code: editing.ledgerCode, description: editing.ledgerDescription)
+    }
+
+    private var chosenLedger: LedgerCode? {
+        guard !ledgerCode.isEmpty else { return nil }
+        if let current = ledgerCodes.first(where: { $0.matches(ledgerCode) }) { return current }
+        if let originalLedger, originalLedger.matches(ledgerCode) { return originalLedger }
+        return LedgerCode(code: ledgerCode)
+    }
+
+    private var showsLedger: Bool { !ledgerCodes.isEmpty || !ledgerCode.isEmpty }
+
+    /// What decides the ledger code suggestion: when it changes, the code is checked again.
+    private struct LedgerKey: Hashable {
+        var owner: String
+        var category: String
+        var suggestionsFinished: Bool
+    }
+
+    private var ledgerKey: LedgerKey {
+        let finished = switch suggestion {
+        case .waitingForText, .working: false
+        case .done, .unavailable, .failed: true
+        }
+        return LedgerKey(owner: ownerName, category: categoryName, suggestionsFinished: finished)
+    }
+
+    /// After owner or category changed: drop a code that isn't in the new list, then fill in
+    /// the sender's learned code, or ask the on-device model to pick one from the list.
+    private func refreshLedger() async {
+        let codes = ledgerCodes
+        if !ledgerCode.isEmpty, !codes.contains(where: { $0.matches(ledgerCode) }), originalLedger?.matches(ledgerCode) != true {
+            ledgerCode = ""
+            edited.remove(.ledger)
+        }
+        guard editing == nil, ledgerCode.isEmpty, !edited.contains(.ledger), !codes.isEmpty else { return }
+        suggested.remove(.ledger)
+        fromRule.remove(.ledger)
+        if let learned = appliedRule?.ledgerCode(owner: ownerName, category: categoryName),
+           let code = codes.first(where: { $0.matches(learned) }) {
+            ledgerCode = code.code
+            fromRule.insert(.ledger)
+            return
+        }
+        guard ledgerKey.suggestionsFinished, let text = extractedText,
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              ModelExtractor.availability == .available else { return }
+        let key = ledgerKey
+        let suggester = LedgerCodeSuggester(codes: codes, category: categoryName)
+        guard let code = try? await suggester.suggest(sender: sender, description: descriptionText, text: text) else { return }
+        // Owner or category changed, or the user chose a code, while the model was working.
+        guard !Task.isCancelled, key == ledgerKey, ledgerCode.isEmpty, !edited.contains(.ledger) else { return }
+        ledgerCode = code.code
+        suggested.insert(.ledger)
     }
 
     /// VAT shows for owners that track it, and when editing a document that already has VAT
@@ -138,6 +208,7 @@ struct FilingView: View {
         paymentReference = record.paymentReference ?? ""
         reimbursedBy = record.reimbursedBy ?? ""
         vat = record.vatInfo ?? VATInfo()
+        ledgerCode = record.ledgerCode
         extractedText = record.extractedText ?? ""
         suggestion = .done
     }
@@ -181,6 +252,19 @@ struct FilingView: View {
                         }
                     }
                     mark(.category)
+                }
+                if showsLedger {
+                    HStack {
+                        Picker("Ledger code", selection: tracked($ledgerCode, .ledger)) {
+                            Text("None").tag("")
+                            ForEach(ledgerCodes) { Text($0.label).tag($0.code) }
+                            // A filed document may use a code since removed from the list.
+                            if let chosen = chosenLedger, !ledgerCodes.contains(where: { $0.matches(chosen.code) }) {
+                                Text(chosen.label).tag(ledgerCode)
+                            }
+                        }
+                        mark(.ledger)
+                    }
                 }
             }
 
@@ -395,6 +479,7 @@ struct FilingView: View {
             if let editing { prefill(from: editing) } else { applyDefaults() }
         }
         .task { if editing == nil { await recognizeText() } }
+        .task(id: ledgerKey) { await refreshLedger() }
     }
 
     /// On the Mac, and beside the review list on iPad, a toolbar button is easy to miss: the

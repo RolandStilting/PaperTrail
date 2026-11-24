@@ -38,7 +38,7 @@ struct VATOverviewView: View {
         return VATReport(company: company, period: period, items: records.map { record in
             VATReportItem(date: record.vatDate, sender: record.sender, description: record.documentDescription, amount: record.amount,
                           vat: record.vatInfo ?? VATInfo(), isReimbursedExpense: record.reimbursedBy == company && record.ownerName != company,
-                          relativePath: record.relativePath)
+                          relativePath: record.relativePath, ledgerCode: record.ledgerCode, ledgerDescription: record.ledgerDescription)
         })
     }
 

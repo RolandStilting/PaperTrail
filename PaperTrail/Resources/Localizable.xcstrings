@@ -1,6 +1,36 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "4300" : {
+
+    },
+    "Add Code" : {
+
+    },
+    "Categories without codes show no ledger code when filing." : {
+
+    },
+    "Code" : {
+
+    },
+    "e.g. Telephone and internet" : {
+
+    },
+    "Each code once. Empty rows are removed when you save the settings." : {
+
+    },
+    "Ledger code" : {
+
+    },
+    "Ledger codes" : {
+
+    },
+    "Optional. Add the ledger codes your administration books on for some categories, such as Invoices and Receipts. When filing, you then pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names." : {
+
+    },
+    "When you file a document, Paper Trail remembers where documents from that sender go, and their ledger code." : {
+
+    },
     "›" : {
 
     },

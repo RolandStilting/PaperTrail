@@ -118,6 +118,8 @@ struct SettingsView: View {
                 Text("Folders inside each owner's year folder.")
             }
 
+            LedgerCodesSection(draft: $draft)
+
             Section {
                 ForEach($draft.owners) { $owner in
                     DisclosureGroup(owner.name.isEmpty ? String(localized: "New owner") : owner.name) {
@@ -221,7 +223,9 @@ struct SettingsView: View {
                         draft.owners[index].payingAccount.bic = IBAN.normalize(draft.owners[index].payingAccount.bic)
                         draft.owners[index].payingAccount.name = draft.owners[index].payingAccount.name.trimmingCharacters(in: .whitespaces)
                     }
-                    errors = settingsStore.update(draft)
+                    // Empty ledger code rows are dropped from what's saved; the draft keeps
+                    // them until Settings opens again, so "Settings saved" stays visible.
+                    errors = settingsStore.update(draft.cleaningLedgerCodes())
                     if errors.isEmpty {
                         if embedded { savedMessage = true } else { dismiss() }
                     }

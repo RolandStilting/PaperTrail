@@ -2,6 +2,14 @@ import Foundation
 import PaperTrailKit
 import SwiftData
 
+extension DocumentRecord {
+    /// Stores the chosen ledger code with its description as it is now.
+    func setLedger(_ ledger: LedgerCode?) {
+        ledgerCode = ledger?.code ?? ""
+        ledgerDescription = ledger?.description ?? ""
+    }
+}
+
 /// Files a confirmed document: plan the path, write and verify the PDF, then index it.
 struct FilingService {
     var location: any ArchiveLocating
@@ -52,6 +60,7 @@ struct FilingService {
         )
         record.reimbursedBy = request.reimbursedBy
         record.vatInfo = request.vat
+        record.setLedger(request.ledger)
         context.insert(record)
         learnRule(from: record, request: request, suggestedSender: suggestedSender, context: context)
         // The file is already safe on disk; an index failure is reported but the index
@@ -84,6 +93,7 @@ struct FilingService {
         record.paymentReference = bill.reference.isEmpty ? nil : bill.reference
         record.reimbursedBy = request.reimbursedBy
         record.vatInfo = request.vat
+        record.setLedger(request.ledger)
         if let learned = learnRule(from: record, request: request, suggestedSender: previousSender, context: context),
            previousSender.lowercased() != record.sender.lowercased() {
             forgetOldName(previousSender, keeping: learned, context: context)
@@ -124,7 +134,8 @@ struct FilingService {
         let filing = ConfirmedFiling(
             sender: record.sender, suggestedSender: suggestedSender,
             owner: record.ownerName, category: record.categoryName, payToIban: payTo,
-            reimbursedBy: request.reimbursedBy
+            reimbursedBy: request.reimbursedBy,
+            ledgerCode: request.offersLedgerCodes ? request.ledger?.code ?? "" : nil
         )
         guard let rule = SenderRules.learn(from: filing, existing: records.map(\.rule)) else { return nil }
         if let existing = records.first(where: { $0.id == rule.id }) {

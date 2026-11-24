@@ -52,6 +52,9 @@
     "1 day overdue" : {
 
     },
+    "A ledger code for %@ › %@ has a description but no code. Enter the code or remove the row." : {
+
+    },
     "Add at least one category." : {
 
     },
@@ -153,6 +156,12 @@
 
     },
     "input VAT to reclaim" : {
+
+    },
+    "Ledger code" : {
+
+    },
+    "Ledger description" : {
 
     },
     "Made by Paper Trail from the documents' VAT lines. Check deductibility with your accountant." : {
@@ -291,6 +300,9 @@
 
     },
     "Two categories have the same name. Make each category name unique." : {
+
+    },
+    "Two ledger codes for %@ › %@ are the same. Make each code unique." : {
 
     },
     "Two owners have the same name. Make each owner name unique." : {

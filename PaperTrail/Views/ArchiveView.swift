@@ -61,7 +61,8 @@ struct ArchiveView: View {
             if let yearFilter, calendar.component(.year, from: record.receivedDate) != yearFilter { return false }
             guard statusFilter.matches(record) else { return false }
             guard !terms.isEmpty else { return true }
-            let haystack = [record.sender, record.documentDescription, record.categoryName, record.ownerName, record.extractedText ?? ""]
+            let haystack = [record.sender, record.documentDescription, record.categoryName, record.ownerName, record.ledgerCode, record.ledgerDescription,
+                            record.extractedText ?? ""]
                 .joined(separator: " ").lowercased()
             return terms.allSatisfy(haystack.contains)
         }

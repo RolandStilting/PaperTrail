@@ -97,7 +97,8 @@ struct ExpenseService {
 
     static func line(_ expense: DocumentRecord) -> ClaimLine {
         ClaimLine(date: expense.documentDate ?? expense.receivedDate, sender: expense.sender,
-                  description: expense.documentDescription, amount: expense.amount, relativePath: expense.relativePath)
+                  description: expense.documentDescription, amount: expense.amount, relativePath: expense.relativePath,
+                  ledgerCode: expense.ledgerCode, ledgerDescription: expense.ledgerDescription)
     }
 
     static func sorted(_ expenses: [DocumentRecord]) -> [DocumentRecord] {
