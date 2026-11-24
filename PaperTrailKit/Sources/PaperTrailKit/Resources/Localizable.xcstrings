@@ -43,7 +43,13 @@
         }
       }
     },
+    "%lld days overdue" : {
+
+    },
     "1 bill to pay, %@." : {
+
+    },
+    "1 day overdue" : {
 
     },
     "Add at least one category." : {
@@ -107,6 +113,18 @@
     "Documents" : {
 
     },
+    "Due %@" : {
+
+    },
+    "Due in %lld days" : {
+
+    },
+    "Due today" : {
+
+    },
+    "Due tomorrow" : {
+
+    },
     "Enter both mailbox folders." : {
 
     },
@@ -149,6 +167,9 @@
           }
         }
       }
+    },
+    "No due date" : {
+
     },
     "No expenses to claim." : {
 
