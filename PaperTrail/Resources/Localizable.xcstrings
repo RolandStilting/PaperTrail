@@ -162,6 +162,18 @@
     "Add VAT Line" : {
 
     },
+    "After 1 hour" : {
+
+    },
+    "After 1 minute" : {
+
+    },
+    "After 5 minutes" : {
+
+    },
+    "After 15 minutes" : {
+
+    },
     "All %lld expenses in it are cleared at once." : {
 
     },
@@ -679,6 +691,9 @@
     "IMAP server" : {
 
     },
+    "Immediately" : {
+
+    },
     "Import" : {
 
     },
@@ -704,6 +719,9 @@
 
     },
     "Learned rules" : {
+
+    },
+    "Lock" : {
 
     },
     "Look for Payment Code Again" : {
@@ -865,10 +883,22 @@
     "Paper Trail adds a reminder to the To pay list of this owner in Reminders." : {
 
     },
+    "Paper Trail asks for %@ when it opens and after it has been away for the chosen time; your passcode works too. This device only. Files in iCloud Drive aren't locked, and Spotlight can still show document titles; turn Spotlight off below to hide them." : {
+
+    },
     "Paper Trail can't use Reminders. Allow full access for Paper Trail in Settings → Privacy & Security → Reminders, then tap Create Reminder on the bill." : {
 
     },
+    "Paper Trail is locked" : {
+
+    },
     "Paper Trail remembers owner and category for each sender you file." : {
+
+    },
+    "Passcode" : {
+
+    },
+    "Password" : {
 
     },
     "Pay" : {
@@ -967,6 +997,9 @@
     "Remove" : {
 
     },
+    "Require %@" : {
+
+    },
     "Reverse charge (BTW verlegd)" : {
 
     },
@@ -1037,6 +1070,9 @@
 
     },
     "Server" : {
+
+    },
+    "Set a passcode on this device to use the lock." : {
 
     },
     "Settings" : {
@@ -1189,6 +1225,12 @@
     "Total" : {
 
     },
+    "Turn off the lock for Paper Trail." : {
+
+    },
+    "Turn on the lock for Paper Trail." : {
+
+    },
     "Type %@ to confirm" : {
 
     },
@@ -1196,6 +1238,12 @@
 
     },
     "Undo Submitted" : {
+
+    },
+    "Unlock with %@" : {
+
+    },
+    "Unlock your documents." : {
 
     },
     "Unpaid bill" : {

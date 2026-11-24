@@ -17,14 +17,25 @@ struct FilingService {
         _ = try await reviewQueue.add(document, root: root.url)
     }
 
-    func file(_ document: PendingDocument, request: FilingRequest, extractedText: String?, suggestedSender: String = "", context: ModelContext) async throws -> DocumentRecord {
+    /// - Parameter textLayer: For scans, the recognised lines with their place on each page;
+    ///   they are added to the PDF as invisible text so the filed file is searchable everywhere.
+    func file(_ document: PendingDocument, request: FilingRequest, extractedText: String?, textLayer: [[RecognizedLine]]? = nil,
+              suggestedSender: String = "", context: ModelContext) async throws -> DocumentRecord {
         let plan = try FilingPlanner.plan(for: request, namer: namer)
         let root = try await location.resolveRoot()
         if let queued = document.reviewItemURL, !FileManager.default.fileExists(atPath: queued.path(percentEncoded: false)) {
             // Filed or removed elsewhere in the meantime; don't create a second copy.
             throw ReviewQueueError.alreadyHandled(queued.lastPathComponent)
         }
-        let stored = try await store.store(document.pdfData, plan: plan, root: root.url, removingSource: document.reviewItemURL)
+        var pdf = document.pdfData
+        if let textLayer {
+            let scan = pdf
+            // If the layer can't be added (e.g. rotated pages), the scan is filed as it is.
+            if let searchable = await Task.detached(operation: { SearchablePDF.addingTextLayer(to: scan, pages: textLayer) }).value {
+                pdf = searchable
+            }
+        }
+        let stored = try await store.store(pdf, plan: plan, root: root.url, removingSource: document.reviewItemURL)
 
         let record = DocumentRecord(
             relativePath: stored.relativePath,

@@ -66,6 +66,8 @@ struct FilingView: View {
     @State private var reminderProblem: String?
 
     @State private var extractedText: String?
+    /// For scans: where each recognised line is, to make the filed PDF searchable.
+    @State private var recognizedLines: [[RecognizedLine]]?
     @State private var ocrFailed = false
     @State private var isFiling = false
     @State private var errorMessage: String?
@@ -459,11 +461,11 @@ struct FilingView: View {
     private func recognizeText() async {
         let recognizer = VisionTextRecognizer()
         do {
-            if document.pageImages.isEmpty {
-                extractedText = try await PDFTextExtractor(recognizer: recognizer).extractText(from: document.pdfData)
-            } else {
-                extractedText = try await recognizer.recognizeText(in: document.pageImages)
-            }
+            let result = document.pageImages.isEmpty
+                ? try await PDFTextExtractor(recognizer: recognizer).extract(from: document.pdfData)
+                : try await recognizer.recognizeText(in: document.pageImages)
+            extractedText = result.text
+            recognizedLines = result.lines
         } catch is CancellationError {
             return
         } catch {
@@ -596,7 +598,8 @@ struct FilingView: View {
         isFiling = true
         defer { isFiling = false }
         do {
-            let record = try await filingService.file(document, request: request, extractedText: extractedText, suggestedSender: suggestedSender, context: modelContext)
+            let record = try await filingService.file(document, request: request, extractedText: extractedText, textLayer: recognizedLines,
+                                                      suggestedSender: suggestedSender, context: modelContext)
             do {
                 try await billService.addReminder(for: record, context: modelContext)
             } catch {
