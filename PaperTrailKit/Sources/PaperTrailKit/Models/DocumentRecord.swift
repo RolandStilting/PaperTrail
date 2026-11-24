@@ -133,4 +133,6 @@ public enum IntakeSource: String, Codable, Sendable, CaseIterable {
     case share
     case inboxFolder
     case email
+    /// Added with the Shortcuts action (or Siri).
+    case shortcut
 }
