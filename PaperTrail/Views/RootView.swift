@@ -141,6 +141,7 @@ struct RootView: View {
             while !Task.isCancelled {
                 await model.refreshReviewItems()
                 await model.syncBills(context: modelContext)
+                await model.indexBackup.exportIfDue(context: modelContext, settings: settingsStore.settings)
                 try? await Task.sleep(for: .seconds(60))
             }
         }

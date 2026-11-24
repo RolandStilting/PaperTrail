@@ -163,6 +163,8 @@ struct SettingsView: View {
                 Text("Find documents by sender, description, amount or their text from the system search. The search index stays on this device; turn this off to remove it.")
             }
 
+            BackupSection()
+
             Section {
                 NavigationLink("Learned rules") { RulesView() }
             } footer: {

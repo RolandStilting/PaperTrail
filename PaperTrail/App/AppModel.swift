@@ -10,6 +10,7 @@ import SwiftData
 final class AppModel {
     let filingService: FilingService
     let billService: BillService
+    let indexBackup = IndexBackup(location: ICloudArchiveLocation())
     let expenseService: ExpenseService
 
     /// The document in the filing screen, if any.
