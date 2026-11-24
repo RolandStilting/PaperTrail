@@ -92,7 +92,7 @@ struct OverviewView: View {
                 if !snapshot.hidesDetails, !snapshot.bills.isEmpty {
                     Text("Next to pay").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
                 }
-                BillList(snapshot: snapshot, today: entry.date, limit: 4, large: true, showsMore: true)
+                FittingBillList(snapshot: snapshot, today: entry.date, upTo: 4)
                 Spacer(minLength: 0)
                 PaidThisMonthStrip(snapshot: snapshot)
             }
@@ -215,6 +215,21 @@ private struct OverviewColumn: View {
     }
 }
 
+/// As many bills as fit: large widgets are shorter on the Mac and smaller iPhones than on a Pro Max.
+private struct FittingBillList: View {
+    let snapshot: WidgetSnapshot
+    let today: Date
+    let upTo: Int
+
+    var body: some View {
+        ViewThatFits(in: .vertical) {
+            ForEach((1...upTo).reversed(), id: \.self) { limit in
+                BillList(snapshot: snapshot, today: today, limit: limit, large: true, showsMore: true)
+            }
+        }
+    }
+}
+
 /// Open bills, soonest due first, or a short line when there are none or details are hidden.
 private struct BillList: View {
     let snapshot: WidgetSnapshot
@@ -298,16 +313,10 @@ struct ToPayView: View {
                     }
                     Spacer(minLength: 0)
                 } else {
-                    let shown = Array(snapshot.bills.prefix(isLarge ? 4 : 2))
-                    VStack(spacing: isLarge ? 12 : 5) {
-                        ForEach(shown) { bill in
-                            Link(destination: WidgetLink.bill(bill.id)) {
-                                BillRow(bill: bill, today: entry.date, large: isLarge)
-                            }
-                        }
-                    }
-                    if snapshot.openBillCount > shown.count {
-                        Text("+ \(snapshot.openBillCount - shown.count) more").font(.caption2).foregroundStyle(.secondary)
+                    if isLarge {
+                        FittingBillList(snapshot: snapshot, today: entry.date, upTo: 4)
+                    } else {
+                        BillList(snapshot: snapshot, today: entry.date, limit: 2, large: false, showsMore: true)
                     }
                     Spacer(minLength: 0)
                 }
