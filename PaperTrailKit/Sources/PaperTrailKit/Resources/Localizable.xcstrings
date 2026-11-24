@@ -13,6 +13,39 @@
     "%@ pays with a SEPA file. Enter the account name and IBAN it pays from." : {
 
     },
+    "%@: %lld expenses, %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: %2$lld expenses, %3$@."
+          }
+        }
+      }
+    },
+    "%@: 1 expense, %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@: 1 expense, %2$@."
+          }
+        }
+      }
+    },
+    "%lld bills to pay, %@ in total." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld bills to pay, %2$@ in total."
+          }
+        }
+      }
+    },
+    "1 bill to pay, %@." : {
+
+    },
     "Add at least one category." : {
 
     },
@@ -107,7 +140,26 @@
     "Made by Paper Trail from the documents' VAT lines. Check deductibility with your accountant." : {
 
     },
+    "Next due: %@ on %@." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Next due: %1$@ on %2$@."
+          }
+        }
+      }
+    },
+    "No expenses to claim." : {
+
+    },
     "No VAT found – check" : {
+
+    },
+    "Nothing to pay. All bills are paid." : {
+
+    },
+    "Overdue: %@." : {
 
     },
     "Paper Trail won't check the Inbox of an account you also use for other mail: it would file and move every email. Use a mail rule that moves the Paper Trail address's emails to their own folder, and enter that folder." : {

@@ -46,6 +46,9 @@
         }
       }
     },
+    "%@ is in Needs Review." : {
+
+    },
     "%@ over %@" : {
       "localizations" : {
         "en" : {
@@ -79,6 +82,9 @@
 
     },
     "%lld documents are skipped because their PDF is no longer in iCloud Drive." : {
+
+    },
+    "%lld documents waiting." : {
 
     },
     "%lld due this week" : {
@@ -153,6 +159,9 @@
     "Add" : {
 
     },
+    "Add ${document} to Paper Trail" : {
+
+    },
     "Add Amount or Payment Details" : {
 
     },
@@ -163,6 +172,9 @@
 
     },
     "Add owner" : {
+
+    },
+    "Add to Paper Trail" : {
 
     },
     "Add VAT Line" : {
@@ -177,6 +189,9 @@
           }
         }
       }
+    },
+    "Adds a PDF or image to Needs Review in Paper Trail, to file on any of your devices." : {
+
     },
     "After 1 hour" : {
 
@@ -269,6 +284,9 @@
 
     },
     "Bills" : {
+
+    },
+    "Bills to Pay" : {
 
     },
     "Blue" : {
@@ -614,6 +632,9 @@
     "Expenses" : {
 
     },
+    "Expenses to Claim" : {
+
+    },
     "Export" : {
 
     },
@@ -881,6 +902,9 @@
     "Not yet" : {
 
     },
+    "Nothing is waiting in Needs Review." : {
+
+    },
     "Nothing received yet this month." : {
 
     },
@@ -896,16 +920,31 @@
     "OK" : {
 
     },
+    "Open Bills" : {
+
+    },
+    "Open Bills to Pay" : {
+
+    },
     "Open Paper Trail" : {
 
     },
     "Open Paper Trail at login" : {
 
     },
+    "Open Paper Trail first, then try again." : {
+
+    },
     "Open Payment Page" : {
 
     },
     "Opening…" : {
+
+    },
+    "Opens the list of open bills in Paper Trail, with payment codes and details." : {
+
+    },
+    "Opens the next document waiting in Needs Review so you can file it." : {
 
     },
     "Orange" : {
@@ -1064,6 +1103,9 @@
     "Review %lld" : {
 
     },
+    "Review Documents" : {
+
+    },
     "Review Later" : {
 
     },
@@ -1142,6 +1184,9 @@
     "Settings" : {
 
     },
+    "Settings (⌘,)" : {
+
+    },
     "Settings saved" : {
 
     },
@@ -1206,6 +1251,12 @@
 
     },
     "Teal" : {
+
+    },
+    "Tells how many bills are open in Paper Trail, their total and which are overdue." : {
+
+    },
+    "Tells per company how many expenses are waiting to be claimed and their total." : {
 
     },
     "Test Connection" : {
