@@ -13,6 +13,7 @@ struct DocumentDetailView: View {
     @State private var pdf: Data?
     @State private var loadFailed = false
     @State private var editingVAT = false
+    @State private var editingDetails = false
 
     /// In the archive's document pane: the archive keeps the window title, so the sender is
     /// shown as a heading instead.
@@ -87,6 +88,8 @@ struct DocumentDetailView: View {
             }
 
             Section("Actions") {
+                Button("Edit Details", systemImage: "pencil") { editingDetails = true }
+                    .disabled(pdf == nil)
                 if record.isOpenBill {
                     NavigationLink {
                         BillDetailView(bill: record, billService: model.billService)
@@ -120,6 +123,29 @@ struct DocumentDetailView: View {
         .formStyle(.grouped)
         .titleUnlessEmbedded(embedded, record.sender)
         .sheet(isPresented: $editingVAT) { VATEditSheet(record: record) }
+        .sheet(isPresented: $editingDetails) {
+            if let pdf {
+                NavigationStack {
+                    FilingView(document: PendingDocument(pdfData: pdf, source: record.source),
+                               filingService: model.filingService, billService: model.billService,
+                               editing: record) { editingDetails = false }
+                }
+                #if os(iOS)
+                .presentationSizing(.page)
+                #endif
+                #if os(macOS)
+                .frame(minWidth: 900, idealWidth: 1000, minHeight: 680, idealHeight: 760)
+                #endif
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Edit", systemImage: "pencil") { editingDetails = true }
+                    .keyboardShortcut("e", modifiers: .command)
+                    .disabled(pdf == nil)
+                    .help("Edit Details (⌘E)")
+            }
+        }
         .task(id: record.relativePath) { await load(record) }
     }
 

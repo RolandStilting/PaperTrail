@@ -29,7 +29,7 @@ protocol BillReminding {
     func completeReminder(externalID: String) async throws
     /// False when the reminder was deleted (or lives in an account this device can't see).
     func reminderExists(externalID: String) async -> Bool
-    /// Removes the reminder (used only by Clear All Documents, on the user's request).
+    /// Removes the reminder (Clear All Documents, or an edited document that is no longer a bill).
     func deleteReminder(externalID: String) async throws
 }
 
@@ -169,6 +169,28 @@ struct BillService {
         guard bill.isOpenBill else { return }
         bill.reminderExternalID = try await reminders.createReminder(for: bill)
         try context.save()
+    }
+
+    /// After a document's details were edited: adds, replaces or removes its reminder. A new
+    /// reminder is made before the old one is removed, so a failure never leaves the bill without one.
+    func updateReminder(for bill: DocumentRecord, change: DocumentEdit.ReminderChange, context: ModelContextSaving) async throws {
+        switch change {
+        case .keep:
+            return
+        case .create:
+            guard bill.isOpenBill else { return }
+            bill.reminderExternalID = try await reminders.createReminder(for: bill)
+            try context.save()
+        case .replace:
+            let old = bill.reminderExternalID
+            bill.reminderExternalID = try await reminders.createReminder(for: bill)
+            try context.save()
+            if let old { try await reminders.deleteReminder(externalID: old) }
+        case .remove:
+            if let old = bill.reminderExternalID { try await reminders.deleteReminder(externalID: old) }
+            bill.reminderExternalID = nil
+            try context.save()
+        }
     }
 
     func reminderIsMissing(for bill: DocumentRecord) async -> Bool {

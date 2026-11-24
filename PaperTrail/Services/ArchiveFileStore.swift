@@ -13,12 +13,16 @@ nonisolated protocol ArchiveFileStoring: Sendable {
     /// Writes `pdf` to the planned location (adding ` (2)`, ` (3)` on collision), verifies it,
     /// and only then removes `sourceToRemove` if given.
     func store(_ pdf: Data, plan: FilingPlan, root: URL, removingSource sourceToRemove: URL?) async throws -> StoredFile
+    /// Moves a filed document to the planned location (adding ` (2)`, ` (3)` on collision) and
+    /// returns its new path relative to `root`. A move never copies, so the file can't be lost.
+    func move(_ relativePath: String, to plan: FilingPlan, root: URL) async throws -> String
 }
 
 nonisolated enum ArchiveFileStoreError: LocalizedError {
     case tooManyCollisions(String)
     case verificationFailed(String)
     case writeFailed(String, underlying: String)
+    case fileMissing(String)
 
     var errorDescription: String? {
         switch self {
@@ -28,6 +32,8 @@ nonisolated enum ArchiveFileStoreError: LocalizedError {
             String(localized: "\"\(name)\" was written but could not be verified. The document was not removed from its source. Check iCloud Drive and try again.")
         case .writeFailed(let name, let underlying):
             String(localized: "Could not save \"\(name)\": \(underlying). Check that iCloud Drive has free space and try again.")
+        case .fileMissing(let name):
+            String(localized: "\"\(name)\" is no longer where Paper Trail filed it. It may have been moved or renamed on another device; wait for iCloud Drive to catch up and try again.")
         }
     }
 }
@@ -62,6 +68,56 @@ nonisolated struct CoordinatedFileStore: ArchiveFileStoring {
 
         let relativePath = ArchivePaths.relativePath(components: plan.folderComponents, fileName: destination.lastPathComponent)
         return StoredFile(url: destination, relativePath: relativePath, contentHash: expectedHash)
+    }
+
+    @concurrent
+    func move(_ relativePath: String, to plan: FilingPlan, root: URL) async throws -> String {
+        let fileManager = FileManager.default
+        let source = root.appending(path: relativePath, directoryHint: .notDirectory)
+        let sourceName = source.lastPathComponent
+        guard fileManager.fileExists(atPath: source.path(percentEncoded: false)) else {
+            throw ArchiveFileStoreError.fileMissing(sourceName)
+        }
+        let folder = plan.folderComponents.reduce(root) { $0.appending(path: $1, directoryHint: .isDirectory) }
+        let sameFolder = folder.standardizedFileURL.path(percentEncoded: false).lowercased()
+            == source.deletingLastPathComponent().standardizedFileURL.path(percentEncoded: false).lowercased()
+
+        var result: Result<URL, Error> = .failure(ArchiveFileStoreError.tooManyCollisions(plan.fileName))
+        var coordinationError: NSError?
+        do {
+            try fileManager.createDirectory(at: folder, withIntermediateDirectories: true)
+        } catch {
+            throw ArchiveFileStoreError.writeFailed(plan.fileName, underlying: error.localizedDescription)
+        }
+        var taken = Set(((try? fileManager.contentsOfDirectory(atPath: folder.path(percentEncoded: false))) ?? []).map { $0.lowercased() })
+        // Renaming within its folder (e.g. only the case of a letter): its own name is free.
+        if sameFolder { taken.remove(sourceName.lowercased()) }
+        while let name = FileNamer.uniqueFileName(plan.fileName, exists: { taken.contains($0.lowercased()) }) {
+            let target = folder.appending(path: name, directoryHint: .notDirectory)
+            let coordinator = NSFileCoordinator(filePresenter: nil)
+            var collided = false
+            coordinator.coordinate(writingItemAt: source, options: .forMoving, writingItemAt: target, options: .forReplacing, error: &coordinationError) { from, to in
+                do {
+                    try fileManager.moveItem(at: from, to: to)
+                    coordinator.item(at: from, didMoveTo: to)
+                    result = .success(to)
+                } catch CocoaError.fileWriteFileExists {
+                    collided = true
+                } catch {
+                    result = .failure(ArchiveFileStoreError.writeFailed(name, underlying: error.localizedDescription))
+                }
+            }
+            if let coordinationError {
+                throw ArchiveFileStoreError.writeFailed(name, underlying: coordinationError.localizedDescription)
+            }
+            guard collided else { break }
+            taken.insert(name.lowercased())
+        }
+        let moved = try result.get()
+        guard fileManager.fileExists(atPath: moved.path(percentEncoded: false)) else {
+            throw ArchiveFileStoreError.verificationFailed(moved.lastPathComponent)
+        }
+        return ArchivePaths.relativePath(components: plan.folderComponents, fileName: moved.lastPathComponent)
     }
 
     static func sha256(_ data: Data) -> String {

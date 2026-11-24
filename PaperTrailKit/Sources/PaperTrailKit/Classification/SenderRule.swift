@@ -98,6 +98,19 @@ public enum SenderRules {
 
     /// The rule to save after a confirmed filing: the existing rule for this sender, updated,
     /// or a new one. Returns nil when there is no usable sender name.
+    /// After the user corrected a sender's name on a filed document: rules other than `kept`
+    /// stop claiming the old name, so the corrected rule is the one that matches. Returns the
+    /// changed rules; a rule left without names is no longer useful and can be removed.
+    public static func releasing(oldName: String, keeping kept: UUID, in rules: [SenderRule]) -> [SenderRule] {
+        let name = alias(oldName)
+        return rules.compactMap { rule in
+            guard rule.id != kept, rule.aliases.contains(name) else { return nil }
+            var changed = rule
+            changed.aliases.removeAll { $0 == name }
+            return changed
+        }
+    }
+
     public static func learn(from filing: ConfirmedFiling, existing: [SenderRule], now: Date = .now) -> SenderRule? {
         let names = [filing.sender, filing.suggestedSender, SenderNormalizer.normalize(filing.sender)]
             .map(alias).filter { $0.count >= minimumAliasLength }
