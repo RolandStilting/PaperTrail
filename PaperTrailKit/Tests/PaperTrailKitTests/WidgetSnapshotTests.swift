@@ -28,6 +28,34 @@ struct WidgetSnapshotTests {
         #expect(snapshot.bills.map(\.sender) == ["Voorbeeld Energie", "Later BV", "Geen Datum"])
     }
 
+    @Test func overdueAndDueSoonTotals() {
+        let snapshot = WidgetSnapshot.make(openBills: bills, expenseAmounts: [], reviewCount: 0, hidesDetails: false,
+                                           now: date(24), calendar: calendar)
+        #expect(snapshot.overdueTotal == 142.37)
+        #expect(snapshot.dueSoonCount == 1)
+        #expect(snapshot.dueSoonTotal == 853.66)
+
+        let withPaid = WidgetSnapshot.make(openBills: [], expenseAmounts: [], reviewCount: 0, hidesDetails: false,
+                                           paidThisMonth: [64.50, 230], now: date(24), calendar: calendar)
+        #expect(withPaid.paidThisMonthCount == 2 && withPaid.paidThisMonthTotal == 294.50)
+    }
+
+    @Test func friendlyDueText() {
+        let locale = Locale(identifier: "en_NL")
+        func text(_ day: Int?) -> String {
+            WidgetSnapshot.Bill(id: UUID(), sender: "X", owner: "Y", amount: 1, dueDate: day.map(date))
+                .dueText(today: date(24), locale: locale, calendar: calendar)
+        }
+        #expect(text(21) == "3 days overdue")
+        #expect(text(23) == "1 day overdue")
+        #expect(text(24) == "Due today")
+        #expect(text(25) == "Due tomorrow")
+        #expect(text(28) == "Due in 4 days")
+        #expect(text(nil) == "No due date")
+        #expect(text(30) == "Due in 6 days")
+        #expect(text(34) == "Due 4 Dec")   // 34 November = 4 December, more than a week away
+    }
+
     @Test func lockedHidesAmountsAndSenders() {
         let snapshot = WidgetSnapshot.make(openBills: bills, expenseAmounts: [12.10], reviewCount: 0, hidesDetails: true,
                                            now: date(24), calendar: calendar)
