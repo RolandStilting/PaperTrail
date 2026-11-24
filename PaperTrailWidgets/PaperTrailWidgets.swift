@@ -188,11 +188,17 @@ private struct OverviewColumn: View {
     var body: some View {
         Link(destination: link) {
             VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    IconBadge(systemImage: systemImage, tint: tint, size: card ? 30 : 26)
-                    Text(title).font(.caption.weight(.semibold)).lineLimit(1)
+                // Cards are narrower inside: the title goes under the icon there, so it isn't cut off.
+                if card {
+                    IconBadge(systemImage: systemImage, tint: tint, size: 30)
+                    Text(title).font(.caption.weight(.semibold)).lineLimit(1).padding(.top, 2)
+                } else {
+                    HStack(spacing: 6) {
+                        IconBadge(systemImage: systemImage, tint: tint, size: 26)
+                        Text(title).font(.caption.weight(.semibold)).lineLimit(1)
+                    }
+                    .padding(.bottom, 2)
                 }
-                .padding(.bottom, 2)
                 Text(value)
                     .font((card ? Font.title3 : .headline).weight(.bold)).monospacedDigit()
                     .minimumScaleFactor(0.5).lineLimit(1)
