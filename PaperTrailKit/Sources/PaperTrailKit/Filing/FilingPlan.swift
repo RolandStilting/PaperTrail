@@ -12,9 +12,11 @@ public struct FilingRequest: Sendable, Hashable {
     public var bill: BillDetails?
     /// The company that reimburses this expense, if any.
     public var reimbursedBy: String?
+    /// VAT lines, for documents of VAT-registered owners (or expenses they reimburse).
+    public var vat: VATInfo?
 
     public init(owner: String, category: String, receivedDate: Date, documentDate: Date? = nil, sender: String, description: String,
-                bill: BillDetails? = nil, reimbursedBy: String? = nil) {
+                bill: BillDetails? = nil, reimbursedBy: String? = nil, vat: VATInfo? = nil) {
         self.owner = owner
         self.category = category
         self.receivedDate = receivedDate
@@ -23,6 +25,7 @@ public struct FilingRequest: Sendable, Hashable {
         self.description = description
         self.bill = bill
         self.reimbursedBy = reimbursedBy
+        self.vat = vat
     }
 }
 

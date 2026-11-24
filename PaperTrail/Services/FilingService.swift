@@ -40,6 +40,7 @@ struct FilingService {
             bill: request.bill
         )
         record.reimbursedBy = request.reimbursedBy
+        record.vatInfo = request.vat
         context.insert(record)
         learnRule(from: record, request: request, suggestedSender: suggestedSender, context: context)
         // The file is already safe on disk; an index failure is reported but the index

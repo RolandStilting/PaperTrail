@@ -1,0 +1,7 @@
+Voorbeeld Cloud Diensten
+Invoice 88812
+
+Opslag 50 GB        € 0,99   btw 21%  € 0,17
+Muziekdienst        € 10,99  btw 21%  € 1,91
+Totaal btw 21%                        € 2,08
+Totaal te betalen                     € 11,98

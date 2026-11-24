@@ -57,6 +57,17 @@ public final class DocumentRecord {
         return claimID == nil ? .open : .submitted
     }
 
+    // VAT (phase 7), stored as VATInfo JSON; empty when unknown or not relevant.
+    public var vatInfoText: String = ""
+
+    public var vatInfo: VATInfo? {
+        get { VATInfo.decode(vatInfoText) }
+        set { vatInfoText = newValue?.encoded ?? "" }
+    }
+
+    /// The date that decides the VAT period: the date on the document, else the received date.
+    public var vatDate: Date { documentDate ?? receivedDate }
+
     /// Unpaid bill still waiting for payment.
     public var isOpenBill: Bool { isUnpaidBill && !isPaid }
 

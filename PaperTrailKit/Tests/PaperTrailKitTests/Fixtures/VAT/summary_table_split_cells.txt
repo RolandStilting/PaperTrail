@@ -1,0 +1,13 @@
+Elektronica Voorbeeld International Ltd.
+Btw-nummer: NL000000000B01
+Factuurnummer: TEST-0002
+
+Btw-
+basisbedrag
+Btw-bedrag
+Btw-tarief
+1.122,00
+235,62
+21,00 %
+Totaalprijs (incl. btw)
+EUR 1.357,62
