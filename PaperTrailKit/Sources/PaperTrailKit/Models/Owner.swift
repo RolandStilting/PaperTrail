@@ -48,9 +48,11 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
     /// Whether this owner's banking app accepts the standard EPC payment QR code (ASN does,
     /// the Rabobank app doesn't). When false, only a code printed on the invoice is shown.
     public var bankScansEPCQRCode: Bool
+    /// Optional ledger codes per category, for the admin department. Most owners have none.
+    public var ledgerLists: [LedgerCodeList]
 
     public init(id: UUID = UUID(), name: String, paymentMethod: PaymentMethod = .qrCode, payingAccount: PayingAccount = PayingAccount(),
-                vatPeriod: VATPeriodKind? = nil, color: OwnerColor? = nil, bankScansEPCQRCode: Bool = true) {
+                vatPeriod: VATPeriodKind? = nil, color: OwnerColor? = nil, bankScansEPCQRCode: Bool = true, ledgerLists: [LedgerCodeList] = []) {
         self.id = id
         self.name = name
         self.paymentMethod = paymentMethod
@@ -58,9 +60,10 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
         self.vatPeriod = vatPeriod
         self.color = color
         self.bankScansEPCQRCode = bankScansEPCQRCode
+        self.ledgerLists = ledgerLists
     }
 
-    enum CodingKeys: String, CodingKey { case id, name, paymentMethod, payingAccount, vatPeriod, color, bankScansEPCQRCode }
+    enum CodingKeys: String, CodingKey { case id, name, paymentMethod, payingAccount, vatPeriod, color, bankScansEPCQRCode, ledgerLists }
 
     /// Settings saved before phase 4 have no payment fields; they get the defaults.
     public init(from decoder: any Decoder) throws {
@@ -72,5 +75,6 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
         vatPeriod = try container.decodeIfPresent(VATPeriodKind.self, forKey: .vatPeriod)
         color = try container.decodeIfPresent(OwnerColor.self, forKey: .color)
         bankScansEPCQRCode = try container.decodeIfPresent(Bool.self, forKey: .bankScansEPCQRCode) ?? true
+        ledgerLists = try container.decodeIfPresent([LedgerCodeList].self, forKey: .ledgerLists) ?? []
     }
 }

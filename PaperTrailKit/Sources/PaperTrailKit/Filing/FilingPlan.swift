@@ -14,9 +14,11 @@ public struct FilingRequest: Sendable, Hashable {
     public var reimbursedBy: String?
     /// VAT lines, for documents of VAT-registered owners (or expenses they reimburse).
     public var vat: VATInfo?
+    /// The ledger code to book on, if the owner has codes for the category and one was chosen.
+    public var ledger: LedgerCode?
 
     public init(owner: String, category: String, receivedDate: Date, documentDate: Date? = nil, sender: String, description: String,
-                bill: BillDetails? = nil, reimbursedBy: String? = nil, vat: VATInfo? = nil) {
+                bill: BillDetails? = nil, reimbursedBy: String? = nil, vat: VATInfo? = nil, ledger: LedgerCode? = nil) {
         self.owner = owner
         self.category = category
         self.receivedDate = receivedDate
@@ -26,6 +28,7 @@ public struct FilingRequest: Sendable, Hashable {
         self.bill = bill
         self.reimbursedBy = reimbursedBy
         self.vat = vat
+        self.ledger = ledger
     }
 }
 

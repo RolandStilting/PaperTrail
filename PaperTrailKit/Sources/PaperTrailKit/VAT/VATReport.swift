@@ -77,8 +77,12 @@ public struct VATReportItem: Sendable, Hashable {
     /// Filed under another owner and reimbursed by this company (expense claim).
     public var isReimbursedExpense: Bool
     public var relativePath: String
+    /// The document's ledger code and description; empty when none.
+    public var ledgerCode: String
+    public var ledgerDescription: String
 
-    public init(date: Date, sender: String, description: String, amount: Double?, vat: VATInfo, isReimbursedExpense: Bool, relativePath: String) {
+    public init(date: Date, sender: String, description: String, amount: Double?, vat: VATInfo, isReimbursedExpense: Bool, relativePath: String,
+                ledgerCode: String = "", ledgerDescription: String = "") {
         self.date = date
         self.sender = sender
         self.description = description
@@ -86,6 +90,8 @@ public struct VATReportItem: Sendable, Hashable {
         self.vat = vat
         self.isReimbursedExpense = isReimbursedExpense
         self.relativePath = relativePath
+        self.ledgerCode = ledgerCode
+        self.ledgerDescription = ledgerDescription
     }
 
     public enum Kind: Sendable { case domestic, foreign, reverseCharge, vatMissing }
@@ -175,26 +181,30 @@ public struct VATReport: Sendable {
         }
         var rows = [[String(localized: "Date", bundle: .module), String(localized: "Sender", bundle: .module), String(localized: "Description", bundle: .module),
                      String(localized: "Rate", bundle: .module), String(localized: "Excl. VAT", bundle: .module), String(localized: "VAT", bundle: .module),
-                     String(localized: "Incl. VAT", bundle: .module), String(localized: "Status", bundle: .module), String(localized: "Document", bundle: .module)]]
+                     String(localized: "Incl. VAT", bundle: .module), String(localized: "Status", bundle: .module),
+                     String(localized: "Ledger code", bundle: .module), String(localized: "Ledger description", bundle: .module),
+                     String(localized: "Document", bundle: .module)]]
         for item in items {
             if item.vat.lines.isEmpty {
-                rows.append([namer.dateString(item.date), item.sender, item.description, "", "", "", number(item.amount), status(item), item.relativePath])
+                rows.append([namer.dateString(item.date), item.sender, item.description, "", "", "", number(item.amount), status(item),
+                             item.ledgerCode, item.ledgerDescription, item.relativePath])
                 continue
             }
             for line in item.vat.lines {
                 let amounts = Self.amounts(of: line, in: item)
                 rows.append([namer.dateString(item.date), item.sender, item.description, rateText(line.rate),
-                             number(amounts.excl), number(line.amount), number(amounts.incl), status(item), item.relativePath])
+                             number(amounts.excl), number(line.amount), number(amounts.incl), status(item),
+                             item.ledgerCode, item.ledgerDescription, item.relativePath])
             }
         }
         rows.append([])
         for total in totalsPerRate {
             rows.append(["", String(localized: "Total", bundle: .module) + " " + rateText(total.rate), "", rateText(total.rate),
-                         number(total.base), number(total.vat), number(((total.base + total.vat) * 100).rounded() / 100), "", ""])
+                         number(total.base), number(total.vat), number(((total.base + total.vat) * 100).rounded() / 100), "", "", "", ""])
         }
-        rows.append(["", String(localized: "VAT to reclaim", bundle: .module), "", "", "", number(totalToReclaim), "", "", ""])
+        rows.append(["", String(localized: "VAT to reclaim", bundle: .module), "", "", "", number(totalToReclaim), "", "", "", "", ""])
         if !foreign.isEmpty {
-            rows.append(["", String(localized: "Foreign VAT (not in the total)", bundle: .module), "", "", "", number(foreignVAT), "", "", ""])
+            rows.append(["", String(localized: "Foreign VAT (not in the total)", bundle: .module), "", "", "", number(foreignVAT), "", "", "", "", ""])
         }
         let text = rows.map { $0.map(field).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)

@@ -65,6 +65,11 @@ public final class DocumentRecord {
         set { vatInfoText = newValue?.encoded ?? "" }
     }
 
+    // Ledger code (grootboekrekening) the document is booked on; empty when none. The
+    // description is kept as it was when chosen, so exports stay readable if the list changes.
+    public var ledgerCode: String = ""
+    public var ledgerDescription: String = ""
+
     // Payment code on the document itself (iDEAL/Tikkie QR or a pay link), as PaymentCode JSON.
     public var paymentCodeText: String = ""
     /// When the document was searched for a payment code; nil = not yet.

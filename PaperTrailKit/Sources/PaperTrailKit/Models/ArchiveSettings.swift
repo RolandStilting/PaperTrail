@@ -63,6 +63,7 @@ public struct ArchiveSettings: Codable, Hashable, Sendable {
         if Self.hasDuplicates(categoryNames) {
             errors.append(String(localized: "Two categories have the same name. Make each category name unique.", bundle: .module))
         }
+        errors += ledgerCodeErrors
         return errors
     }
 

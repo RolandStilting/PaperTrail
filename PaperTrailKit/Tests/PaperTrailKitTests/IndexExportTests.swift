@@ -23,6 +23,8 @@ struct IndexExportTests {
         // Exported times keep milliseconds; whole seconds compare exactly.
         record.filedAt = date(23).addingTimeInterval(36_000.25)
         record.paymentCode = PaymentCode(source: .link, payload: "https://pay.example.test/1")
+        record.ledgerCode = "4300"
+        record.ledgerDescription = "Energie"
         return record
     }
 
@@ -30,7 +32,9 @@ struct IndexExportTests {
         IndexExport(exportedAt: date(24), documents: documents.map(\.exported),
                     expenseClaims: [ExpenseClaimRecord(ownerName: "Company1", createdAt: date(10), expenseCount: 2, total: 30).exported],
                     vatReturns: [], senderRules: [IndexExport.Rule(SenderRule(senderName: "Voorbeeld Energie", aliases: ["voorbeeld energie"],
-                                                                               owner: "Company1", category: "Invoices", updatedAt: date(23)))],
+                                                                               owner: "Company1", category: "Invoices",
+                                                                               ledgerCodes: [LedgerChoice(owner: "Company1", category: "Invoices", code: "4300")],
+                                                                               updatedAt: date(23)))],
                     settings: .defaults)
     }
 
@@ -45,6 +49,24 @@ struct IndexExportTests {
         #expect(restored.exported == original.exported)
         #expect(restored.vatInfo?.total == 21)
         #expect(restored.reminderExternalID == "reminder-1")
+        #expect(restored.ledgerCode == "4300")
+        #expect(restored.ledgerDescription == "Energie")
+        #expect(read.senderRules[0].rule.ledgerCode(owner: "Company1", category: "Invoices") == "4300")
+    }
+
+    @Test func readsExportsMadeBeforeLedgerCodes() throws {
+        var json = try #require(try JSONSerialization.jsonObject(with: try export([bill()]).json()) as? [String: Any])
+        var documents = try #require(json["documents"] as? [[String: Any]])
+        documents[0]["ledgerCode"] = nil
+        documents[0]["ledgerDescription"] = nil
+        json["documents"] = documents
+        var rules = try #require(json["senderRules"] as? [[String: Any]])
+        rules[0]["ledgerCodes"] = nil
+        json["senderRules"] = rules
+        let read = try IndexExport.read(try JSONSerialization.data(withJSONObject: json))
+        #expect(read.documents[0].ledgerCode == nil)
+        #expect(DocumentRecord(imported: read.documents[0]).ledgerCode == "")
+        #expect(read.senderRules[0].rule.ledgerCodes.isEmpty)
     }
 
     @Test func readsDatesWithAndWithoutMilliseconds() throws {
@@ -69,7 +91,7 @@ struct IndexExportTests {
         let text = try #require(String(data: csv.dropFirst(3), encoding: .utf8))
         let rows = text.split(separator: "\r\n")
         #expect(rows.count == 2)
-        #expect(rows[1].contains("2026-11-23;2026-11-20;Company1;Invoices;Voorbeeld Energie;\"Nota; november\";121,00;21,00"))
+        #expect(rows[1].contains("2026-11-23;2026-11-20;Company1;Invoices;4300;Energie;Voorbeeld Energie;\"Nota; november\";121,00;21,00"))
         #expect(rows[1].contains("NL00TEST0123456789"))
     }
 

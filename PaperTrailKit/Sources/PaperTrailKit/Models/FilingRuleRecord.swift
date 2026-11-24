@@ -13,6 +13,8 @@ public final class FilingRuleRecord {
     public var categoryName: String = ""
     /// Empty when the sender's expenses are not reimbursed.
     public var reimbursedByName: String = ""
+    /// One line per ledger code: owner, category and code separated by tabs.
+    public var ledgerCodesText: String = ""
     public var updatedAt: Date = Date.distantPast
 
     public init(_ rule: SenderRule) {
@@ -27,6 +29,7 @@ public final class FilingRuleRecord {
         ownerName = rule.owner
         categoryName = rule.category
         reimbursedByName = rule.reimbursedBy ?? ""
+        ledgerCodesText = rule.ledgerCodes.map { [$0.owner, $0.category, $0.code].joined(separator: "\t") }.joined(separator: "\n")
         updatedAt = rule.updatedAt
     }
 
@@ -36,7 +39,12 @@ public final class FilingRuleRecord {
             aliases: aliasesText.split(separator: "\n").map(String.init),
             ibans: ibansText.split(separator: "\n").map(String.init),
             owner: ownerName, category: categoryName,
-            reimbursedBy: reimbursedByName.isEmpty ? nil : reimbursedByName, updatedAt: updatedAt
+            reimbursedBy: reimbursedByName.isEmpty ? nil : reimbursedByName,
+            ledgerCodes: ledgerCodesText.split(separator: "\n").compactMap { line in
+                let parts = line.split(separator: "\t", omittingEmptySubsequences: false).map(String.init)
+                return parts.count == 3 ? LedgerChoice(owner: parts[0], category: parts[1], code: parts[2]) : nil
+            },
+            updatedAt: updatedAt
         )
     }
 }

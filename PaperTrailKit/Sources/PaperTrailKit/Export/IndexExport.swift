@@ -55,6 +55,9 @@ public struct IndexExport: Codable, Sendable, Equatable {
         public var vat: VATInfo?
         public var paymentCode: PaymentCode?
         public var recognizedText: String?
+        /// Ledger code and its description as chosen; nil when none (and in older exports).
+        public var ledgerCode: String?
+        public var ledgerDescription: String?
     }
 
     public struct ExpenseClaim: Codable, Sendable, Equatable {
@@ -84,6 +87,8 @@ public struct IndexExport: Codable, Sendable, Equatable {
         public var owner: String
         public var category: String
         public var reimbursedBy: String?
+        /// nil in exports made before ledger codes.
+        public var ledgerCodes: [LedgerChoice]?
         public var updatedAt: Date
     }
 
@@ -153,7 +158,7 @@ public struct IndexExport: Codable, Sendable, Equatable {
         }
         let yes = String(localized: "yes", bundle: .module)
         var rows = [[
-            "Received", "Document date", "Owner", "Category", "Sender", "Description", "Amount (EUR)",
+            "Received", "Document date", "Owner", "Category", "Ledger code", "Ledger description", "Sender", "Description", "Amount (EUR)",
             "VAT 21%", "VAT 9%", "VAT 0%", "VAT total", "Foreign VAT", "Reverse charge",
             "Unpaid bill", "Due date", "Paid", "Paid on", "IBAN", "Payment reference",
             "Reimbursed by", "Reimbursed on", "File", "ID",
@@ -161,6 +166,7 @@ public struct IndexExport: Codable, Sendable, Equatable {
         for document in documents.sorted(by: { ($0.receivedDate, $0.relativePath) < ($1.receivedDate, $1.relativePath) }) {
             rows.append([
                 date(document.receivedDate), date(document.documentDate), document.owner, document.category,
+                document.ledgerCode ?? "", document.ledgerDescription ?? "",
                 document.sender, document.description, amount(document.amount),
                 vat(document.vat, rate: 21), vat(document.vat, rate: 9), vat(document.vat, rate: 0),
                 document.vat.map { amount($0.total) } ?? "",
@@ -185,7 +191,8 @@ extension DocumentRecord {
             source: sourceRaw, contentHash: contentHash, isUnpaidBill: isUnpaidBill, amount: amount, dueDate: dueDate,
             iban: iban, paymentReference: paymentReference, isPaid: isPaid, paidAt: paidAt, reminderID: reminderExternalID,
             exportedToSEPAAt: exportedAt, reimbursedBy: reimbursedBy, claimID: claimID, reimbursedAt: reimbursedAt,
-            vat: vatInfo, paymentCode: paymentCode, recognizedText: extractedText
+            vat: vatInfo, paymentCode: paymentCode, recognizedText: extractedText,
+            ledgerCode: ledgerCode.isEmpty ? nil : ledgerCode, ledgerDescription: ledgerDescription.isEmpty ? nil : ledgerDescription
         )
     }
 
@@ -210,6 +217,8 @@ extension DocumentRecord {
         reimbursedAt = document.reimbursedAt
         vatInfo = document.vat
         paymentCode = document.paymentCode
+        ledgerCode = document.ledgerCode ?? ""
+        ledgerDescription = document.ledgerDescription ?? ""
     }
 }
 
@@ -240,12 +249,13 @@ extension VATReturnRecord {
 extension IndexExport.Rule {
     public init(_ rule: SenderRule) {
         self.init(id: rule.id, senderName: rule.senderName, aliases: rule.aliases, ibans: rule.ibans, owner: rule.owner,
-                  category: rule.category, reimbursedBy: rule.reimbursedBy, updatedAt: rule.updatedAt)
+                  category: rule.category, reimbursedBy: rule.reimbursedBy,
+                  ledgerCodes: rule.ledgerCodes.isEmpty ? nil : rule.ledgerCodes, updatedAt: rule.updatedAt)
     }
 
     public var rule: SenderRule {
         SenderRule(id: id, senderName: senderName, aliases: aliases, ibans: ibans, owner: owner, category: category,
-                   reimbursedBy: reimbursedBy, updatedAt: updatedAt)
+                   reimbursedBy: reimbursedBy, ledgerCodes: ledgerCodes ?? [], updatedAt: updatedAt)
     }
 }
 

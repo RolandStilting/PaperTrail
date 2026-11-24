@@ -11,13 +11,19 @@ public struct ClaimLine: Sendable, Hashable {
     public var amount: Double?
     /// Where the receipt is in the archive, relative to "Paper Trail".
     public var relativePath: String
+    /// The receipt's ledger code and description (from its own owner's list); empty when none.
+    public var ledgerCode: String
+    public var ledgerDescription: String
 
-    public init(date: Date, sender: String, description: String, amount: Double?, relativePath: String) {
+    public init(date: Date, sender: String, description: String, amount: Double?, relativePath: String,
+                ledgerCode: String = "", ledgerDescription: String = "") {
         self.date = date
         self.sender = sender
         self.description = description
         self.amount = amount
         self.relativePath = relativePath
+        self.ledgerCode = ledgerCode
+        self.ledgerDescription = ledgerDescription
     }
 }
 
@@ -44,11 +50,13 @@ public enum ExpenseClaim {
         }
         var rows = [[String(localized: "Date", bundle: .module), String(localized: "Sender", bundle: .module),
                      String(localized: "Description", bundle: .module), String(localized: "Amount (EUR)", bundle: .module),
+                     String(localized: "Ledger code", bundle: .module), String(localized: "Ledger description", bundle: .module),
                      String(localized: "Document", bundle: .module)]]
         for line in lines {
-            rows.append([namer.dateString(line.date), line.sender, line.description, amount(line.amount), line.relativePath])
+            rows.append([namer.dateString(line.date), line.sender, line.description, amount(line.amount),
+                         line.ledgerCode, line.ledgerDescription, line.relativePath])
         }
-        rows.append(["", String(localized: "Total", bundle: .module), "", amount(total(lines)), ""])
+        rows.append(["", String(localized: "Total", bundle: .module), "", amount(total(lines)), "", "", ""])
         let text = rows.map { $0.map(field).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
