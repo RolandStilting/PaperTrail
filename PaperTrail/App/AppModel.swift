@@ -144,10 +144,25 @@ final class AppModel {
     }
 
     /// papertrail://bill/<id>, the link in a bill's reminder.
+    /// Links from reminders (papertrail://bill/<id>) and widgets (topay, review, bill).
     func handle(url: URL) {
-        guard url.scheme == "papertrail", url.host() == "bill", let id = UUID(uuidString: url.lastPathComponent) else { return }
-        billToOpen = id
-        showingBillFromLink = true
+        guard url.scheme == "papertrail" else { return }
+        switch url.host() {
+        case "bill":
+            guard let id = UUID(uuidString: url.lastPathComponent) else { return }
+            billToOpen = id
+            showingBillFromLink = true
+        case "topay":
+            billToOpen = nil
+            showingBillFromLink = true
+        case "review":
+            Task {
+                await refreshReviewItems()
+                if let first = reviewItems.first, pending == nil { await openReviewItem(first) }
+            }
+        default:
+            break
+        }
     }
 
     /// The file of a filed document in the archive.

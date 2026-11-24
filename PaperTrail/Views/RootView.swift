@@ -118,6 +118,7 @@ struct RootView: View {
             if let id = SpotlightIndexer.documentID(from: activity) { model.documentToOpen = DocumentRoute(id: id) }
         }
         .modifier(SpotlightSync())
+        .modifier(WidgetSync())
         .onChange(of: model.wantsSearchFocus) { _, wants in
             // Find (⌘F) searches the archive; go there first if needed.
             guard wants else { return }

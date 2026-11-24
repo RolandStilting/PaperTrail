@@ -42,6 +42,9 @@ targets:
       - target: PaperTrailShare
         embed: true
         codeSign: true
+      - target: PaperTrailWidgets
+        embed: true
+        codeSign: true
     info:
       path: PaperTrail/Resources/Info.plist
       properties:
@@ -117,6 +120,37 @@ targets:
         SKIP_INSTALL: YES
         CODE_SIGN_ENTITLEMENTS[sdk=iphone*]: PaperTrailShare/PaperTrailShare-iOS.entitlements
         CODE_SIGN_ENTITLEMENTS[sdk=macosx*]: PaperTrailShare/PaperTrailShare-macOS.entitlements
+
+  PaperTrailWidgets:
+    type: app-extension
+    supportedDestinations: [iOS, macOS]
+    sources:
+      - path: PaperTrailWidgets
+    dependencies:
+      - package: PaperTrailKit
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    info:
+      path: PaperTrailWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Paper Trail
+        PTAppGroupIdentifier: $(PAPERTRAIL_APP_GROUP)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(PAPERTRAIL_BUNDLE_ID).widgets
+        PRODUCT_NAME: PaperTrailWidgets
+        PRODUCT_MODULE_NAME: PaperTrailWidgets
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        CODE_SIGN_STYLE: Automatic
+        ENABLE_HARDENED_RUNTIME: YES
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_ENTITLEMENTS[sdk=iphone*]: PaperTrailWidgets/PaperTrailWidgets-iOS.entitlements
+        CODE_SIGN_ENTITLEMENTS[sdk=macosx*]: PaperTrailWidgets/PaperTrailWidgets-macOS.entitlements
 
   PaperTrailTests:
     type: bundle.unit-test
