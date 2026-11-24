@@ -47,6 +47,16 @@ struct IndexExportTests {
         #expect(restored.reminderExternalID == "reminder-1")
     }
 
+    @Test func readsDatesWithAndWithoutMilliseconds() throws {
+        let json = try String(decoding: export([bill()]).json(), as: UTF8.self)
+        // Strip the milliseconds from every date, as a hand-edited file might have them.
+        let plain = json.replacingOccurrences(of: #"\.\d{3}Z"#, with: "Z", options: .regularExpression)
+        #expect(plain != json)
+        let read = try IndexExport.read(Data(plain.utf8))
+        #expect(read.documents.first?.receivedDate == date(23))
+        #expect(read.exportedAt == date(24))
+    }
+
     @Test func rejectsOtherFiles() {
         #expect(throws: IndexExport.ReadError.notAnExport) { try IndexExport.read(Data("{\"hello\": 1}".utf8)) }
         var newer = export([])

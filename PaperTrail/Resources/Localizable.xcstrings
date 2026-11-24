@@ -75,6 +75,12 @@
     "%lld documents" : {
 
     },
+    "%lld documents are already in the index and stay as they are." : {
+
+    },
+    "%lld documents are skipped because their PDF is no longer in iCloud Drive." : {
+
+    },
     "%lld due this week" : {
 
     },
@@ -162,6 +168,16 @@
     "Add VAT Line" : {
 
     },
+    "Adds %lld documents, %lld expense claims, %lld submitted VAT periods and %lld learned rules." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Adds %1$lld documents, %2$lld expense claims, %3$lld submitted VAT periods and %4$lld learned rules."
+          }
+        }
+      }
+    },
     "After 1 hour" : {
 
     },
@@ -238,6 +254,9 @@
 
     },
     "Automatic" : {
+
+    },
+    "Backup" : {
 
     },
     "Banking app scans standard QR codes" : {
@@ -396,6 +415,9 @@
     "Could not move these to the Trash: %@. Nothing was cleared from the index. Check iCloud Drive and try again." : {
 
     },
+    "Could not read \"%@\". Make sure it is downloaded from iCloud Drive and try again." : {
+
+    },
     "Could not read \"%@\". Make sure the file is downloaded and not damaged, then try again." : {
 
     },
@@ -434,6 +456,9 @@
 
     },
     "Could not use the Keychain: %@" : {
+
+    },
+    "Could not write the index export: %@. Check that iCloud Drive has free space and try again." : {
 
     },
     "Couldn't look for QR codes on this device; only links were checked." : {
@@ -568,6 +593,9 @@
     "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email." : {
 
     },
+    "Every week Paper Trail writes everything that isn't in the PDFs (amounts, VAT, paid bills, expense claims, learned rules) to Paper Trail/Export in iCloud Drive, as JSON and as a CSV for Excel or Numbers. The last 8 weeks are kept in Export/Backups. Import adds back documents and records that are missing from the index; it never changes or removes anything." : {
+
+    },
     "Everything is paid." : {
 
     },
@@ -589,6 +617,9 @@
     "Export" : {
 
     },
+    "Export Index Now" : {
+
+    },
     "Export PDF and CSV…" : {
 
     },
@@ -596,6 +627,9 @@
 
     },
     "Exported" : {
+
+    },
+    "Exported %lld documents to Paper Trail/Export in iCloud Drive." : {
 
     },
     "Exported in a SEPA file; open until its reminder is completed" : {
@@ -608,6 +642,12 @@
 
     },
     "File document" : {
+
+    },
+    "File Document" : {
+
+    },
+    "File Document (⌘↩)" : {
 
     },
     "File it right here." : {
@@ -700,6 +740,15 @@
     "Import File…" : {
 
     },
+    "Import index?" : {
+
+    },
+    "Import Index…" : {
+
+    },
+    "Imported. %@" : {
+
+    },
     "In iCloud Drive" : {
 
     },
@@ -716,6 +765,9 @@
 
     },
     "Kept: owners, categories, payment and email settings. Emails in your mailbox are not touched." : {
+
+    },
+    "Last export" : {
 
     },
     "Learned rules" : {
@@ -826,7 +878,13 @@
     "None" : {
 
     },
+    "Not yet" : {
+
+    },
     "Nothing received yet this month." : {
+
+    },
+    "Nothing to add: everything in this export is already in the index." : {
 
     },
     "Nothing to pay" : {
@@ -1010,6 +1068,12 @@
 
     },
     "Save" : {
+
+    },
+    "Save Changes" : {
+
+    },
+    "Save Changes (⌘↩)" : {
 
     },
     "Save Email Settings" : {

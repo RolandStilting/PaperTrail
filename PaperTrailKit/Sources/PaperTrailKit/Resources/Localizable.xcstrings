@@ -199,6 +199,12 @@
     "This device doesn't support Apple Intelligence, so Paper Trail can't suggest details here. Fill them in yourself." : {
 
     },
+    "This export was made by a newer version of Paper Trail. Update the app, then import it again." : {
+
+    },
+    "This file is not a Paper Trail index export. Choose \"Paper Trail Index.json\" from the Export folder." : {
+
+    },
     "This is exactly the same file." : {
 
     },
@@ -227,6 +233,9 @@
 
     },
     "VAT to reclaim" : {
+
+    },
+    "yes" : {
 
     }
   },

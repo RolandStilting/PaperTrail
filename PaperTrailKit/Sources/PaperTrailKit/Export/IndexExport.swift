@@ -120,7 +120,8 @@ public struct IndexExport: Codable, Sendable, Equatable {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let text = try decoder.singleValueContainer().decode(String.self)
-            if let date = try? dateStyle.parse(text) ?? Date.ISO8601FormatStyle().parse(text) { return date }
+            // With milliseconds (as written), or without (edited by hand or made elsewhere).
+            if let date = (try? dateStyle.parse(text)) ?? (try? Date.ISO8601FormatStyle().parse(text)) { return date }
             throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "Not an ISO 8601 date: \(text)"))
         }
         guard let export = try? decoder.decode(IndexExport.self, from: data), export.format == "Paper Trail index" else {
