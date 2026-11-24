@@ -8,6 +8,7 @@ struct PaperTrailApp: App {
     private let modelContainer = Self.makeModelContainer()
     private let filingService: FilingService
     @State private var model: AppModel
+    @State private var appLock = AppLock()
     #if os(macOS)
     @State private var mailIntake: MailIntakeService
     #endif
@@ -33,6 +34,7 @@ struct PaperTrailApp: App {
             RootView()
                 .environment(settingsStore)
                 .environment(model)
+                .environment(appLock)
                 #if os(macOS)
                 .environment(mailIntake)
                 .frame(minWidth: 820, minHeight: 560)
@@ -48,10 +50,12 @@ struct PaperTrailApp: App {
             CommandGroup(replacing: .newItem) {
                 Button("Add Document…") { model.showingImporter = true }
                     .keyboardShortcut("n")
+                    .disabled(appLock.isLocked)
             }
             CommandGroup(after: .textEditing) {
                 Button("Find Documents") { model.wantsSearchFocus = true }
                     .keyboardShortcut("f")
+                    .disabled(appLock.isLocked)
             }
         }
 
@@ -61,6 +65,7 @@ struct PaperTrailApp: App {
             NavigationStack { SettingsView(embedded: true) }
                 .environment(settingsStore)
                 .environment(model)
+                .environment(appLock)
                 .environment(mailIntake)
                 .modelContainer(modelContainer)
                 .frame(minWidth: 520, minHeight: 600)

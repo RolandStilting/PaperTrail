@@ -7,6 +7,9 @@
     "\"%@\" is no longer in Needs Review. It was probably filed on another device. Pull down to refresh the list." : {
 
     },
+    "\"%@\" is no longer where Paper Trail filed it. It may have been moved or renamed on another device; wait for iCloud Drive to catch up and try again." : {
+
+    },
     "\"%@\" is not a PDF or image. Paper Trail can import PDFs and images." : {
 
     },
@@ -403,6 +406,9 @@
     "Could not save the change: %@" : {
 
     },
+    "Could not save the changes" : {
+
+    },
     "Could not save the file: %@ Try another folder." : {
 
     },
@@ -504,6 +510,15 @@
     "Each owner gets a top-level folder and a colour in lists. Renaming only affects documents filed afterwards." : {
 
     },
+    "Edit" : {
+
+    },
+    "Edit Details" : {
+
+    },
+    "Edit Details (⌘E)" : {
+
+    },
     "Edit VAT" : {
 
     },
@@ -599,6 +614,9 @@
 
     },
     "Find Documents" : {
+
+    },
+    "Find documents by sender, description, amount or their text from the system search. The search index stays on this device; turn this off to remove it." : {
 
     },
     "Find VAT in Documents" : {
@@ -967,6 +985,9 @@
     "Saved – type to replace" : {
 
     },
+    "Saved, but the reminder wasn't updated" : {
+
+    },
     "Saved." : {
 
     },
@@ -986,6 +1007,9 @@
 
     },
     "Scanning failed: %@. Try again." : {
+
+    },
+    "Search" : {
 
     },
     "Select a bill" : {
@@ -1031,6 +1055,9 @@
 
     },
     "Shared, emailed and Inbox documents wait here until you file them." : {
+
+    },
+    "Show Documents in Spotlight" : {
 
     },
     "Show in Finder" : {
@@ -1121,6 +1148,12 @@
 
     },
     "These documents are not in Paper Trail anymore (moved or renamed?): %@. Put them back and export again." : {
+
+    },
+    "This document is in a VAT return marked as submitted. Its owner, dates, amount and VAT can't be changed; use Undo Submitted in the VAT overview first." : {
+
+    },
+    "This expense is in a submitted claim. Its amount and company can't be changed; undo the claim under Expenses first." : {
 
     },
     "This invoice has no payment code or link. Use the copy buttons below." : {

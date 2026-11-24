@@ -47,6 +47,7 @@ targets:
       properties:
         CFBundleDisplayName: Paper Trail
         NSCameraUsageDescription: Paper Trail uses the camera to scan receipts, invoices and letters.
+        NSFaceIDUsageDescription: Paper Trail uses Face ID to unlock your documents when you turn on the lock in Settings.
         NSRemindersFullAccessUsageDescription: Paper Trail adds unpaid bills to your To pay lists in Reminders and marks a bill paid when you complete its reminder.
         CFBundleURLTypes:
           - CFBundleURLName: $(PAPERTRAIL_BUNDLE_ID)

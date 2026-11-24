@@ -18,6 +18,54 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var errors: [String] = []
     @AppStorage(SpotlightIndexer.enabledKey) private var spotlightEnabled = true
+    @Environment(AppLock.self) private var appLock
+    @AppStorage(AppLock.enabledKey) private var lockEnabled = false
+    @AppStorage(AppLock.timeoutKey) private var lockTimeout = AppLock.defaultTimeout.rawValue
+
+    /// Turning the lock on or off asks for Face ID / Touch ID first: on, to be sure it works;
+    /// off, so nobody else can switch it off.
+    private var lockBinding: Binding<Bool> {
+        Binding(get: { lockEnabled }, set: { wanted in
+            Task {
+                let reason = wanted ? String(localized: "Turn on the lock for Paper Trail.") : String(localized: "Turn off the lock for Paper Trail.")
+                guard await appLock.authenticate(reason: reason) else { return }
+                lockEnabled = wanted
+                if !wanted { appLock.turnedOff() }
+            }
+        })
+    }
+
+    @ViewBuilder
+    private var lockSection: some View {
+        let method = AppLock.Method.current
+        Section {
+            Toggle(String(localized: "Require \(method.name)"), isOn: lockBinding)
+                .disabled(!AppLock.isAvailable && !lockEnabled)
+            if lockEnabled {
+                Picker("Lock", selection: $lockTimeout) {
+                    ForEach(LockTimeout.allCases) { Text(Self.label(for: $0)).tag($0.rawValue) }
+                }
+            }
+        } header: {
+            Text("Lock")
+        } footer: {
+            if AppLock.isAvailable {
+                Text("Paper Trail asks for \(method.name) when it opens and after it has been away for the chosen time; your passcode works too. This device only. Files in iCloud Drive aren't locked, and Spotlight can still show document titles; turn Spotlight off below to hide them.")
+            } else {
+                Text("Set a passcode on this device to use the lock.")
+            }
+        }
+    }
+
+    private static func label(for timeout: LockTimeout) -> String {
+        switch timeout {
+        case .immediately: String(localized: "Immediately")
+        case .oneMinute: String(localized: "After 1 minute")
+        case .fiveMinutes: String(localized: "After 5 minutes")
+        case .fifteenMinutes: String(localized: "After 15 minutes")
+        case .oneHour: String(localized: "After 1 hour")
+        }
+    }
 
     var body: some View {
         Form {
@@ -104,6 +152,8 @@ struct SettingsView: View {
                 Text("A dedicated mailbox that this Mac checks; its emails go to Needs Review.")
             }
             #endif
+
+            lockSection
 
             Section {
                 Toggle("Show Documents in Spotlight", isOn: $spotlightEnabled)

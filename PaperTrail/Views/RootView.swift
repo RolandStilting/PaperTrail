@@ -23,6 +23,7 @@ struct RootView: View {
     @Environment(SettingsStore.self) private var settingsStore
     @Environment(\.modelContext) private var modelContext
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(AppLock.self) private var appLock
     #if os(iOS)
     @Environment(\.horizontalSizeClass) private var sizeClass
     #endif
@@ -108,6 +109,10 @@ struct RootView: View {
             .frame(minWidth: 720, minHeight: 640)
             #endif
         }
+        .onAppear { appLock.updateCovers() }
+        #if os(iOS)
+        .onChange(of: scenePhase, initial: true) { _, phase in appLock.scenePhaseChanged(to: phase) }
+        #endif
         .onOpenURL { model.handle(url: $0) }
         .onContinueUserActivity(CSSearchableItemActionType) { activity in
             if let id = SpotlightIndexer.documentID(from: activity) { model.documentToOpen = DocumentRoute(id: id) }
