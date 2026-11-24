@@ -14,6 +14,7 @@ struct SettingsView: View {
 
     @State private var draft = ArchiveSettings.defaults
     @State private var savedMessage = false
+    @State private var loadedDraft = false
     @Environment(AppModel.self) private var model
     @Environment(\.modelContext) private var modelContext
     @State private var errors: [String] = []
@@ -232,7 +233,17 @@ struct SettingsView: View {
                 }
             }
         }
-        .onAppear { draft = settingsStore.settings }
+        // Load the draft once: onAppear also runs when coming back from a pushed screen (such as
+        // the ledger code editor), and reloading then would throw away the edits made there.
+        .onAppear {
+            guard !loadedDraft else { return }
+            draft = settingsStore.settings
+            loadedDraft = true
+        }
+        // Settings changed on another device: take them over while nothing here is unsaved.
+        .onChange(of: settingsStore.settings) { old, new in
+            if draft == old { draft = new }
+        }
         .onChange(of: draft) { _, _ in savedMessage = false }
     }
 }
