@@ -7,6 +7,8 @@ import AppKit
 
 /// Input VAT to reclaim per company and period. Counts only; deductibility is the user's call.
 struct VATOverviewView: View {
+    /// Inside the app's navigation (tab or sidebar) instead of a sheet.
+    var embedded = false
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(SettingsStore.self) private var settingsStore
@@ -46,7 +48,7 @@ struct VATOverviewView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        SheetNavigation(embedded: embedded) {
             Form {
                 selection
                 if let report { summary(report) }
@@ -57,9 +59,9 @@ struct VATOverviewView: View {
                 }
             }
             .formStyle(.grouped)
-            .navigationTitle("VAT Overview")
+            .navigationTitle("VAT")
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+                if !embedded { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             }
             .onAppear(perform: setUp)
             .confirmationDialog("Read VAT again for all documents in this period?", isPresented: $confirmingReadAgain) {
@@ -247,6 +249,7 @@ struct VATEditSheet: View {
                 if let errorMessage { Section { Text(errorMessage).foregroundStyle(.red) } }
             }
             .formStyle(.grouped)
+            .keyboardDismissal()
             .navigationTitle(record.sender)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }

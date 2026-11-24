@@ -13,6 +13,8 @@ struct OpenBillsView: View {
     let billService: BillService
     /// Bill to open straight away, e.g. from a reminder's link.
     var initialBillID: UUID?
+    /// Inside the app's navigation (tab or sidebar) instead of a sheet.
+    var embedded = false
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
@@ -21,6 +23,7 @@ struct OpenBillsView: View {
     private var bills: [DocumentRecord]
     @State private var path: [UUID] = []
     @State private var exportingOwner: Owner?
+    @State private var selection: UUID?
 
     private var owners: [String] {
         let configured = settingsStore.settings.owners.map(\.name)
@@ -33,24 +36,31 @@ struct OpenBillsView: View {
             .sorted { ($0.dueDate ?? .distantFuture, $0.receivedDate) < ($1.dueDate ?? .distantFuture, $1.receivedDate) }
     }
 
+    /// Bills in the order the list shows them, for the arrow keys.
+    private var orderedIDs: [UUID] { owners.flatMap { bills(of: $0).map(\.id) } }
+
     var body: some View {
-        NavigationStack(path: $path) {
-            List {
-                if bills.isEmpty {
-                    ContentUnavailableView("No open bills", systemImage: "checkmark.seal", description: Text("Unpaid bills you file show up here until their reminder is completed."))
-                }
-                ForEach(owners, id: \.self) { owner in
-                    Section(owner) {
-                        ForEach(bills(of: owner)) { bill in
-                            NavigationLink(value: bill.id) { BillRow(bill: bill) }
-                        }
-                        if let settings = settingsStore.settings.owners.first(where: { $0.name == owner }), settings.paymentMethod == .sepaFile {
-                            Button("Export SEPA File…", systemImage: "square.and.arrow.up") { exportingOwner = settings }
+        SheetNavigation(embedded: embedded, path: $path) {
+            Group {
+                if embedded {
+                    // Mac and iPad: the selected bill's QR code and details beside the list.
+                    ListWithDetail { split in
+                        billList(split: split)
+                    } detail: {
+                        if let selection, let bill = bills.first(where: { $0.id == selection }) {
+                            BillDetailView(bill: bill, billService: billService, embedded: true)
+                                .id(bill.id)
+                        } else {
+                            ContentUnavailableView(bills.isEmpty ? "No open bills" : "Select a bill",
+                                                   systemImage: bills.isEmpty ? "checkmark.seal" : "qrcode",
+                                                   description: Text(bills.isEmpty ? "Everything is paid." : "Its QR code and payment details appear here."))
                         }
                     }
+                } else {
+                    billList(split: false)
                 }
             }
-            .navigationTitle("Open Bills")
+            .navigationTitle("To Pay")
             .navigationDestination(for: UUID.self) { id in
                 if let bill = bills.first(where: { $0.id == id }) {
                     BillDetailView(bill: bill, billService: billService)
@@ -59,8 +69,10 @@ struct OpenBillsView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                if !embedded {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") { dismiss() }
+                    }
                 }
             }
             .sheet(item: $exportingOwner) { owner in
@@ -72,6 +84,37 @@ struct OpenBillsView: View {
         }
         .onAppear {
             if let initialBillID, path.isEmpty { path = [initialBillID] }
+        }
+    }
+
+    private func billList(split: Bool) -> some View {
+        List(selection: $selection) {
+            if bills.isEmpty {
+                ContentUnavailableView("No open bills", systemImage: "checkmark.seal", description: Text("Unpaid bills you file show up here until their reminder is completed."))
+            }
+            ForEach(owners, id: \.self) { owner in
+                Section(owner) {
+                    ForEach(bills(of: owner)) { bill in
+                        Group {
+                            if split {
+                                BillRow(bill: bill)
+                            } else {
+                                NavigationLink(value: bill.id) { BillRow(bill: bill) }
+                            }
+                        }
+                        .tag(bill.id)
+                    }
+                    if let settings = settingsStore.settings.owners.first(where: { $0.name == owner }), settings.paymentMethod == .sepaFile {
+                        Button("Export SEPA File…", systemImage: "square.and.arrow.up") { exportingOwner = settings }
+                    }
+                }
+            }
+        }
+        .arrowKeySelection($selection, in: orderedIDs)
+        .onAppear { if split, selection == nil { selection = orderedIDs.first } }
+        .onChange(of: orderedIDs) { _, ids in
+            // A bill marked paid leaves the list: select the next one.
+            if split, let selection, !ids.contains(selection) { self.selection = ids.first }
         }
     }
 }
@@ -106,9 +149,16 @@ private struct BillRow: View {
 struct BillDetailView: View {
     let bill: DocumentRecord
     let billService: BillService
+    /// Beside the To Pay list: the list keeps the window title.
+    var embedded = false
 
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.openURL) private var openURL
+    @Environment(AppModel.self) private var model
+    @Environment(SettingsStore.self) private var settingsStore
     @State private var errorMessage: String?
+    @State private var scanProblem: String?
+    @State private var isScanning = false
     @State private var confirmingPaid = false
     @State private var copied: String?
     @State private var isWorking = false
@@ -122,18 +172,24 @@ struct BillDetailView: View {
 
     var body: some View {
         Form {
-            Section {
-                switch qrPayload {
-                case .success(let payload):
-                    PaymentQRCode(payload: payload)
-                        .frame(maxWidth: 320, maxHeight: 320)
-                        .frame(maxWidth: .infinity)
-                case .failure(let error):
-                    Label(Self.message(for: error), systemImage: "info.circle")
-                        .foregroundStyle(.secondary)
+            if embedded {
+                Section {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(bill.sender).font(.title2.weight(.semibold))
+                        if let amount = bill.amount {
+                            Text(BillReminderText.amount(amount)).font(.title3).monospacedDigit().foregroundStyle(.secondary)
+                        }
+                    }
                 }
+            }
+            Section {
+                paymentCodeContent
             } footer: {
-                Text("Scan with your banking app, check the details and confirm there. Paper Trail never sends payments.")
+                switch bill.paymentCode?.source {
+                case .qrCode: Text("From the invoice itself: scan the code with your banking app, check the details and confirm there. Paper Trail never sends payments.")
+                case .link: Text("From the invoice itself: the sender's payment page. Check the details there before you pay. Paper Trail never sends payments.")
+                case nil: Text("Scan with your banking app, check the details and confirm there. Paper Trail never sends payments.")
+                }
             }
 
             Section("Details") {
@@ -157,13 +213,16 @@ struct BillDetailView: View {
                 }
                 Button("Mark as Paid", systemImage: "checkmark.circle") { confirmingPaid = true }
                     .disabled(isWorking)
+                Button("Look for Payment Code Again", systemImage: "qrcode.viewfinder") { Task { await findPaymentCode(again: true) } }
+                    .disabled(isScanning)
             } footer: {
                 Text("Completing the bill's reminder in Reminders also marks it paid.")
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(bill.sender)
+        .titleUnlessEmbedded(embedded, bill.sender)
         .task { reminderMissing = await billService.reminderIsMissing(for: bill) }
+        .task(id: bill.id) { await findPaymentCode(again: false) }
         .confirmationDialog("Mark this bill as paid?", isPresented: $confirmingPaid) {
             Button("Mark as Paid") { Task { await markPaid() } }
         } message: {
@@ -173,6 +232,78 @@ struct BillDetailView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(errorMessage ?? "")
+        }
+    }
+
+    /// The owner's banking app accepts Paper Trail's own EPC QR code.
+    private var bankScansEPC: Bool {
+        settingsStore.settings.owners.first { $0.name == bill.ownerName }?.bankScansEPCQRCode ?? true
+    }
+
+    @ViewBuilder
+    private var paymentCodeContent: some View {
+        if let code = bill.paymentCode {
+            if code.source == .qrCode {
+                PaymentQRCode(payload: code.payload)
+                    .frame(maxWidth: 320, maxHeight: 320)
+                    .frame(maxWidth: .infinity)
+            }
+            if let url = code.url {
+                Button {
+                    openURL(url)
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Open Payment Page")
+                            Text(code.host ?? "").font(.caption).foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "safari")
+                    }
+                }
+                .help(url.absoluteString)
+            }
+        } else if isScanning {
+            ProgressView("Looking for a payment code on the invoice…")
+                .frame(maxWidth: .infinity)
+        } else if bankScansEPC {
+            switch qrPayload {
+            case .success(let payload):
+                PaymentQRCode(payload: payload)
+                    .frame(maxWidth: 320, maxHeight: 320)
+                    .frame(maxWidth: .infinity)
+            case .failure(let error):
+                Label(Self.message(for: error), systemImage: "info.circle")
+                    .foregroundStyle(.secondary)
+            }
+        } else {
+            Label("This invoice has no payment code or link. Use the copy buttons below.", systemImage: "info.circle")
+                .foregroundStyle(.secondary)
+        }
+        if let scanProblem {
+            Label(scanProblem, systemImage: "exclamationmark.triangle")
+                .font(.footnote)
+                .foregroundStyle(.orange)
+        }
+    }
+
+    /// Searches the bill's PDF once for a QR code or pay link from the sender; the result is
+    /// stored on the record (and synced), so other devices don't search again.
+    private func findPaymentCode(again: Bool) async {
+        guard again || bill.paymentCodeCheckedAt == nil, let url = model.fileURL(for: bill) else { return }
+        isScanning = true
+        defer { isScanning = false }
+        do {
+            let result = try await PaymentCodeScanner.scan(fileAt: url, text: bill.extractedText ?? "")
+            bill.paymentCode = result.code
+            // Without a working QR search, only a found link counts as done; try again next time.
+            if result.code != nil || !result.qrSearchFailed { bill.paymentCodeCheckedAt = .now }
+            try modelContext.save()
+            scanProblem = result.code == nil && result.qrSearchFailed
+                ? String(localized: "Couldn't look for QR codes on this device; only links were checked.")
+                : nil
+        } catch {
+            scanProblem = error.localizedDescription
         }
     }
 

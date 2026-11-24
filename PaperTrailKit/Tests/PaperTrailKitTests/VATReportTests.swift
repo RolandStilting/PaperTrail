@@ -8,6 +8,15 @@ struct VATReportTests {
     static let calendar = TestSupport.calendar
     static func day(_ month: Int, _ d: Int) -> Date { calendar.date(from: DateComponents(year: 2026, month: month, day: d, hour: 12))! }
 
+    @Test func usualDeadline() {
+        let c = Self.calendar
+        let q1 = VATPeriod.containing(Self.day(2, 14), kind: .quarter, calendar: c)
+        #expect(q1.usualDeadline(calendar: c).map { c.dateComponents([.month, .day], from: $0) } == DateComponents(month: 4, day: 30))
+        let nov = VATPeriod.containing(Self.day(11, 3), kind: .month, calendar: c)
+        #expect(nov.usualDeadline(calendar: c).map { c.dateComponents([.year, .month, .day], from: $0) } == DateComponents(year: 2026, month: 12, day: 31))
+        #expect(VATPeriod.containing(Self.day(5, 1), kind: .year, calendar: c).usualDeadline(calendar: c) == nil)
+    }
+
     @Test func periods() {
         let q = VATPeriod.containing(Self.day(2, 14), kind: .quarter, calendar: Self.calendar)
         #expect(q.label(calendar: Self.calendar) == "Q1 2026")

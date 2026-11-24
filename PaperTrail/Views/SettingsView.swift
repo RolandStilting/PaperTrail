@@ -1,8 +1,11 @@
 import PaperTrailKit
+import SwiftData
 import SwiftUI
 
 /// Edit the owners and categories that make up the folder structure.
 struct SettingsView: View {
+    /// In a tab or the Mac Settings window: no Cancel, and Save stays on the screen.
+    var embedded = false
     @Environment(SettingsStore.self) private var settingsStore
     #if os(macOS)
     @Environment(MailIntakeService.self) private var mail
@@ -10,13 +13,35 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var draft = ArchiveSettings.defaults
+    @State private var savedMessage = false
+    @Environment(AppModel.self) private var model
+    @Environment(\.modelContext) private var modelContext
     @State private var errors: [String] = []
 
     var body: some View {
         Form {
             Section {
                 ForEach($draft.owners) { $owner in
-                    TextField("Owner name", text: $owner.name)
+                    HStack {
+                        Menu {
+                            Picker("Colour", selection: $owner.color) {
+                                Text("Automatic").tag(OwnerColor?.none)
+                                ForEach(OwnerColor.allCases, id: \.self) { color in
+                                    Label { Text(color.title) } icon: { Image(systemName: "circle.fill").foregroundStyle(color.color) }
+                                        .tag(OwnerColor?.some(color))
+                                }
+                            }
+                        } label: {
+                            Circle()
+                                .fill(draft.color(ofOwner: owner.name).color)
+                                .frame(width: 14, height: 14)
+                                .accessibilityLabel(Text("Colour for \(owner.name)"))
+                        }
+                        .menuStyle(.button)
+                        .buttonStyle(.plain)
+                        .fixedSize()
+                        TextField("Owner name", text: $owner.name)
+                    }
                 }
                 .onDelete { draft.owners.remove(atOffsets: $0) }
                 .onMove { draft.owners.move(fromOffsets: $0, toOffset: $1) }
@@ -26,7 +51,7 @@ struct SettingsView: View {
             } header: {
                 Text("Owners")
             } footer: {
-                Text("Each owner gets a top-level folder. Renaming only affects documents filed afterwards.")
+                Text("Each owner gets a top-level folder and a colour in lists. Renaming only affects documents filed afterwards.")
             }
 
             Section {
@@ -51,6 +76,7 @@ struct SettingsView: View {
                             Text("QR code and copy buttons").tag(PaymentMethod.qrCode)
                             Text("SEPA batch file").tag(PaymentMethod.sepaFile)
                         }
+                        Toggle("Banking app scans standard QR codes", isOn: $owner.bankScansEPCQRCode)
                         TextField("Account name", text: $owner.payingAccount.name, prompt: Text("Name on the paying account"))
                         TextField("IBAN", text: $owner.payingAccount.iban, prompt: Text("Paying account"))
                             .autocorrectionDisabled()
@@ -67,7 +93,7 @@ struct SettingsView: View {
             } header: {
                 Text("Paying bills and VAT")
             } footer: {
-                Text("Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Stored with your settings in iCloud.")
+                Text("Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud.")
             }
 
             #if os(macOS)
@@ -94,6 +120,24 @@ struct SettingsView: View {
             }
             #endif
 
+            #if DEBUG
+            Section {
+                Button("Add Sample Documents", systemImage: "doc.badge.plus") {
+                    Task {
+                        do { try await SampleDocuments.add(using: model.filingService, context: modelContext) } catch { model.errorMessage = error.localizedDescription }
+                    }
+                }
+            } header: {
+                Text("Debug")
+            } footer: {
+                Text("Debug builds only. Files a few made-up documents to try the screens.")
+            }
+            #endif
+
+            if savedMessage, errors.isEmpty {
+                Section { Label("Settings saved", systemImage: "checkmark.circle").foregroundStyle(.green) }
+            }
+
             if !errors.isEmpty {
                 Section {
                     ForEach(errors, id: \.self) { Text($0).foregroundStyle(.red) }
@@ -101,10 +145,13 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .keyboardDismissal()
         .navigationTitle("Settings")
         .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { dismiss() }
+            if !embedded {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
@@ -114,10 +161,13 @@ struct SettingsView: View {
                         draft.owners[index].payingAccount.name = draft.owners[index].payingAccount.name.trimmingCharacters(in: .whitespaces)
                     }
                     errors = settingsStore.update(draft)
-                    if errors.isEmpty { dismiss() }
+                    if errors.isEmpty {
+                        if embedded { savedMessage = true } else { dismiss() }
+                    }
                 }
             }
         }
         .onAppear { draft = settingsStore.settings }
+        .onChange(of: draft) { _, _ in savedMessage = false }
     }
 }

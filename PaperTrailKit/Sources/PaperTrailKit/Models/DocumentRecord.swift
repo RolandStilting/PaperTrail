@@ -65,6 +65,16 @@ public final class DocumentRecord {
         set { vatInfoText = newValue?.encoded ?? "" }
     }
 
+    // Payment code on the document itself (iDEAL/Tikkie QR or a pay link), as PaymentCode JSON.
+    public var paymentCodeText: String = ""
+    /// When the document was searched for a payment code; nil = not yet.
+    public var paymentCodeCheckedAt: Date?
+
+    public var paymentCode: PaymentCode? {
+        get { PaymentCode.decode(paymentCodeText) }
+        set { paymentCodeText = newValue?.encoded ?? "" }
+    }
+
     /// The date that decides the VAT period: the date on the document, else the received date.
     public var vatDate: Date { documentDate ?? receivedDate }
 

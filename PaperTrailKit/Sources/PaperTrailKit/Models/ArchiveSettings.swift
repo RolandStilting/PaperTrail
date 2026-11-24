@@ -19,6 +19,12 @@ public struct ArchiveSettings: Codable, Hashable, Sendable {
             .map { DocumentCategory(name: $0) }
     )
 
+    /// The colour of an owner: its own choice, else automatic by position.
+    public func color(ofOwner name: String) -> OwnerColor {
+        guard let index = owners.firstIndex(where: { $0.name == name }) else { return .gray }
+        return owners[index].color ?? .automatic(index: index)
+    }
+
     /// Problems that stop the settings from being saved, as user-facing messages.
     public var validationErrors: [String] {
         var errors: [String] = []
