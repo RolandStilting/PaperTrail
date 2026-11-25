@@ -23,7 +23,7 @@ public struct ArchiveSettings: Codable, Hashable, Sendable {
     }
 
     public static let defaults = ArchiveSettings(
-        owners: ["Company1", "Company2", "Private"].map { Owner(name: $0) },
+        owners: ["Company1", "Company2", "Private"].map { Owner(name: $0, isPersonal: $0 == "Private") },
         categories: ["Invoices", "Receipts", "Letters", "Contracts", "Tax", "Insurance", "Bank", "Other"]
             .map { DocumentCategory(name: $0) }
     )

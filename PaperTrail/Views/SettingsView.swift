@@ -142,6 +142,7 @@ struct SettingsView: View {
             Section {
                 ForEach($draft.owners) { $owner in
                     DisclosureGroup(owner.name.isEmpty ? String(localized: "New owner") : owner.name) {
+                        Toggle("Personal (not a company)", isOn: $owner.isPersonal)
                         Picker("Pay with", selection: $owner.paymentMethod) {
                             Text("QR code and copy buttons").tag(PaymentMethod.qrCode)
                             Text("SEPA batch file").tag(PaymentMethod.sepaFile)

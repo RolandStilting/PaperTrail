@@ -59,6 +59,18 @@ struct LedgerCodeTests {
         #expect(again == current)
     }
 
+    @Test func personalOwner() throws {
+        let json = #"{"owners":[{"id":"\#(UUID().uuidString)","name":"Londar"},{"id":"\#(UUID().uuidString)","name":"Werkgever"},{"id":"\#(UUID().uuidString)","name":"Privé"}],"categories":[]}"#
+        let settings = try JSONDecoder().decode(ArchiveSettings.self, from: Data(json.utf8))
+        #expect(settings.owners.map(\.isPersonal) == [false, false, true])
+        var changed = settings
+        changed.owners[2].isPersonal = false
+        changed.owners[1].isPersonal = true
+        let again = try JSONDecoder().decode(ArchiveSettings.self, from: try JSONEncoder().encode(changed))
+        #expect(again.owners.map(\.isPersonal) == [false, true, false])
+        #expect(ArchiveSettings.defaults.owners.map(\.isPersonal) == [false, false, true])
+    }
+
     @Test func listsPerCategoryMoveToTheOwner() throws {
         let invoices = UUID(), receipts = UUID(), letters = UUID()
         let json = #"""

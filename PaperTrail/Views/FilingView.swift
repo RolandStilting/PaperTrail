@@ -102,11 +102,11 @@ struct FilingView: View {
         settingsStore.settings.ledgerCodes(owner: bookingOwner, category: categoryName)
     }
 
-    /// For a company's document paid privately: the owner to file it under instead (the first
-    /// owner without a VAT return, e.g. Private).
+    /// For a company's document paid privately: the owner to file it under instead (the owner
+    /// marked Personal in Settings, e.g. Private).
     private var privateOwner: Owner? {
-        guard currentOwner?.vatPeriod != nil, reimbursingCompany == nil else { return nil }
-        return settingsStore.settings.owners.first { $0.vatPeriod == nil }
+        guard let currentOwner, !currentOwner.isPersonal, reimbursingCompany == nil else { return nil }
+        return settingsStore.settings.owners.first { $0.isPersonal }
     }
 
     /// Files the document under the private owner, to be reimbursed by the company it showed.
@@ -431,7 +431,7 @@ struct FilingView: View {
 
     /// Expenses are personal documents a company pays back; for a company's own documents the
     /// section only shows when already set.
-    private var showsExpense: Bool { !reimbursedBy.isEmpty || currentOwner?.vatPeriod == nil }
+    private var showsExpense: Bool { !reimbursedBy.isEmpty || currentOwner?.isPersonal == true }
 
     private var showsPaymentFields: Bool { showsPayment || isUnpaidBill || amount != nil }
 
