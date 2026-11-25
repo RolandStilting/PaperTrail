@@ -105,6 +105,31 @@ struct ExtractionValueChecksTests {
         #expect(result.amount == 98.10)
     }
 
+    @Test func collectionWarningIsNoDirectDebit() {
+        // Invented invoice: a payment box with label and value in separate columns, and a note
+        // about the collection process for late payment.
+        let text = """
+        U heeft 30 dagen de tijd om deze rekening te betalen. Lees hoe ons incassotraject eruitziet.
+        Betaalgegevens:
+        Bedrag:  € 64,20
+        Vervaldatum:  12 oktober 2026
+        IBAN:  NL00 TEST 0123 4567 89
+        Bij te late betaling volgen incassokosten.
+        """
+        let result = Self.check(Self.bill(amount: 64.20, dueDate: "2026-10-12", iban: "NL00TEST0123456789"), text)
+        #expect(result.isUnpaidBill)
+        #expect(result.iban == "NL00TEST0123456789")
+        #expect(result.dueDate == "2026-10-12")
+    }
+
+    @Test func directDebitPhrasings() {
+        for text in ["Het bedrag wordt via incasso van uw rekening afgeschreven.",
+                     "Wij innen dit bedrag per SEPA-incasso op 1 maart.",
+                     "Het termijnbedrag wordt geïncasseerd op basis van uw doorlopende machtiging."] {
+            #expect(!Self.check(Self.bill(amount: 10, iban: "NL00TEST0123456789"), text + " € 10,00").isUnpaidBill, "\(text)")
+        }
+    }
+
     @Test func keepsIbanWrittenWithSpaces() {
         let text = "Totaal te betalen € 812,40 uiterlijk op 31-03-2026 op NL00 TEST 0987 6543 21."
         let result = Self.check(Self.bill(amount: 812.40, iban: "NL00 TEST 0987 6543 21"), text)

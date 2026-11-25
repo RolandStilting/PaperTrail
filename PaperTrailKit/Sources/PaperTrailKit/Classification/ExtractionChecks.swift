@@ -14,8 +14,12 @@ public enum ExtractionChecks {
     static let documentDateLabels = [
         "factuurdatum", "invoice date", "dagtekening", "notadatum", "aangemaakt", "datum", "date",
     ]
+    /// Not a bare "incasso": "incassotraject", "incassokosten" and "incassobureau" are about
+    /// collecting a late payment, on invoices that still have to be paid.
     static let directDebitPhrases = [
-        "automatisch af", "automatische incasso", "incasso", "afgeschreven", "direct debit",
+        "automatisch af", "automatische incasso", "via incasso", "per incasso", "middel van incasso",
+        "sepa-incasso", "sepa incasso", "europese incasso", "wordt geïncasseerd", "worden geïncasseerd",
+        "doorlopende machtiging", "afgeschreven", "direct debit",
         "will be debited", "collected automatically",
     ]
 
