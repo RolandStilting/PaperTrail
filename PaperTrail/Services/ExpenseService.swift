@@ -61,7 +61,7 @@ struct ExpenseService {
         let subtitle = String(localized: "\(sorted.count) expenses, created \(claim.createdAt.formatted(date: .long, time: .omitted))")
         let lines = sorted.map { Self.line($0, vatCodes: vatCodes) }
         let pdf = try ExpenseClaim.pdf(title: title, subtitle: subtitle, lines: lines, receipts: receipts)
-        let csv = ExpenseClaim.csv(lines)
+        let csv = ExpenseClaim.csv(lines, vatCodes: vatCodes)
 
         let folder = FileManager.default.temporaryDirectory.appending(path: "Claims/\(claim.id.uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)

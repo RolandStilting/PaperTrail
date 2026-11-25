@@ -85,7 +85,9 @@ public enum ExpenseClaim {
 
     /// Semicolon-separated with a UTF-8 byte order mark, so Excel in Dutch settings opens it in
     /// columns and shows accents; amounts use the locale's decimal separator.
-    public static func csv(_ lines: [ClaimLine], locale: Locale = .current, calendar: Calendar? = nil) -> Data {
+    /// - Parameter vatCodes: The company's input VAT ledger codes; shown once, in the heading of
+    ///   each VAT column ("VAT 21% (1510)"), since they are the same on every row.
+    public static func csv(_ lines: [ClaimLine], vatCodes: [VATLedgerCode] = [], locale: Locale = .current, calendar: Calendar? = nil) -> Data {
         let calendar = calendar ?? FileNamer.defaultCalendar()
         let namer = FileNamer(calendar: calendar)
         let decimal = locale.decimalSeparator ?? ","
@@ -101,22 +103,26 @@ public enum ExpenseClaim {
             let atRate = line.vat(rate: rate)
             return atRate.isEmpty ? "" : amount(sum(atRate.map(\.amount)))
         }
-        func vatCode(_ line: ClaimLine, rate: Double) -> String { line.vat(rate: rate).first?.ledgerCode ?? "" }
+        func vatHeading(_ rate: Double) -> String {
+            let heading = rate == 21 ? String(localized: "VAT 21%", bundle: .module) : String(localized: "VAT 9%", bundle: .module)
+            let code = vatCodes.first { abs($0.rate - rate) < 0.001 && !$0.code.isEmpty }?.code
+                ?? lines.flatMap { $0.vat(rate: rate) }.first { !$0.ledgerCode.isEmpty }?.ledgerCode
+            return code.map { "\(heading) (\($0))" } ?? heading
+        }
         var rows = [[String(localized: "Date", bundle: .module), String(localized: "Sender", bundle: .module),
                      String(localized: "Description", bundle: .module), String(localized: "Amount (EUR)", bundle: .module),
-                     String(localized: "Excl. VAT", bundle: .module), String(localized: "VAT 21%", bundle: .module), String(localized: "VAT 9%", bundle: .module),
+                     String(localized: "Excl. VAT", bundle: .module), vatHeading(21), vatHeading(9),
                      String(localized: "Ledger code", bundle: .module), String(localized: "Ledger description", bundle: .module),
-                     String(localized: "VAT 21% ledger code", bundle: .module), String(localized: "VAT 9% ledger code", bundle: .module),
                      String(localized: "Document", bundle: .module)]]
         for line in lines {
             rows.append([namer.dateString(line.date), line.sender, line.description, amount(line.amount),
                          amount(line.amountExcludingVAT), vatAmount(line, rate: 21), vatAmount(line, rate: 9),
-                         line.ledgerCode, line.ledgerDescription, vatCode(line, rate: 21), vatCode(line, rate: 9), line.relativePath])
+                         line.ledgerCode, line.ledgerDescription, line.relativePath])
         }
         let totals = vatPerRate(lines)
         func vatTotal(_ rate: Double) -> String { totals.first { $0.rate == rate }.map { amount($0.amount) } ?? "" }
         rows.append(["", String(localized: "Total", bundle: .module), "", amount(total(lines)),
-                     amount(sum(lines.compactMap(\.amountExcludingVAT))), vatTotal(21), vatTotal(9), "", "", "", "", ""])
+                     amount(sum(lines.compactMap(\.amountExcludingVAT))), vatTotal(21), vatTotal(9), "", "", ""])
         let text = rows.map { $0.map(field).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
