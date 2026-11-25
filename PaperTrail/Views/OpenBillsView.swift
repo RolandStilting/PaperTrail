@@ -303,7 +303,8 @@ struct BillDetailView: View {
     /// Searches the bill's PDF once for a QR code or pay link from the sender; the result is
     /// stored on the record (and synced), so other devices don't search again.
     private func findPaymentCode(again: Bool) async {
-        guard again || bill.paymentCodeCheckedAt == nil, let url = model.fileURL(for: bill) else { return }
+        guard again || PaymentCode.needsSearch(checkedAt: bill.paymentCodeCheckedAt, found: bill.paymentCode),
+              let url = model.fileURL(for: bill) else { return }
         isScanning = true
         defer { isScanning = false }
         do {
