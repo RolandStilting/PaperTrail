@@ -15,6 +15,28 @@ public struct RecognizedLine: Sendable, Hashable {
     }
 }
 
+extension RecognizedLine {
+    /// The page's text in reading order, one line per row. Vision often returns the cells of
+    /// a table row (on receipts: "Btw 9%", then each amount) as separate pieces; pieces at the
+    /// same height are joined left to right, with two spaces between them, so a row stays
+    /// together. Rows go from the top of the page down.
+    public static func readingOrderText(_ lines: [RecognizedLine]) -> String {
+        var rows: [(midY: Double, height: Double, pieces: [RecognizedLine])] = []
+        for line in lines.sorted(by: { $0.box.midY > $1.box.midY }) {
+            // Same row when the centres are within half a line height (allows a slanted photo).
+            if let last = rows.indices.last,
+               abs(rows[last].midY - line.box.midY) <= 0.5 * min(rows[last].height, line.box.height) {
+                rows[last].pieces.append(line)
+            } else {
+                rows.append((line.box.midY, line.box.height, [line]))
+            }
+        }
+        return rows
+            .map { $0.pieces.sorted { $0.box.minX < $1.box.minX }.map(\.text).joined(separator: "  ") }
+            .joined(separator: "\n")
+    }
+}
+
 /// Makes scanned PDFs searchable: each page is copied as it is, with the recognised text
 /// drawn invisibly on top at the place it was found. Finder, Spotlight, Files and Preview
 /// can then search and select the text; the page looks exactly the same.

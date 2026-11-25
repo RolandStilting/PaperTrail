@@ -41,6 +41,8 @@ public enum TextDates {
         // Each pattern yields (day, month, year) capture group numbers.
         let patterns: [(String, (Int, Int, Int))] = [
             (#"\b(\d{1,2})[-./](\d{1,2})[-./](\d{4})\b"#, (1, 2, 3)),
+            // Till receipts: day-month-two-digit year ("17-09-26"), read as 20yy.
+            (#"\b(\d{1,2})[-./](\d{1,2})[-./](\d{2})\b(?![-./]\d)"#, (1, 2, 3)),
             (#"\b(\d{4})-(\d{2})-(\d{2})\b"#, (3, 2, 1)),
             (#"\b(\d{1,2})\s+("# + monthNames + #")\.?\s+(\d{4})\b"#, (1, 2, 3)),
             (#"\b("# + monthNames + #")\.?\s+(\d{1,2}),?\s+(\d{4})\b"#, (2, 1, 3)),
@@ -52,7 +54,8 @@ public enum TextDates {
             for match in regex.matches(in: text, range: NSRange(location: 0, length: ns.length)) {
                 func part(_ group: Int) -> String { ns.substring(with: match.range(at: group)).lowercased() }
                 let monthText = part(groups.1)
-                guard let day = Int(part(groups.0)), let year = Int(part(groups.2)),
+                let yearText = part(groups.2)
+                guard let day = Int(part(groups.0)), let year = Int(yearText).map({ yearText.count == 2 ? 2000 + $0 : $0 }),
                       let month = Int(monthText) ?? months[monthText],
                       let date = iso(year: year, month: month, day: day)
                 else { continue }

@@ -323,6 +323,18 @@
     "VAT %@: %@, ledger code %@" : {
 
     },
+    "VAT 9%" : {
+
+    },
+    "VAT 9% ledger code" : {
+
+    },
+    "VAT 21%" : {
+
+    },
+    "VAT 21% ledger code" : {
+
+    },
     "VAT ledger code" : {
 
     },

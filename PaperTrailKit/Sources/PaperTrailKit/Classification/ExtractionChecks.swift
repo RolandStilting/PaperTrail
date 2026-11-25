@@ -12,7 +12,7 @@ public enum ExtractionChecks {
         "vervaldatum", "due date", "payment due",
     ]
     static let documentDateLabels = [
-        "factuurdatum", "invoice date", "dagtekening", "notadatum", "datum", "date",
+        "factuurdatum", "invoice date", "dagtekening", "notadatum", "aangemaakt", "datum", "date",
     ]
     static let directDebitPhrases = [
         "automatisch af", "automatische incasso", "incasso", "afgeschreven", "direct debit",
