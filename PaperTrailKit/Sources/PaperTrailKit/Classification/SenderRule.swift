@@ -160,7 +160,9 @@ public enum SenderRules {
         rule.owner = filing.owner
         rule.category = filing.category
         rule.reimbursedBy = filing.reimbursedBy
-        if let code = filing.ledgerCode { rule.setLedgerCode(code, owner: filing.owner) }
+        if let code = filing.ledgerCode {
+            rule.setLedgerCode(code, owner: ArchiveSettings.bookingOwner(owner: filing.owner, reimbursedBy: filing.reimbursedBy))
+        }
         rule.updatedAt = now
         for name in names where !rule.aliases.contains(name) { rule.aliases.append(name) }
         if !payTo.isEmpty, !rule.ibans.contains(payTo) { rule.ibans.append(payTo) }

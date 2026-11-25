@@ -51,11 +51,14 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
     /// The owner's chart of accounts (optional): ledger codes for the admin department, offered
     /// for categories that use ledger codes. Most owners have none.
     public var ledgerCodes: [LedgerCode]
+    /// Ledger codes for input VAT to reclaim (te vorderen BTW), per Dutch rate; only for owners
+    /// with a VAT return. Not chosen per document.
+    public var vatLedgerCodes: [VATLedgerCode]
     /// Read from settings saved before codes were per owner; moved by ``ArchiveSettings``.
     var legacyLedgerLists: [LegacyLedgerCodeList] = []
 
     public init(id: UUID = UUID(), name: String, paymentMethod: PaymentMethod = .qrCode, payingAccount: PayingAccount = PayingAccount(),
-                vatPeriod: VATPeriodKind? = nil, color: OwnerColor? = nil, bankScansEPCQRCode: Bool = true, ledgerCodes: [LedgerCode] = []) {
+                vatPeriod: VATPeriodKind? = nil, color: OwnerColor? = nil, bankScansEPCQRCode: Bool = true, ledgerCodes: [LedgerCode] = [], vatLedgerCodes: [VATLedgerCode] = []) {
         self.id = id
         self.name = name
         self.paymentMethod = paymentMethod
@@ -64,9 +67,10 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
         self.color = color
         self.bankScansEPCQRCode = bankScansEPCQRCode
         self.ledgerCodes = ledgerCodes
+        self.vatLedgerCodes = vatLedgerCodes
     }
 
-    enum CodingKeys: String, CodingKey { case id, name, paymentMethod, payingAccount, vatPeriod, color, bankScansEPCQRCode, ledgerCodes, ledgerLists }
+    enum CodingKeys: String, CodingKey { case id, name, paymentMethod, payingAccount, vatPeriod, color, bankScansEPCQRCode, ledgerCodes, vatLedgerCodes, ledgerLists }
 
     /// Settings saved before phase 4 have no payment fields; they get the defaults.
     public init(from decoder: any Decoder) throws {
@@ -79,6 +83,7 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
         color = try container.decodeIfPresent(OwnerColor.self, forKey: .color)
         bankScansEPCQRCode = try container.decodeIfPresent(Bool.self, forKey: .bankScansEPCQRCode) ?? true
         ledgerCodes = try container.decodeIfPresent([LedgerCode].self, forKey: .ledgerCodes) ?? []
+        vatLedgerCodes = try container.decodeIfPresent([VATLedgerCode].self, forKey: .vatLedgerCodes) ?? []
         legacyLedgerLists = try container.decodeIfPresent([LegacyLedgerCodeList].self, forKey: .ledgerLists) ?? []
     }
 
@@ -92,5 +97,6 @@ public struct Owner: Codable, Hashable, Identifiable, Sendable {
         try container.encodeIfPresent(color, forKey: .color)
         try container.encode(bankScansEPCQRCode, forKey: .bankScansEPCQRCode)
         try container.encode(ledgerCodes, forKey: .ledgerCodes)
+        try container.encode(vatLedgerCodes, forKey: .vatLedgerCodes)
     }
 }

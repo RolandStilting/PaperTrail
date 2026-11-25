@@ -95,6 +95,30 @@ struct LedgerCodeTests {
         #expect(rule.ledgerCode(owner: "Company1") == "4610")
     }
 
+    @Test func paidPrivatelyLearnsTheReimbursingCompanysCode() throws {
+        let filing = ConfirmedFiling(sender: "Hotel Voorbeeld", owner: "Private", category: "Receipts", reimbursedBy: "Company1", ledgerCode: "4600")
+        let rule = try #require(SenderRules.learn(from: filing, existing: []))
+        #expect(rule.ledgerCode(owner: "Company1") == "4600")
+        #expect(rule.ledgerCode(owner: "Private") == nil)
+        #expect(ArchiveSettings.bookingOwner(owner: "Private", reimbursedBy: "Company1") == "Company1")
+        #expect(ArchiveSettings.bookingOwner(owner: "Company1", reimbursedBy: nil) == "Company1")
+    }
+
+    @Test func vatLedgerCodePerRate() throws {
+        var owner = Owner(name: "Company1", vatPeriod: .quarter)
+        owner.setVATLedgerCode("1511", rate: 9)
+        owner.setVATLedgerCode("1510", rate: 21)
+        #expect(owner.vatLedgerCodes.map(\.rate) == [21, 9])
+        #expect(owner.vatLedgerCode(rate: 21) == "1510")
+        owner.setVATLedgerCode("", rate: 9)
+        #expect(owner.vatLedgerCode(rate: 9) == nil)
+        var settings = ArchiveSettings(owners: [owner], categories: [Self.invoices])
+        settings.owners[0].vatLedgerCodes.append(VATLedgerCode(rate: 9, code: "  "))
+        #expect(settings.cleaningLedgerCodes().owners[0].vatLedgerCodes == [VATLedgerCode(rate: 21, code: "1510")])
+        let again = try JSONDecoder().decode(ArchiveSettings.self, from: try JSONEncoder().encode(settings))
+        #expect(again.owners[0].vatLedgerCode(rate: 21) == "1510")
+    }
+
     @Test func noListLeavesTheCodeAloneAndAnEmptyChoiceForgetsIt() throws {
         let first = try #require(SenderRules.learn(from: ConfirmedFiling(sender: "Praatnet", owner: "Company1", category: "Invoices", ledgerCode: "4300"), existing: []))
         let noList = try #require(SenderRules.learn(from: ConfirmedFiling(sender: "Praatnet", owner: "Company1", category: "Letters"), existing: [first]))

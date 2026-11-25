@@ -46,7 +46,7 @@ extension ArchiveSettings {
     }
 
     /// Settings ready to save: rows without code or description dropped, codes and
-    /// descriptions trimmed.
+    /// descriptions trimmed, empty VAT codes removed.
     public func cleaningLedgerCodes() -> ArchiveSettings {
         var settings = self
         for index in settings.owners.indices {
@@ -55,6 +55,9 @@ extension ArchiveSettings {
                 code.code = code.code.trimmingCharacters(in: .whitespacesAndNewlines)
                 code.description = code.description.trimmingCharacters(in: .whitespacesAndNewlines)
                 return code.code.isEmpty && code.description.isEmpty ? nil : code
+            }
+            for vatCode in settings.owners[index].vatLedgerCodes {
+                settings.owners[index].setVATLedgerCode(vatCode.code.trimmingCharacters(in: .whitespacesAndNewlines), rate: vatCode.rate)
             }
         }
         return settings
@@ -89,5 +92,48 @@ extension ArchiveSettings {
             }
             owners[index].legacyLedgerLists = []
         }
+    }
+}
+
+/// The ledger code input VAT at one rate is booked on, e.g. 21 % → "1510".
+public struct VATLedgerCode: Codable, Hashable, Sendable {
+    /// Percentage, e.g. 21 or 9.
+    public var rate: Double
+    public var code: String
+
+    public init(rate: Double, code: String) {
+        self.rate = rate
+        self.code = code
+    }
+
+    /// The Dutch rates with reclaimable VAT that get a code in Settings.
+    public static let rates: [Double] = [21, 9]
+}
+
+extension Owner {
+    /// The input VAT ledger code for `rate`, or nil when none is set.
+    public func vatLedgerCode(rate: Double) -> String? {
+        vatLedgerCodes.first { abs($0.rate - rate) < 0.001 && !$0.code.isEmpty }?.code
+    }
+
+    /// Sets the code for `rate`; an empty code removes it.
+    public mutating func setVATLedgerCode(_ code: String, rate: Double) {
+        vatLedgerCodes.removeAll { abs($0.rate - rate) < 0.001 }
+        if !code.isEmpty { vatLedgerCodes.append(VATLedgerCode(rate: rate, code: code)) }
+        vatLedgerCodes.sort { $0.rate > $1.rate }
+    }
+}
+
+extension ArchiveSettings {
+    /// The company a document is booked by: the company that reimburses it (a receipt paid
+    /// privately), else its own owner. Its ledger codes and VAT codes apply.
+    public static func bookingOwner(owner: String, reimbursedBy: String?) -> String {
+        guard let reimbursedBy, !reimbursedBy.isEmpty else { return owner }
+        return reimbursedBy
+    }
+
+    /// Input VAT ledger code of `owner` for `rate`.
+    public func vatLedgerCode(owner: String, rate: Double) -> String? {
+        owners.first { $0.name == owner }?.vatLedgerCode(rate: rate)
     }
 }

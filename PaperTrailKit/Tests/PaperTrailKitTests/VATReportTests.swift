@@ -39,7 +39,7 @@ struct VATReportTests {
                       vat: VATInfo(lines: [VATLine(rate: 0, base: 600, amount: 0)], isReverseCharge: true), isReimbursedExpense: false, relativePath: "d.pdf"),
         VATReportItem(date: day(1, 15), sender: "Proefzorg", description: "Polis", amount: 148.5,
                       vat: VATInfo(), isReimbursedExpense: false, relativePath: "e.pdf"),
-    ])
+    ], vatLedgerCodes: [VATLedgerCode(rate: 21, code: "1510"), VATLedgerCode(rate: 9, code: "1511")])
 
     @Test func totalsPerRateAndGroups() {
         let report = Self.report
@@ -52,12 +52,14 @@ struct VATReportTests {
     @Test func csvHasALinePerRateAndTotals() {
         let text = String(decoding: Self.report.csv(locale: Locale(identifier: "nl_NL"), calendar: Self.calendar).dropFirst(3), as: UTF8.self)
         let rows = text.components(separatedBy: "\r\n")
-        #expect(rows[0] == "Date;Sender;Description;Rate;Excl. VAT;VAT;Incl. VAT;Status;Ledger code;Ledger description;Document")
-        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;9%;4,49;0,40;4,89;Reclaim (reimbursed expense);4510;Kantoorbenodigdheden;b.pdf"))
-        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;21%;10,33;2,17;12,50;Reclaim (reimbursed expense);4510;Kantoorbenodigdheden;b.pdf"))
-        #expect(rows.contains("2026-01-15;Proefzorg;Polis;;;;148,50;No VAT found – check;;;e.pdf"))
-        #expect(rows.contains(";VAT to reclaim;;;;150,73;;;;;"))
-        #expect(rows.contains(";Foreign VAT (not in the total);;;;11,78;;;;;"))
+        #expect(rows[0] == "Date;Sender;Description;Rate;Excl. VAT;VAT;Incl. VAT;Status;Ledger code;Ledger description;VAT ledger code;Document")
+        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;9%;4,49;0,40;4,89;Reclaim (reimbursed expense);4510;Kantoorbenodigdheden;1511;b.pdf"))
+        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;21%;10,33;2,17;12,50;Reclaim (reimbursed expense);4510;Kantoorbenodigdheden;1510;b.pdf"))
+        #expect(rows.contains("2026-01-15;Proefzorg;Polis;;;;148,50;No VAT found – check;;;;e.pdf"))
+        #expect(rows.contains(";VAT to reclaim;;;;150,73;;;;;;"))
+        #expect(rows.contains(";Foreign VAT (not in the total);;;;11,78;;;;;;"))
+        #expect(rows.contains { $0.hasPrefix("2026-02-02;Gasthof Beispiel;Rechnung;7%;") && $0.hasSuffix(";Foreign VAT;;;;c.pdf") })
+        #expect(rows.contains { $0.hasPrefix(";Total 21%;;21%;") && $0.hasSuffix(";1510;") })
     }
 
     @Test func pdfRenders() throws {

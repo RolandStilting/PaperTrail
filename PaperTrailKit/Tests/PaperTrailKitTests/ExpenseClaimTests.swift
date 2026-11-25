@@ -10,7 +10,9 @@ struct ExpenseClaimTests {
 
     static let lines = [
         ClaimLine(date: day(7), sender: "Bouwmarkt Voorbeeld", description: "Kassabon verf; tape", amount: 49.02, relativePath: "Private/2026/Receipts/a.pdf",
-                  ledgerCode: "4510", ledgerDescription: "Kantoorbenodigdheden"),
+                  ledgerCode: "4510", ledgerDescription: "Kantoorbenodigdheden",
+                  vat: ClaimVATLine.reclaimable(VATInfo(lines: [VATLine(rate: 21, amount: 8.51)]),
+                                                codes: [VATLedgerCode(rate: 21, code: "1510"), VATLedgerCode(rate: 9, code: "1511")])),
         ClaimLine(date: day(9), sender: "Parkeren \"Test\"", description: "Parkeerbon", amount: 4.5, relativePath: "Private/2026/Receipts/b.pdf"),
         ClaimLine(date: day(10), sender: "Testmarkt", description: "Bon", amount: nil, relativePath: "Private/2026/Receipts/c.pdf"),
     ]
@@ -23,11 +25,20 @@ struct ExpenseClaimTests {
         let data = ExpenseClaim.csv(Self.lines, locale: Locale(identifier: "nl_NL"), calendar: Self.calendar)
         #expect(data.prefix(3) == Data([0xEF, 0xBB, 0xBF]))
         let rows = String(decoding: data.dropFirst(3), as: UTF8.self).components(separatedBy: "\r\n")
-        #expect(rows[0] == "Date;Sender;Description;Amount (EUR);Ledger code;Ledger description;Document")
-        #expect(rows[1] == "2026-03-07;Bouwmarkt Voorbeeld;\"Kassabon verf; tape\";49,02;4510;Kantoorbenodigdheden;Private/2026/Receipts/a.pdf")
-        #expect(rows[2] == "2026-03-09;\"Parkeren \"\"Test\"\"\";Parkeerbon;4,50;;;Private/2026/Receipts/b.pdf")
-        #expect(rows[3] == "2026-03-10;Testmarkt;Bon;;;;Private/2026/Receipts/c.pdf")
-        #expect(rows[4] == ";Total;;53,52;;;")
+        #expect(rows[0] == "Date;Sender;Description;Amount (EUR);Excl. VAT;VAT 21%;VAT 9%;Ledger code;Ledger description;VAT 21% ledger code;VAT 9% ledger code;Document")
+        #expect(rows[1] == "2026-03-07;Bouwmarkt Voorbeeld;\"Kassabon verf; tape\";49,02;40,51;8,51;;4510;Kantoorbenodigdheden;1510;;Private/2026/Receipts/a.pdf")
+        #expect(rows[2] == "2026-03-09;\"Parkeren \"\"Test\"\"\";Parkeerbon;4,50;4,50;;;;;;;Private/2026/Receipts/b.pdf")
+        #expect(rows[3] == "2026-03-10;Testmarkt;Bon;;;;;;;;;Private/2026/Receipts/c.pdf")
+        #expect(rows[4] == ";Total;;53,52;45,01;8,51;;;;;;")
+    }
+
+    @Test func onlyDutchVATIsReclaimed() {
+        let codes = [VATLedgerCode(rate: 21, code: "1510")]
+        #expect(ClaimVATLine.reclaimable(VATInfo(lines: [VATLine(rate: 7, amount: 3)], isForeign: true), codes: codes).isEmpty)
+        #expect(ClaimVATLine.reclaimable(VATInfo(lines: [VATLine(rate: 21, amount: 0)], isReverseCharge: true), codes: codes).isEmpty)
+        #expect(ClaimVATLine.reclaimable(nil, codes: codes).isEmpty)
+        let lines = ClaimVATLine.reclaimable(VATInfo(lines: [VATLine(rate: 21, amount: 2.10), VATLine(rate: 9, amount: 0.45)]), codes: codes)
+        #expect(lines == [ClaimVATLine(rate: 21, amount: 2.10, ledgerCode: "1510"), ClaimVATLine(rate: 9, amount: 0.45)])
     }
 
     @Test func pdfHasSummaryThenReceipts() throws {

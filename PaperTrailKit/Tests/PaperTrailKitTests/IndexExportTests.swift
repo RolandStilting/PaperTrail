@@ -35,7 +35,9 @@ struct IndexExportTests {
                                                                                owner: "Company1", category: "Invoices",
                                                                                ledgerCodes: [LedgerChoice(owner: "Company1", code: "4300")],
                                                                                updatedAt: date(23)))],
-                    settings: .defaults)
+                    settings: ArchiveSettings(owners: [Owner(name: "Company1", vatPeriod: .quarter, vatLedgerCodes: [VATLedgerCode(rate: 21, code: "1510")]),
+                                                       Owner(name: "Private")],
+                                              categories: ArchiveSettings.defaults.categories))
     }
 
     @Test func jsonRoundTripKeepsEverything() throws {
@@ -93,6 +95,8 @@ struct IndexExportTests {
         #expect(rows.count == 2)
         #expect(rows[1].contains("2026-11-23;2026-11-20;Company1;Invoices;4300;Energie;Voorbeeld Energie;\"Nota; november\";121,00;21,00"))
         #expect(rows[1].contains("NL00TEST0123456789"))
+        #expect(rows[1].contains(";21,00;1510;;"))
+        #expect(rows[0].contains("VAT total;VAT 21% ledger code;VAT 9% ledger code;"))
     }
 
     @Test func importAddsOnlyWhatIsMissing() {

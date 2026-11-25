@@ -156,10 +156,17 @@ public struct IndexExport: Codable, Sendable, Equatable {
             guard let lines = info?.lines.filter({ abs($0.rate - rate) < 0.001 }), !lines.isEmpty else { return "" }
             return amount(lines.map(\.amount).reduce(0, +))
         }
+        /// The booking company's input VAT code, for reclaimable VAT at `rate` on the document.
+        func vatCode(_ document: Document, rate: Double) -> String {
+            guard let info = document.vat, !info.isForeign, !info.isReverseCharge,
+                  info.lines.contains(where: { abs($0.rate - rate) < 0.001 }) else { return "" }
+            let booking = ArchiveSettings.bookingOwner(owner: document.owner, reimbursedBy: document.reimbursedBy)
+            return settings?.vatLedgerCode(owner: booking, rate: rate) ?? ""
+        }
         let yes = String(localized: "yes", bundle: .module)
         var rows = [[
             "Received", "Document date", "Owner", "Category", "Ledger code", "Ledger description", "Sender", "Description", "Amount (EUR)",
-            "VAT 21%", "VAT 9%", "VAT 0%", "VAT total", "Foreign VAT", "Reverse charge",
+            "VAT 21%", "VAT 9%", "VAT 0%", "VAT total", "VAT 21% ledger code", "VAT 9% ledger code", "Foreign VAT", "Reverse charge",
             "Unpaid bill", "Due date", "Paid", "Paid on", "IBAN", "Payment reference",
             "Reimbursed by", "Reimbursed on", "File", "ID",
         ].map { String(localized: String.LocalizationValue($0), bundle: .module) }]
@@ -170,6 +177,7 @@ public struct IndexExport: Codable, Sendable, Equatable {
                 document.sender, document.description, amount(document.amount),
                 vat(document.vat, rate: 21), vat(document.vat, rate: 9), vat(document.vat, rate: 0),
                 document.vat.map { amount($0.total) } ?? "",
+                vatCode(document, rate: 21), vatCode(document, rate: 9),
                 document.vat?.isForeign == true ? yes : "", document.vat?.isReverseCharge == true ? yes : "",
                 document.isUnpaidBill ? yes : "", date(document.dueDate), document.isPaid ? yes : "", date(document.paidAt),
                 document.iban ?? "", document.paymentReference ?? "",

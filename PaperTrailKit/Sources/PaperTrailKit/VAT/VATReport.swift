@@ -109,11 +109,20 @@ public struct VATReport: Sendable {
     public var company: String
     public var period: VATPeriod
     public var items: [VATReportItem]
+    /// The company's input VAT ledger codes; in the CSV for reclaimable (domestic) VAT lines.
+    public var vatLedgerCodes: [VATLedgerCode]
 
-    public init(company: String, period: VATPeriod, items: [VATReportItem]) {
+    public init(company: String, period: VATPeriod, items: [VATReportItem], vatLedgerCodes: [VATLedgerCode] = []) {
         self.company = company
         self.period = period
         self.items = items.sorted { $0.date < $1.date }
+        self.vatLedgerCodes = vatLedgerCodes
+    }
+
+    /// The VAT ledger code for a line of `item`: only for VAT that is reclaimed.
+    func vatLedgerCode(for line: VATLine, in item: VATReportItem) -> String {
+        guard item.kind == .domestic else { return "" }
+        return vatLedgerCodes.first { abs($0.rate - line.rate) < 0.001 }?.code ?? ""
     }
 
     public struct RateTotal: Sendable, Hashable {
@@ -183,28 +192,29 @@ public struct VATReport: Sendable {
                      String(localized: "Rate", bundle: .module), String(localized: "Excl. VAT", bundle: .module), String(localized: "VAT", bundle: .module),
                      String(localized: "Incl. VAT", bundle: .module), String(localized: "Status", bundle: .module),
                      String(localized: "Ledger code", bundle: .module), String(localized: "Ledger description", bundle: .module),
-                     String(localized: "Document", bundle: .module)]]
+                     String(localized: "VAT ledger code", bundle: .module), String(localized: "Document", bundle: .module)]]
         for item in items {
             if item.vat.lines.isEmpty {
                 rows.append([namer.dateString(item.date), item.sender, item.description, "", "", "", number(item.amount), status(item),
-                             item.ledgerCode, item.ledgerDescription, item.relativePath])
+                             item.ledgerCode, item.ledgerDescription, "", item.relativePath])
                 continue
             }
             for line in item.vat.lines {
                 let amounts = Self.amounts(of: line, in: item)
                 rows.append([namer.dateString(item.date), item.sender, item.description, rateText(line.rate),
                              number(amounts.excl), number(line.amount), number(amounts.incl), status(item),
-                             item.ledgerCode, item.ledgerDescription, item.relativePath])
+                             item.ledgerCode, item.ledgerDescription, vatLedgerCode(for: line, in: item), item.relativePath])
             }
         }
         rows.append([])
         for total in totalsPerRate {
             rows.append(["", String(localized: "Total", bundle: .module) + " " + rateText(total.rate), "", rateText(total.rate),
-                         number(total.base), number(total.vat), number(((total.base + total.vat) * 100).rounded() / 100), "", "", "", ""])
+                         number(total.base), number(total.vat), number(((total.base + total.vat) * 100).rounded() / 100), "", "", "",
+                         vatLedgerCodes.first { abs($0.rate - total.rate) < 0.001 }?.code ?? "", ""])
         }
-        rows.append(["", String(localized: "VAT to reclaim", bundle: .module), "", "", "", number(totalToReclaim), "", "", "", "", ""])
+        rows.append(["", String(localized: "VAT to reclaim", bundle: .module), "", "", "", number(totalToReclaim), "", "", "", "", "", ""])
         if !foreign.isEmpty {
-            rows.append(["", String(localized: "Foreign VAT (not in the total)", bundle: .module), "", "", "", number(foreignVAT), "", "", "", "", ""])
+            rows.append(["", String(localized: "Foreign VAT (not in the total)", bundle: .module), "", "", "", number(foreignVAT), "", "", "", "", "", ""])
         }
         let text = rows.map { $0.map(field).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
