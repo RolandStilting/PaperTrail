@@ -12,6 +12,8 @@ struct SettingsView: View {
 
     @State private var draft = ArchiveSettings.defaults
     @State private var loadedDraft = false
+    /// The owner whose screen is open (also right after Add owner).
+    @State private var openedOwner: Owner.ID?
     @Environment(AppModel.self) private var model
     @Environment(\.modelContext) private var modelContext
     @State private var errors: [String] = []
@@ -79,37 +81,32 @@ struct SettingsView: View {
             }
 
             Section {
-                ForEach($draft.owners) { $owner in
-                    HStack {
-                        Menu {
-                            Picker("Colour", selection: $owner.color) {
-                                Text("Automatic").tag(OwnerColor?.none)
-                                ForEach(OwnerColor.allCases, id: \.self) { color in
-                                    Label { Text(color.title) } icon: { Image(systemName: "circle.fill").foregroundStyle(color.color) }
-                                        .tag(OwnerColor?.some(color))
-                                }
-                            }
-                        } label: {
+                ForEach(draft.owners) { owner in
+                    NavigationLink(value: OwnerRoute(id: owner.id)) {
+                        HStack(spacing: 10) {
                             Circle()
                                 .fill(draft.color(ofOwner: owner.name).color)
-                                .frame(width: 14, height: 14)
-                                .accessibilityLabel(Text("Colour for \(owner.name)"))
+                                .frame(width: 12, height: 12)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(owner.name.isEmpty ? String(localized: "New owner") : owner.name)
+                                Text(OwnerSettingsView.summary(owner))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
-                        .menuStyle(.button)
-                        .buttonStyle(.plain)
-                        .fixedSize()
-                        TextField("Owner name", text: $owner.name)
                     }
                 }
                 .onDelete { draft.owners.remove(atOffsets: $0) }
                 .onMove { draft.owners.move(fromOffsets: $0, toOffset: $1) }
                 Button("Add owner", systemImage: "plus") {
-                    draft.owners.append(Owner(name: ""))
+                    let owner = Owner(name: "")
+                    draft.owners.append(owner)
+                    openedOwner = owner.id
                 }
             } header: {
                 Text("Owners")
             } footer: {
-                Text("Each owner gets a top-level folder and a colour in lists. Renaming only affects documents filed afterwards.")
+                Text("A top-level folder for each person or company. Open an owner for paying bills, VAT and ledger codes.")
             }
 
             Section {
@@ -134,46 +131,7 @@ struct SettingsView: View {
             } header: {
                 Text("Categories")
             } footer: {
-                Text("Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are per owner, below.")
-            }
-
-            LedgerCodesSection(draft: $draft)
-
-            Section {
-                ForEach($draft.owners) { $owner in
-                    DisclosureGroup(owner.name.isEmpty ? String(localized: "New owner") : owner.name) {
-                        Toggle("Personal (not a company)", isOn: $owner.isPersonal)
-                        Picker("Pay with", selection: $owner.paymentMethod) {
-                            Text("QR code and copy buttons").tag(PaymentMethod.qrCode)
-                            Text("SEPA batch file").tag(PaymentMethod.sepaFile)
-                        }
-                        Toggle("Banking app scans standard QR codes", isOn: $owner.bankScansEPCQRCode)
-                        TextField("Account name", text: $owner.payingAccount.name, prompt: Text("Name on the paying account"))
-                        TextField("IBAN", text: $owner.payingAccount.iban, prompt: Text("Paying account"))
-                            .autocorrectionDisabled()
-                        TextField("BIC (optional)", text: $owner.payingAccount.bic)
-                            .autocorrectionDisabled()
-                        Picker("VAT return", selection: $owner.vatPeriod) {
-                            Text("None").tag(VATPeriodKind?.none)
-                            Text("Monthly").tag(VATPeriodKind?.some(.month))
-                            Text("Quarterly").tag(VATPeriodKind?.some(.quarter))
-                            Text("Yearly").tag(VATPeriodKind?.some(.year))
-                        }
-                        if owner.vatPeriod != nil {
-                            ForEach(VATLedgerCode.rates, id: \.self) { rate in
-                                TextField(String(localized: "Input VAT ledger code \("\(Int(rate)) %")"), text: Binding(
-                                    get: { owner.vatLedgerCodes.first { $0.rate == rate }?.code ?? "" },
-                                    set: { owner.setVATLedgerCode($0, rate: rate) }
-                                ), prompt: Text("Optional"))
-                                .autocorrectionDisabled()
-                            }
-                        }
-                    }
-                }
-            } header: {
-                Text("Paying bills and VAT")
-            } footer: {
-                Text("Owners with a VAT return get VAT lines on their documents and a VAT overview; the optional input VAT ledger codes go into the VAT, claim and index exports. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud.")
+                Text("Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are set per owner.")
             }
 
             #if os(macOS)
@@ -229,6 +187,8 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .keyboardDismissal()
         .navigationTitle("Settings")
+        .navigationDestination(for: OwnerRoute.self) { route in ownerScreen(route.id) }
+        .navigationDestination(item: $openedOwner) { id in ownerScreen(id) }
         // Load the draft once: onAppear also runs when coming back from a pushed screen (such as
         // the ledger code editor), and reloading then would throw away the edits made there.
         .onAppear {
@@ -248,6 +208,26 @@ struct SettingsView: View {
         }
         // Leaving the screen (or opening a sub-screen) saves at once.
         .onDisappear { save() }
+    }
+
+    private func ownerScreen(_ id: Owner.ID) -> some View {
+        OwnerSettingsView(owner: ownerBinding(id), automaticColor: automaticColor(of: id), errors: errors, save: save) {
+            draft.owners.removeAll { $0.id == id }
+            openedOwner = nil
+            save()
+        }
+    }
+
+    /// The owner with `id` in the draft; by ID, so a deleted owner can't crash an open screen.
+    private func ownerBinding(_ id: Owner.ID) -> Binding<Owner> {
+        Binding(get: { draft.owners.first { $0.id == id } ?? Owner(id: id, name: "") },
+                set: { new in
+                    if let index = draft.owners.firstIndex(where: { $0.id == id }) { draft.owners[index] = new }
+                })
+    }
+
+    private func automaticColor(of id: Owner.ID) -> OwnerColor {
+        .automatic(index: draft.owners.firstIndex { $0.id == id } ?? 0)
     }
 
     /// The draft as it is saved: IBAN and BIC without spaces, names trimmed, empty ledger code
@@ -271,4 +251,9 @@ struct SettingsView: View {
         }
         errors = settingsStore.update(settings)
     }
+}
+
+/// A link to one owner's screen in Settings.
+struct OwnerRoute: Hashable {
+    let id: Owner.ID
 }

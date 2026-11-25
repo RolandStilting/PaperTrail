@@ -153,6 +153,9 @@
     "A dedicated mailbox that this Mac checks; its emails go to Needs Review." : {
 
     },
+    "A top-level folder for each person or company. Open an owner for paying bills, VAT and ledger codes." : {
+
+    },
     "Account name" : {
 
     },
@@ -290,6 +293,9 @@
 
     },
     "Bills" : {
+
+    },
+    "Bills get a reminder in this owner's To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself." : {
 
     },
     "Bills to Pay" : {
@@ -510,6 +516,12 @@
     "Date on document" : {
 
     },
+    "Delete %@?" : {
+
+    },
+    "Delete Owner" : {
+
+    },
     "Delete Rule" : {
 
     },
@@ -569,6 +581,9 @@
 
     },
     "e.g. Acme Energy" : {
+
+    },
+    "e.g. Private or a company name" : {
 
     },
     "e.g. Telephone and internet" : {
@@ -692,6 +707,9 @@
     "File name" : {
 
     },
+    "Filed documents and their folders stay where they are." : {
+
+    },
     "Filed like earlier documents from %@. Change owner or category to update this rule." : {
 
     },
@@ -720,6 +738,9 @@
 
     },
     "Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are per owner, below." : {
+
+    },
+    "Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are set per owner." : {
 
     },
     "For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed." : {
@@ -806,6 +827,9 @@
     "Its reminder is completed too." : {
 
     },
+    "Its settings and ledger codes are removed. Filed documents and their folders stay where they are." : {
+
+    },
     "Kept: owners, categories, payment and email settings. Emails in your mailbox are not touched." : {
 
     },
@@ -825,6 +849,9 @@
 
     },
     "Ledger codes for %@" : {
+
+    },
+    "Ledger codes: %lld" : {
 
     },
     "Lock" : {
@@ -870,6 +897,9 @@
 
     },
     "Moves all documents to the Trash and clears the lists, for example after testing. Settings stay." : {
+
+    },
+    "Name" : {
 
     },
     "Name on the paying account" : {
@@ -989,6 +1019,9 @@
     "Optional. Each owner's ledger codes, as its administration books them. When filing, you pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names. Switch them on per category under Categories." : {
 
     },
+    "Optional. The codes this owner's administration books on, offered when filing documents in categories with ledger codes. Paper Trail remembers the code per sender and suggests one for new senders." : {
+
+    },
     "Orange" : {
 
     },
@@ -1061,6 +1094,9 @@
     "Paying account" : {
 
     },
+    "Paying bills" : {
+
+    },
     "Paying bills and VAT" : {
 
     },
@@ -1071,6 +1107,9 @@
 
     },
     "Payment reference" : {
+
+    },
+    "Personal" : {
 
     },
     "Personal (not a company)" : {
@@ -1220,6 +1259,9 @@
     "SEPA batch file" : {
 
     },
+    "SEPA file" : {
+
+    },
     "SEPA file for %@" : {
 
     },
@@ -1331,6 +1373,9 @@
     "The mailbox is checked while Paper Trail runs. It keeps running in the menu bar after you close its window." : {
 
     },
+    "The owner's top-level folder and colour in lists. Renaming only affects documents filed afterwards. Personal: the owner you file expenses under that a company pays back." : {
+
+    },
     "The PDF has a summary page and all receipts; the CSV opens in Excel or Numbers. The expenses are now marked as submitted." : {
 
     },
@@ -1353,6 +1398,9 @@
 
     },
     "This invoice has no payment code or link. Use the copy buttons below." : {
+
+    },
+    "this owner" : {
 
     },
     "This whole account is only for Paper Trail" : {
@@ -1424,13 +1472,22 @@
     "VAT lines you corrected by hand in this period are replaced by what Paper Trail reads from the text." : {
 
     },
+    "VAT monthly" : {
+
+    },
     "VAT Overview Ready" : {
+
+    },
+    "VAT quarterly" : {
 
     },
     "VAT return" : {
 
     },
     "VAT to reclaim" : {
+
+    },
+    "VAT yearly" : {
 
     },
     "Waiting for you to file" : {
@@ -1443,6 +1500,9 @@
 
     },
     "Where" : {
+
+    },
+    "With a VAT return, documents get VAT lines and the owner gets a VAT overview. The input VAT ledger codes go into the VAT, claim and index exports." : {
 
     },
     "With VAT" : {
