@@ -701,6 +701,9 @@
     "Filed, but no reminder" : {
 
     },
+    "Files it under %@ as an expense %@ reimburses. Its VAT and ledger code stay with %@." : {
+
+    },
     "Find Documents" : {
 
     },
@@ -786,6 +789,9 @@
 
     },
     "In iCloud Drive" : {
+
+    },
+    "Input VAT ledger code %@" : {
 
     },
     "It may have been removed from the archive." : {
@@ -977,6 +983,9 @@
     "Opens the next document waiting in Needs Review so you can file it." : {
 
     },
+    "Optional" : {
+
+    },
     "Optional. Each owner's ledger codes, as its administration books them. When filing, you pick a code; Paper Trail remembers it per sender and suggests one for new senders. Codes are in the exports, not in file names. Switch them on per category under Categories." : {
 
     },
@@ -998,10 +1007,13 @@
     "Owners" : {
 
     },
-    "Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud." : {
+    "Owners with a VAT return get VAT lines on their documents and a VAT overview; the optional input VAT ledger codes go into the VAT, claim and index exports. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud." : {
 
     },
     "Paid" : {
+
+    },
+    "Paid Privately – Claim from %@" : {
 
     },
     "Paper Trail" : {

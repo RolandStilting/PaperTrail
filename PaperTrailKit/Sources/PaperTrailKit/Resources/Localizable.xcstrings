@@ -158,6 +158,9 @@
     "input VAT to reclaim" : {
 
     },
+    "Ledger" : {
+
+    },
     "Ledger code" : {
 
     },
@@ -312,6 +315,15 @@
 
     },
     "VAT" : {
+
+    },
+    "VAT %@: %@" : {
+
+    },
+    "VAT %@: %@, ledger code %@" : {
+
+    },
+    "VAT ledger code" : {
 
     },
     "VAT overview %@" : {

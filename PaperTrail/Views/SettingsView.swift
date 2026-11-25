@@ -158,12 +158,21 @@ struct SettingsView: View {
                             Text("Quarterly").tag(VATPeriodKind?.some(.quarter))
                             Text("Yearly").tag(VATPeriodKind?.some(.year))
                         }
+                        if owner.vatPeriod != nil {
+                            ForEach(VATLedgerCode.rates, id: \.self) { rate in
+                                TextField(String(localized: "Input VAT ledger code \("\(Int(rate)) %")"), text: Binding(
+                                    get: { owner.vatLedgerCodes.first { $0.rate == rate }?.code ?? "" },
+                                    set: { owner.setVATLedgerCode($0, rate: rate) }
+                                ), prompt: Text("Optional"))
+                                .autocorrectionDisabled()
+                            }
+                        }
                     }
                 }
             } header: {
                 Text("Paying bills and VAT")
             } footer: {
-                Text("Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud.")
+                Text("Owners with a VAT return get VAT lines on their documents and a VAT overview; the optional input VAT ledger codes go into the VAT, claim and index exports. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud.")
             }
 
             #if os(macOS)

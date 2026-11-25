@@ -91,7 +91,7 @@ struct ExpensesView: View {
                 .buttonStyle(.plain)
             }
             if !openExpenses.isEmpty {
-                Button("Create Claim (\(selected.count), \(BillReminderText.amount(ExpenseClaim.total(selected.map(ExpenseService.line)))))", systemImage: "doc.badge.plus") {
+                Button("Create Claim (\(selected.count), \(BillReminderText.amount(ExpenseClaim.total(selected.map { ExpenseService.line($0) }))))", systemImage: "doc.badge.plus") {
                     Task { await createClaim(company: company, expenses: selected) }
                 }
                 .disabled(selected.isEmpty || isWorking)
@@ -143,7 +143,7 @@ struct ExpensesView: View {
         isWorking = true
         defer { isWorking = false }
         do {
-            package = try await expenseService.createClaim(company: company, expenses: selected, context: modelContext)
+            package = try await expenseService.createClaim(company: company, expenses: selected, vatCodes: vatCodes(of: company), context: modelContext)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -151,7 +151,7 @@ struct ExpensesView: View {
 
     private func shareAgain(_ claim: ExpenseClaimRecord) async {
         do {
-            package = try await expenseService.files(for: claim, expenses: expenses.filter { $0.claimID == claim.id })
+            package = try await expenseService.files(for: claim, expenses: expenses.filter { $0.claimID == claim.id }, vatCodes: vatCodes(of: claim.ownerName))
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -159,6 +159,10 @@ struct ExpensesView: View {
 
     private func run(_ action: () throws -> Void) {
         do { try action() } catch { errorMessage = error.localizedDescription }
+    }
+
+    private func vatCodes(of company: String) -> [VATLedgerCode] {
+        settingsStore.settings.owners.first { $0.name == company }?.vatLedgerCodes ?? []
     }
 }
 

@@ -87,9 +87,34 @@ struct FilingView: View {
 
     // MARK: Ledger code
 
-    /// The owner's codes when the chosen category uses ledger codes; else empty.
+    /// The company that reimburses this expense, if any.
+    private var reimbursingCompany: String? {
+        reimbursedBy.isEmpty || reimbursedBy == ownerName ? nil : reimbursedBy
+    }
+
+    /// The company that books the document: the one that reimburses it, else its owner.
+    private var bookingOwner: String {
+        ArchiveSettings.bookingOwner(owner: ownerName, reimbursedBy: reimbursingCompany)
+    }
+
+    /// The booking company's codes when the chosen category uses ledger codes; else empty.
     private var ledgerCodes: [LedgerCode] {
-        settingsStore.settings.ledgerCodes(owner: ownerName, category: categoryName)
+        settingsStore.settings.ledgerCodes(owner: bookingOwner, category: categoryName)
+    }
+
+    /// For a company's document paid privately: the owner to file it under instead (the first
+    /// owner without a VAT return, e.g. Private).
+    private var privateOwner: Owner? {
+        guard currentOwner?.vatPeriod != nil, reimbursingCompany == nil else { return nil }
+        return settingsStore.settings.owners.first { $0.vatPeriod == nil }
+    }
+
+    /// Files the document under the private owner, to be reimbursed by the company it showed.
+    private func markPaidPrivately(by owner: Owner) {
+        let company = ownerName
+        ownerName = owner.name
+        reimbursedBy = company
+        edited.formUnion([.owner, .reimbursement])
     }
 
     /// The document's own code when editing, kept even if it's no longer in the list.
@@ -119,7 +144,7 @@ struct FilingView: View {
         case .waitingForText, .working: false
         case .done, .unavailable, .failed: true
         }
-        return LedgerKey(owner: ownerName, category: categoryName, suggestionsFinished: finished)
+        return LedgerKey(owner: bookingOwner, category: categoryName, suggestionsFinished: finished)
     }
 
     /// After owner or category changed: drop a code that isn't in the new list, then fill in
@@ -133,7 +158,7 @@ struct FilingView: View {
         guard editing == nil, ledgerCode.isEmpty, !edited.contains(.ledger), !codes.isEmpty else { return }
         suggested.remove(.ledger)
         fromRule.remove(.ledger)
-        if let learned = appliedRule?.ledgerCode(owner: ownerName),
+        if let learned = appliedRule?.ledgerCode(owner: bookingOwner),
            let code = codes.first(where: { $0.matches(learned) }) {
             ledgerCode = code.code
             fromRule.insert(.ledger)
@@ -252,6 +277,13 @@ struct FilingView: View {
                         }
                     }
                     mark(.category)
+                }
+                if let privateOwner {
+                    Button("Paid Privately – Claim from \(ownerName)", systemImage: "person.crop.circle.badge.checkmark") {
+                        markPaidPrivately(by: privateOwner)
+                    }
+                    .disabled(vatLocked || claimLocked)
+                    .help(Text("Files it under \(privateOwner.name) as an expense \(ownerName) reimburses. Its VAT and ledger code stay with \(ownerName)."))
                 }
                 if showsLedger {
                     HStack {
