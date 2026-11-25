@@ -130,6 +130,21 @@ struct ExtractionValueChecksTests {
         }
     }
 
+    @Test func vervaldatumBeatsADateAfterFor() {
+        // Invented healthcare-style invoice: a date of service after "voor", the deadline after "Vervaldatum".
+        let text = """
+        Nota voor behandeling voor 14-05-2026 door Praktijk Voorbeeld.
+        Bedrag:  € 64,20
+        Vervaldatum:  12 oktober 2026
+        IBAN:  NL00 TEST 0123 4567 89
+        """
+        let result = Self.check(Self.bill(amount: 64.20, dueDate: "2026-05-14", iban: "NL00TEST0123456789"), text)
+        #expect(result.dueDate == "2026-10-12")
+        // A real payment phrase with "voor" still counts.
+        #expect(Self.check(Self.bill(amount: 64.20), "Graag € 64,20 overmaken voor 1 november 2026.").dueDate == "2026-11-01")
+        #expect(Self.check(Self.bill(amount: 64.20), "Te betalen vóór 3-11-2026: € 64,20").dueDate == "2026-11-03")
+    }
+
     @Test func keepsIbanWrittenWithSpaces() {
         let text = "Totaal te betalen € 812,40 uiterlijk op 31-03-2026 op NL00 TEST 0987 6543 21."
         let result = Self.check(Self.bill(amount: 812.40, iban: "NL00 TEST 0987 6543 21"), text)
