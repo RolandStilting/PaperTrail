@@ -11,7 +11,7 @@ public enum ReviewQueueNames {
         let stamp = String(format: "%04d-%02d-%02d %02d%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0, c.hour ?? 0, c.minute ?? 0)
         let base = originalName.map { FileNamer.splitExtension($0).base } ?? ""
         let cleaned = FileNamer.sanitizeComponent(base)
-        let label = cleaned.isEmpty ? String(localized: "Scan", bundle: .module) : String(cleaned.prefix(60))
+        let label = cleaned.isEmpty ? String(localized: "Scan", bundle: .module) : FileNamer.prefix(String(cleaned.prefix(60)), maxBytes: 150)
         return "\(stamp) \(label).pdf"
     }
 

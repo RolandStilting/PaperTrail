@@ -150,6 +150,9 @@
     "4300" : {
 
     },
+    "%@: %@" : {
+
+    },
     "A dedicated mailbox that this Mac checks; its emails go to Needs Review." : {
 
     },
@@ -1385,6 +1388,9 @@
     "The email \"%@\" has no PDF, image or text to file. It stays in the mailbox; move it out yourself." : {
 
     },
+    "The email couldn't be displayed to turn it into a PDF. It stays in the mailbox; save it as a PDF yourself if it keeps failing." : {
+
+    },
     "The file was saved, but Paper Trail could not note the export: %@" : {
 
     },
@@ -1461,6 +1467,9 @@
 
     },
     "Turn on the lock for Paper Trail." : {
+
+    },
+    "Turning the email into a PDF took too long, so it was stopped. The email stays in the mailbox; save it as a PDF yourself if it keeps failing." : {
 
     },
     "Type %@ to confirm" : {

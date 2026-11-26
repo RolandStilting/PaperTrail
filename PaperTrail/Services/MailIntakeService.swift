@@ -39,6 +39,10 @@ final class MailIntakeService {
     private let filingService: FilingService
     private let passwords = KeychainPasswordStore()
     private var timer: Task<Void, Never>?
+    /// Emails that failed in the last check; the next check handles them last.
+    private var failedUIDs: Set<UInt32> = []
+    /// Attachments skipped during the current check (too large, not a PDF, too many).
+    private var skipped: [String] = []
 
     init(filingService: FilingService) {
         self.filingService = filingService
@@ -81,10 +85,12 @@ final class MailIntakeService {
         do {
             guard let password = try passwords.password(account: account.username) else { throw MailIntakeError.missingPassword }
             let root = try await filingService.location.resolveRoot().url
-            let report = try await Self.runPass(account: account, password: password, limit: 300) { raw in
+            skipped = []
+            let report = try await Self.runPass(account: account, password: password, limit: 300, failedBefore: failedUIDs) { raw in
                 try await self.file(raw, root: root)
             }
-            problems = report.failures
+            failedUIDs = report.failedUIDs
+            problems = report.failures + skipped
             status = .checked(.now, filed: report.processed)
         } catch {
             status = .failed(error.localizedDescription)
@@ -116,12 +122,13 @@ final class MailIntakeService {
         }
     }
 
-    private nonisolated static func runPass(account: MailAccount, password: String, limit: Double,
+    private nonisolated static func runPass(account: MailAccount, password: String, limit: Double, failedBefore: Set<UInt32>,
                                            handle: @escaping @Sendable (Data) async throws -> Void) async throws -> MailboxReport {
         let transport = try await TLSTransport.connect(host: account.server, port: account.port)
         let watchdog = closeAfter(seconds: limit, transport)
         defer { watchdog.cancel(); transport.close() }
-        return try await MailboxProcessor.run(session: IMAPSession(transport: transport), account: account, password: password, handle: handle)
+        return try await MailboxProcessor.run(session: IMAPSession(transport: transport), account: account, password: password,
+                                         failedBefore: failedBefore, handle: handle)
     }
 
     /// Closing the connection ends any read that is still waiting, so a silent server
@@ -133,27 +140,46 @@ final class MailIntakeService {
         }
     }
 
-    /// Writes one email's documents to Needs Review. Throws if nothing could be filed, so the
-    /// email stays in the mailbox.
+    /// Writes one email's documents to Needs Review. All documents are made first and only
+    /// then written, so an email that fails halfway doesn't leave copies behind that come back
+    /// on every check. A document that can't be converted is skipped and reported; if none
+    /// can, this throws and the email stays in the mailbox.
     private func file(_ raw: Data, root: URL) async throws {
-        let message = MIMEParser.parse(raw)
-        let documents = EmailIntake.documents(in: message)
-        guard !documents.isEmpty else { throw MailIntakeError.nothingToFile(message.subject) }
-        let received = message.date ?? .now
+        // Parsing can be heavy for a large email: off the main actor.
+        let (message, selection) = await Task.detached(priority: .utility) {
+            let message = MIMEParser.parse(raw)
+            return (message, EmailIntake.select(in: message))
+        }.value
+        let subject = message.subject.isEmpty ? message.from : message.subject
+        skipped += selection.skipped.map { String(localized: "\(subject): \($0)") }
+        guard !selection.documents.isEmpty else { throw MailIntakeError.nothingToFile(message.subject) }
+        let received = EmailIntake.receivedDate(header: message.date)
         let label = EmailIntake.label(for: message)
         let renderer = HTMLPDFRenderer()
-        for document in documents {
-            let pending: PendingDocument
-            switch document {
-            case .pdf(let name, let data):
-                pending = PendingDocument(pdfData: data, source: .email, originalName: name)
-            case .image(let name, let data):
-                pending = PendingDocument(pdfData: try PDFBuilder.makePDF(from: PDFBuilder.images(fromImageData: data)), source: .email, originalName: name)
-            case .html(let html):
-                pending = PendingDocument(pdfData: try await renderer.pdf(html: html), source: .email, originalName: label)
-            case .text(let text):
-                pending = PendingDocument(pdfData: try await renderer.pdf(text: text), source: .email, originalName: label)
+        var pendings: [PendingDocument] = []
+        var firstError: Error?
+        for document in selection.documents {
+            do {
+                switch document {
+                case .pdf(let name, let data):
+                    pendings.append(PendingDocument(pdfData: data, source: .email, originalName: name))
+                case .image(let name, let data):
+                    let pdf = try await Task.detached(priority: .utility) {
+                        try PDFBuilder.makePDF(from: PDFBuilder.images(fromImageData: data))
+                    }.value
+                    pendings.append(PendingDocument(pdfData: pdf, source: .email, originalName: name))
+                case .html(let html):
+                    pendings.append(PendingDocument(pdfData: try await renderer.pdf(html: html), source: .email, originalName: label))
+                case .text(let text):
+                    pendings.append(PendingDocument(pdfData: try await renderer.pdf(text: text), source: .email, originalName: label))
+                }
+            } catch {
+                firstError = firstError ?? error
+                skipped.append(String(localized: "\(subject): \(error.localizedDescription)"))
             }
+        }
+        guard !pendings.isEmpty else { throw firstError ?? MailIntakeError.nothingToFile(message.subject) }
+        for pending in pendings {
             _ = try await filingService.reviewQueue.add(pending, root: root, now: received)
         }
     }

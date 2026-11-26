@@ -58,6 +58,10 @@ public actor IMAPSession {
     /// Signs in with SASL PLAIN (RFC 4616) when the server offers it, else with LOGIN.
     /// Both send the credentials only over the TLS connection.
     public func login(user: String, password: String) async throws {
+        // A line break or NUL would end the command early (and could add another one).
+        guard !Self.hasControlCharacters(user), !Self.hasControlCharacters(password) else {
+            throw IMAPError.loginFailed(String(localized: "the user name or password contains a line break or other control character", bundle: .module))
+        }
         try await refreshCapabilities()
         do {
             if capabilities.contains("AUTH=PLAIN") {
@@ -221,7 +225,13 @@ public actor IMAPSession {
     }
 
     /// An IMAP quoted string.
+    static func hasControlCharacters(_ value: String) -> Bool {
+        value.unicodeScalars.contains { CharacterSet.controlCharacters.contains($0) }
+    }
+
+    /// A quoted string; control characters (which can't be quoted) are left out.
     static func quoted(_ value: String) -> String {
-        "\"" + value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
+        let value = String(String.UnicodeScalarView(value.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }))
+        return "\"" + value.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
     }
 }

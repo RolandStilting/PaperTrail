@@ -52,6 +52,18 @@
     "1 day overdue" : {
 
     },
+    "\"%@\" is not a valid PDF." : {
+
+    },
+    "\"%@\" is larger than 50 MB." : {
+
+    },
+    "\"%@\" is larger than 30 MB." : {
+
+    },
+    "%lld more attachments were skipped: Paper Trail takes at most %lld from one email." : {
+
+    },
     "A ledger code for %@ has a description but no code. Enter the code or remove the row." : {
 
     },
@@ -80,6 +92,9 @@
 
     },
     "Apple Intelligence is turned off. To get suggestions, turn it on in (System) Settings → Apple Intelligence & Siri. The device language and the Siri language must be the same supported language." : {
+
+    },
+    "attachment %lld" : {
 
     },
     "Choose a category before filing." : {
@@ -229,6 +244,9 @@
     "Reference: %@" : {
 
     },
+    "Remove line breaks and tabs from the user name and folder names." : {
+
+    },
     "Reverse charge – check" : {
 
     },
@@ -251,6 +269,9 @@
 
     },
     "The connection to the mail server was closed. Check your internet connection and try again." : {
+
+    },
+    "The document would have more than %lld pages, so Paper Trail didn't convert it. Save it as a PDF yourself and add it." : {
 
     },
     "The documents follow on the next pages, in the order listed." : {
@@ -279,6 +300,9 @@
 
     },
     "The scan has no pages. Scan the document again." : {
+
+    },
+    "the user name or password contains a line break or other control character" : {
 
     },
     "This device doesn't support Apple Intelligence, so Paper Trail can't suggest details here. Fill them in yourself." : {

@@ -89,6 +89,9 @@ public struct MailAccount: Codable, Hashable, Sendable {
         if watchesInbox, !accountIsDedicated {
             errors.append(String(localized: "Paper Trail won't check the Inbox of an account you also use for other mail: it would file and move every email. Use a mail rule that moves the Paper Trail address's emails to their own folder, and enter that folder.", bundle: .module))
         }
+        if [username, folder, processed].contains(where: { $0.unicodeScalars.contains { CharacterSet.controlCharacters.contains($0) } }) {
+            errors.append(String(localized: "Remove line breaks and tabs from the user name and folder names.", bundle: .module))
+        }
         // IMAP folder names outside ASCII need modified UTF-7, which Paper Trail doesn't do.
         if !(folder + processed).allSatisfy(\.isASCII) {
             errors.append(String(localized: "Use folder names without accents or special letters.", bundle: .module))
