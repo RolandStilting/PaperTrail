@@ -185,7 +185,7 @@ public struct VATReport: Sendable {
             case .vatMissing: String(localized: "No VAT found – check", bundle: .module)
             }
         }
-        var rows = [[String(localized: "Date", bundle: .module), String(localized: "Sender", bundle: .module), String(localized: "Description", bundle: .module),
+        var rows: [[String]] = [[String(localized: "Date", bundle: .module), String(localized: "Sender", bundle: .module), String(localized: "Description", bundle: .module),
                      String(localized: "Rate", bundle: .module), String(localized: "Excl. VAT", bundle: .module), String(localized: "VAT", bundle: .module),
                      String(localized: "Incl. VAT", bundle: .module), String(localized: "Status", bundle: .module),
                      String(localized: "Ledger code", bundle: .module), String(localized: "Ledger description", bundle: .module),
@@ -213,7 +213,7 @@ public struct VATReport: Sendable {
         if !foreign.isEmpty {
             rows.append(["", String(localized: "Foreign VAT (not in the total)", bundle: .module), "", "", "", number(foreignVAT), "", "", "", "", "", ""])
         }
-        let text = rows.map { $0.map(CSVField.escape).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
+        let text = rows.map { (row: [String]) -> String in row.map { CSVField.escape($0) }.joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
 

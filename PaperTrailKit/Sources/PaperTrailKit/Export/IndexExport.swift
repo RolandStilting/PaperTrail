@@ -163,7 +163,7 @@ public struct IndexExport: Codable, Sendable, Equatable {
             return settings?.vatLedgerCode(owner: booking, rate: rate) ?? ""
         }
         let yes = String(localized: "yes", bundle: .module)
-        var rows = [[
+        var rows: [[String]] = [[
             "Received", "Document date", "Owner", "Category", "Ledger code", "Ledger description", "Sender", "Description", "Amount (EUR)",
             "VAT 21%", "VAT 9%", "VAT 0%", "VAT total", "VAT 21% ledger code", "VAT 9% ledger code", "Foreign VAT", "Reverse charge",
             "Unpaid bill", "Due date", "Paid", "Paid on", "IBAN", "Payment reference",
@@ -183,7 +183,7 @@ public struct IndexExport: Codable, Sendable, Equatable {
                 document.reimbursedBy ?? "", date(document.reimbursedAt), document.relativePath, document.id.uuidString,
             ])
         }
-        let text = rows.map { $0.map(CSVField.escape).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
+        let text = rows.map { (row: [String]) -> String in row.map { CSVField.escape($0) }.joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
 }

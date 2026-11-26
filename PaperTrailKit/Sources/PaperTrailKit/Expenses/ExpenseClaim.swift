@@ -105,7 +105,7 @@ public enum ExpenseClaim {
                 ?? lines.flatMap { $0.vat(rate: rate) }.first { !$0.ledgerCode.isEmpty }?.ledgerCode
             return code.map { "\(heading) (\($0))" } ?? heading
         }
-        var rows = [[String(localized: "Date", bundle: .module), String(localized: "Sender", bundle: .module),
+        var rows: [[String]] = [[String(localized: "Date", bundle: .module), String(localized: "Sender", bundle: .module),
                      String(localized: "Description", bundle: .module), String(localized: "Amount (EUR)", bundle: .module),
                      String(localized: "Excl. VAT", bundle: .module), vatHeading(21), vatHeading(9),
                      String(localized: "Ledger code", bundle: .module), String(localized: "Ledger description", bundle: .module),
@@ -119,7 +119,7 @@ public enum ExpenseClaim {
         func vatTotal(_ rate: Double) -> String { totals.first { $0.rate == rate }.map { amount($0.amount) } ?? "" }
         rows.append(["", String(localized: "Total", bundle: .module), "", amount(total(lines)),
                      amount(sum(lines.compactMap(\.amountExcludingVAT))), vatTotal(21), vatTotal(9), "", "", ""])
-        let text = rows.map { $0.map(CSVField.escape).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
+        let text = rows.map { (row: [String]) -> String in row.map { CSVField.escape($0) }.joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
 
