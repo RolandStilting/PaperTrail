@@ -61,6 +61,7 @@ struct FilingService {
         record.reimbursedBy = request.reimbursedBy
         record.vatInfo = request.vat
         record.setLedger(request.ledger)
+        record.ibanUnconfirmed = request.ibanChanged && !request.ibanConfirmed && request.bill?.isUnpaid == true
         context.insert(record)
         learnRule(from: record, request: request, suggestedSender: suggestedSender, context: context)
         // The file is already safe on disk; an index failure is reported but the index
@@ -94,6 +95,7 @@ struct FilingService {
         record.reimbursedBy = request.reimbursedBy
         record.vatInfo = request.vat
         record.setLedger(request.ledger)
+        record.ibanUnconfirmed = request.ibanChanged && !request.ibanConfirmed && request.bill?.isUnpaid == true
         if let learned = learnRule(from: record, request: request, suggestedSender: previousSender, context: context),
            previousSender.lowercased() != record.sender.lowercased() {
             forgetOldName(previousSender, keeping: learned, context: context)
@@ -131,12 +133,13 @@ struct FilingService {
         // A failed fetch only means no rule is learned this time; filing itself is unaffected.
         let records = (try? context.fetch(FetchDescriptor<FilingRuleRecord>())) ?? []
         let payTo = request.bill?.isUnpaid == true ? request.bill?.iban ?? "" : ""
-        let filing = ConfirmedFiling(
+        var filing = ConfirmedFiling(
             sender: record.sender, suggestedSender: suggestedSender,
             owner: record.ownerName, category: record.categoryName, payToIban: payTo,
             reimbursedBy: request.reimbursedBy,
             ledgerCode: request.offersLedgerCodes ? request.ledger?.code ?? "" : nil
         )
+        filing.ibanConfirmed = request.ibanConfirmed
         guard let rule = SenderRules.learn(from: filing, existing: records.map(\.rule)) else { return nil }
         if let existing = records.first(where: { $0.id == rule.id }) {
             existing.update(from: rule)

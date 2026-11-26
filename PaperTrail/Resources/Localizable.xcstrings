@@ -373,6 +373,9 @@
     "Code" : {
 
     },
+    "Code goes to" : {
+
+    },
     "Colour" : {
 
     },
@@ -589,6 +592,15 @@
     "Each code once. Empty rows are ignored." : {
 
     },
+    "Earlier bills from %@ used %@. Check that this address belongs to %@ or their payment provider before paying." : {
+
+    },
+    "Earlier bills from %@ were paid to %@. Fraudsters often send a familiar-looking invoice with only the IBAN changed. Before paying, check the new account with %@ using a phone number or website you already know, not the details on this invoice." : {
+
+    },
+    "Earlier bills from %@ were paid to another account. Fraudsters often send a familiar-looking invoice with only the IBAN changed. Check the new account with %@ using a phone number or website you already know, not the details on this invoice." : {
+
+    },
     "Edit" : {
 
     },
@@ -767,6 +779,12 @@
     "Hide Sidebar" : {
 
     },
+    "I Checked This IBAN" : {
+
+    },
+    "I checked this IBAN with %@" : {
+
+    },
     "IBAN" : {
 
     },
@@ -845,6 +863,9 @@
     "Ledger codes: %lld" : {
 
     },
+    "Link goes to" : {
+
+    },
     "Lock" : {
 
     },
@@ -872,6 +893,9 @@
     "Mark Reimbursed" : {
 
     },
+    "Mark the IBAN as checked?" : {
+
+    },
     "Mark this bill as paid?" : {
 
     },
@@ -897,6 +921,15 @@
 
     },
     "Needs Review" : {
+
+    },
+    "New IBAN for %@" : {
+
+    },
+    "New IBAN – not checked yet" : {
+
+    },
+    "New IBAN, not checked yet" : {
 
     },
     "New owner" : {
@@ -977,6 +1010,12 @@
     "OK" : {
 
     },
+    "Open %@" : {
+
+    },
+    "Open %@?" : {
+
+    },
     "Open Bills" : {
 
     },
@@ -1050,6 +1089,9 @@
 
     },
     "Paper Trail remembers owner and category for each sender you file." : {
+
+    },
+    "Paper Trail then remembers %@ as an account of %@." : {
 
     },
     "Passcode" : {
@@ -1368,6 +1410,9 @@
 
     },
     "These documents are not in Paper Trail anymore (moved or renamed?): %@. Put them back and export again." : {
+
+    },
+    "This address comes from the invoice: %@\n\nOnly continue if it belongs to %@ or their payment provider. Check the payee and amount on the page before you pay." : {
 
     },
     "This document is in a VAT return marked as submitted. Its owner, dates, amount and VAT can't be changed; use Undo Submitted in the VAT overview first." : {

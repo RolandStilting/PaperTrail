@@ -146,6 +146,12 @@ private struct BillRow: View {
                 }
             }
             Spacer()
+            if bill.ibanUnconfirmed {
+                Image(systemName: "exclamationmark.shield.fill")
+                    .foregroundStyle(.red)
+                    .help("New IBAN, not checked yet")
+                    .accessibilityLabel(Text("New IBAN, not checked yet"))
+            }
             if bill.exportedAt != nil {
                 Image(systemName: "square.and.arrow.up.circle")
                     .foregroundStyle(.orange)
@@ -176,6 +182,53 @@ struct BillDetailView: View {
     @State private var copied: String?
     @State private var isWorking = false
     @State private var reminderMissing = false
+    @Query private var ruleRecords: [FilingRuleRecord]
+    /// The payment page waiting for the user's OK before it opens.
+    @State private var pendingLink: URL?
+    @State private var confirmingIBAN = false
+
+    /// The learned rule for this bill's sender, if any.
+    private var senderRule: FilingRuleRecord? {
+        guard let rule = SenderRules.rule(forSender: bill.sender, in: ruleRecords.map(\.rule)) else { return nil }
+        return ruleRecords.first { $0.id == rule.id }
+    }
+
+    private var hostCheck: PaymentHostCheck {
+        guard let host = bill.paymentCode?.host else { return .nothingKnown }
+        return SenderRules.checkPaymentHost(host, rule: senderRule?.rule)
+    }
+
+    /// Remembers the payment page's host for this sender once the user accepted it.
+    private func acceptPaymentHost() {
+        guard let host = bill.paymentCode?.host, let record = senderRule else { return }
+        record.update(from: SenderRules.accepting(paymentHost: host, in: record.rule))
+        try? modelContext.save()
+    }
+
+    private func confirmIBAN() {
+        bill.ibanUnconfirmed = false
+        if let record = senderRule, let iban = bill.iban {
+            record.update(from: SenderRules.confirming(iban: iban, in: record.rule))
+        }
+        do { try modelContext.save() } catch { errorMessage = error.localizedDescription }
+    }
+
+    @ViewBuilder
+    private var ibanWarning: some View {
+        if bill.ibanUnconfirmed {
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("New IBAN – not checked yet", systemImage: "exclamationmark.shield.fill")
+                        .font(.headline)
+                        .foregroundStyle(.red)
+                    Text("Earlier bills from \(bill.sender) were paid to another account. Fraudsters often send a familiar-looking invoice with only the IBAN changed. Check the new account with \(bill.sender) using a phone number or website you already know, not the details on this invoice.")
+                        .font(.callout)
+                    Button("I Checked This IBAN", systemImage: "checkmark.shield") { confirmingIBAN = true }
+                }
+                .padding(.vertical, 4)
+            }
+        }
+    }
 
     private var qrPayload: Result<String, EPCQRCode.PayloadError> {
         Result { () throws(EPCQRCode.PayloadError) -> String in
@@ -185,6 +238,7 @@ struct BillDetailView: View {
 
     var body: some View {
         Form {
+            ibanWarning
             if embedded {
                 Section {
                     VStack(alignment: .leading, spacing: 4) {
@@ -236,6 +290,20 @@ struct BillDetailView: View {
         .titleUnlessEmbedded(embedded, bill.sender)
         .task { reminderMissing = await billService.reminderIsMissing(for: bill) }
         .task(id: bill.id) { await findPaymentCode(again: false) }
+        .confirmationDialog("Open \(pendingLink?.host() ?? "")?", isPresented: Binding(get: { pendingLink != nil }, set: { if !$0 { pendingLink = nil } }),
+                            titleVisibility: .visible, presenting: pendingLink) { url in
+            Button("Open \(url.host() ?? "")") {
+                acceptPaymentHost()
+                openURL(url)
+            }
+        } message: { url in
+            Text("This address comes from the invoice: \(url.absoluteString)\n\nOnly continue if it belongs to \(bill.sender) or their payment provider. Check the payee and amount on the page before you pay.")
+        }
+        .confirmationDialog("Mark the IBAN as checked?", isPresented: $confirmingIBAN, titleVisibility: .visible) {
+            Button("I Checked This IBAN") { confirmIBAN() }
+        } message: {
+            Text("Paper Trail then remembers \(IBAN.formatted(bill.iban ?? "")) as an account of \(bill.sender).")
+        }
         .confirmationDialog("Mark this bill as paid?", isPresented: $confirmingPaid) {
             Button("Mark as Paid") { Task { await markPaid() } }
         } message: {
@@ -262,19 +330,17 @@ struct BillDetailView: View {
                     .frame(maxWidth: .infinity)
             }
             if let url = code.url {
-                Button {
-                    openURL(url)
-                } label: {
-                    Label {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Open Payment Page")
-                            Text(code.host ?? "").font(.caption).foregroundStyle(.secondary)
-                        }
-                    } icon: {
-                        Image(systemName: "safari")
-                    }
+                LabeledContent(code.source == .qrCode ? "Code goes to" : "Link goes to") {
+                    Text(code.host ?? "").font(.body.monospaced()).textSelection(.enabled)
                 }
-                .help(url.absoluteString)
+                if case .new(let known) = hostCheck {
+                    Label("Earlier bills from \(bill.sender) used \(known.joined(separator: ", ")). Check that this address belongs to \(bill.sender) or their payment provider before paying.",
+                          systemImage: "exclamationmark.triangle.fill")
+                        .font(.callout)
+                        .foregroundStyle(.orange)
+                }
+                Button("Open Payment Page", systemImage: "safari") { pendingLink = url }
+                    .help(url.absoluteString)
             }
         } else if isScanning {
             ProgressView("Looking for a payment code on the invoice…")
@@ -378,6 +444,11 @@ struct BillDetailView: View {
         defer { isWorking = false }
         do {
             try await billService.markPaid(bill, context: modelContext)
+            // Paid with the code from the invoice: its address is now one this sender uses
+            // (unless a warning was still showing).
+            var hostIsNew = false
+            if case .new = hostCheck { hostIsNew = true }
+            if !bill.ibanUnconfirmed, !hostIsNew { acceptPaymentHost() }
         } catch {
             errorMessage = error.localizedDescription
         }

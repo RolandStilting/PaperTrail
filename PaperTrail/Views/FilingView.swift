@@ -47,6 +47,8 @@ struct FilingView: View {
     /// Empty: not a reimbursable expense.
     @State private var reimbursedBy = ""
     @State private var vat = VATInfo()
+    /// The user checked a changed IBAN with the sender (and wants it learned).
+    @State private var ibanConfirmed = false
     /// The chosen ledger code; empty for none.
     @State private var ledgerCode = ""
 
@@ -82,7 +84,33 @@ struct FilingView: View {
             vat: showsVAT && !vat.isEmpty ? vat : nil, ledger: chosenLedger
         )
         request.offersLedgerCodes = !ledgerCodes.isEmpty
+        if case .changed = ibanCheck { request.ibanChanged = true }
+        request.ibanConfirmed = ibanConfirmed
         return request
+    }
+
+    // MARK: IBAN check
+
+    /// The pay-to IBAN against the IBANs known for this sender (by the name in the form).
+    private var ibanCheck: IBANCheck {
+        guard isUnpaidBill else { return .nothingKnown }
+        let rules = ruleRecords.map(\.rule)
+        return SenderRules.checkIBAN(iban, rule: SenderRules.rule(forSender: sender, in: rules) ?? appliedRule)
+    }
+
+    @ViewBuilder
+    private var ibanWarning: some View {
+        if case .changed(let known) = ibanCheck {
+            VStack(alignment: .leading, spacing: 8) {
+                Label("New IBAN for \(sender)", systemImage: "exclamationmark.shield.fill")
+                    .font(.headline)
+                    .foregroundStyle(.red)
+                Text("Earlier bills from \(sender) were paid to \(known.map(IBAN.formatted).joined(separator: ", ")). Fraudsters often send a familiar-looking invoice with only the IBAN changed. Before paying, check the new account with \(sender) using a phone number or website you already know, not the details on this invoice.")
+                    .font(.callout)
+                Toggle("I checked this IBAN with \(sender)", isOn: $ibanConfirmed)
+            }
+            .padding(.vertical, 4)
+        }
     }
 
     // MARK: Ledger code
@@ -234,6 +262,7 @@ struct FilingView: View {
         reimbursedBy = record.reimbursedBy ?? ""
         vat = record.vatInfo ?? VATInfo()
         ledgerCode = record.ledgerCode
+        ibanConfirmed = false
         extractedText = record.extractedText ?? ""
         suggestion = .done
     }
@@ -340,6 +369,7 @@ struct FilingView: View {
                         }
                         TextField("IBAN", text: tracked($iban, .bill), prompt: Text("NL00 BANK 0123 4567 89"))
                             .autocorrectionDisabled()
+                        ibanWarning
                         TextField("Payment reference", text: tracked($paymentReference, .bill))
                             .autocorrectionDisabled()
                     }
