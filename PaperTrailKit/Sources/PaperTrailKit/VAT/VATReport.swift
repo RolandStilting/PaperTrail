@@ -177,9 +177,6 @@ public struct VATReport: Sendable {
         func rateText(_ rate: Double) -> String {
             (rate == rate.rounded() ? String(Int(rate)) : String(rate).replacingOccurrences(of: ".", with: decimal)) + "%"
         }
-        func field(_ text: String) -> String {
-            text.contains(";") || text.contains("\"") || text.contains("\n") ? "\"" + text.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : text
-        }
         func status(_ item: VATReportItem) -> String {
             switch item.kind {
             case .domestic: item.isReimbursedExpense ? String(localized: "Reclaim (reimbursed expense)", bundle: .module) : String(localized: "Reclaim", bundle: .module)
@@ -216,7 +213,7 @@ public struct VATReport: Sendable {
         if !foreign.isEmpty {
             rows.append(["", String(localized: "Foreign VAT (not in the total)", bundle: .module), "", "", "", number(foreignVAT), "", "", "", "", "", ""])
         }
-        let text = rows.map { $0.map(field).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
+        let text = rows.map { $0.map(CSVField.escape).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
 

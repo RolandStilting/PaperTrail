@@ -121,6 +121,17 @@ struct IndexExportTests {
         #expect(again.isEmpty)
     }
 
+    @Test func importSkipsPathsOutsideTheArchive() {
+        let outside = bill()
+        outside.relativePath = "../../Library/Keychains/x.pdf"
+        var looked: [String] = []
+        let plan = IndexImportPlan(export: export([outside]), documentIDs: [], documentPaths: [], claimIDs: [],
+                                   vatReturns: [], ruleIDs: [], fileExists: { looked.append($0); return true })
+        #expect(plan.documents.isEmpty)
+        #expect(plan.unsafePaths == [outside.relativePath])
+        #expect(looked.isEmpty)
+    }
+
     @Test func vatReturnMatchedByOwnerAndPeriod() {
         var export = export([])
         export.vatReturns = [IndexExport.VATReturn(id: UUID(), owner: "Company1", periodStart: date(1), periodEnd: date(30), submittedAt: date(24), vatTotal: 21, documentCount: 1)]

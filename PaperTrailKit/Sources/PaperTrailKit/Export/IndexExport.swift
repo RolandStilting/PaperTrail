@@ -151,10 +151,6 @@ public struct IndexExport: Codable, Sendable, Equatable {
             return String(format: "%.2f", value).replacingOccurrences(of: ".", with: decimal)
         }
         func date(_ value: Date?) -> String { value.map(namer.dateString) ?? "" }
-        func field(_ text: String) -> String {
-            let needsQuotes = text.contains(";") || text.contains("\"") || text.contains("\n") || text.contains("\r")
-            return needsQuotes ? "\"" + text.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : text
-        }
         func vat(_ info: VATInfo?, rate: Double) -> String {
             guard let lines = info?.lines.filter({ abs($0.rate - rate) < 0.001 }), !lines.isEmpty else { return "" }
             return amount(lines.map(\.amount).reduce(0, +))
@@ -187,7 +183,7 @@ public struct IndexExport: Codable, Sendable, Equatable {
                 document.reimbursedBy ?? "", date(document.reimbursedAt), document.relativePath, document.id.uuidString,
             ])
         }
-        let text = rows.map { $0.map(field).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
+        let text = rows.map { $0.map(CSVField.escape).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
 }
@@ -286,6 +282,9 @@ public struct IndexImportPlan: Sendable, Equatable {
     public var documentsAlreadyThere = 0
     /// In the export, but their PDF is no longer in iCloud Drive; not added.
     public var missingFiles: [String] = []
+    /// In the export with a path that isn't a place in the archive (outside it, or in Inbox,
+    /// Needs Review or Export); not added and never looked up.
+    public var unsafePaths: [String] = []
 
     public var isEmpty: Bool { documents.isEmpty && expenseClaims.isEmpty && vatReturns.isEmpty && senderRules.isEmpty }
 
@@ -293,7 +292,9 @@ public struct IndexImportPlan: Sendable, Equatable {
                 vatReturns existingReturns: [(owner: String, start: Date)], ruleIDs: Set<UUID>, fileExists: (String) -> Bool) {
         let paths = Set(documentPaths.map { $0.lowercased() })
         for document in export.documents {
-            if documentIDs.contains(document.id) || paths.contains(document.relativePath.lowercased()) {
+            if !ArchivePaths.isDocumentPath(document.relativePath) {
+                unsafePaths.append(document.relativePath)
+            } else if documentIDs.contains(document.id) || paths.contains(document.relativePath.lowercased()) {
                 documentsAlreadyThere += 1
             } else if !fileExists(document.relativePath) {
                 missingFiles.append(document.relativePath)

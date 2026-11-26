@@ -95,10 +95,6 @@ public enum ExpenseClaim {
             guard let value else { return "" }
             return String(format: "%.2f", value).replacingOccurrences(of: ".", with: decimal)
         }
-        func field(_ text: String) -> String {
-            let needsQuotes = text.contains(";") || text.contains("\"") || text.contains("\n")
-            return needsQuotes ? "\"" + text.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : text
-        }
         func vatAmount(_ line: ClaimLine, rate: Double) -> String {
             let atRate = line.vat(rate: rate)
             return atRate.isEmpty ? "" : amount(sum(atRate.map(\.amount)))
@@ -123,7 +119,7 @@ public enum ExpenseClaim {
         func vatTotal(_ rate: Double) -> String { totals.first { $0.rate == rate }.map { amount($0.amount) } ?? "" }
         rows.append(["", String(localized: "Total", bundle: .module), "", amount(total(lines)),
                      amount(sum(lines.compactMap(\.amountExcludingVAT))), vatTotal(21), vatTotal(9), "", "", ""])
-        let text = rows.map { $0.map(field).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
+        let text = rows.map { $0.map(CSVField.escape).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
 
