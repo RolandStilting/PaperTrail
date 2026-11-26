@@ -41,6 +41,8 @@ public actor IMAPSession {
     private var buffer = Data()
     private var tagNumber = 0
     public private(set) var capabilities: Set<String> = []
+    /// The text after the tag of the last completed command ("OK [COPYUID …] done").
+    private var lastCompletion = ""
 
     public init(transport: any IMAPTransport) {
         self.transport = transport
@@ -143,6 +145,34 @@ public actor IMAPSession {
         }
     }
 
+    /// Whether this server tells which UID a moved message got (UIDPLUS). Needed to claim
+    /// an email, so two devices never file the same one.
+    public var supportsClaims: Bool { capabilities.contains("UIDPLUS") }
+
+    /// Moves one message and returns its UID in the target mailbox, or nil when nothing was
+    /// moved (another device moved it first: a UID command on a missing message is no error).
+    public func moveReturningUID(uid: UInt32, to mailbox: String) async throws -> UInt32? {
+        if capabilities.contains("MOVE") {
+            let untagged = try await run("UID MOVE \(uid) \(Self.quoted(mailbox))")
+            return Self.copiedUID(in: untagged.map(\.text) + [lastCompletion])
+        }
+        let untagged = try await run("UID COPY \(uid) \(Self.quoted(mailbox))")
+        guard let copied = Self.copiedUID(in: untagged.map(\.text) + [lastCompletion]) else { return nil }
+        _ = try await run("UID STORE \(uid) +FLAGS.SILENT (\\Deleted)")
+        _ = try await run("UID EXPUNGE \(uid)")
+        return copied
+    }
+
+    /// The destination UID from "[COPYUID <validity> <source> <destination>]" (RFC 4315).
+    static func copiedUID(in lines: [String]) -> UInt32? {
+        for line in lines {
+            guard let range = line.range(of: "[COPYUID ", options: .caseInsensitive) else { continue }
+            let fields = line[range.upperBound...].prefix { $0 != "]" }.split(separator: " ")
+            if fields.count == 3, let uid = UInt32(fields[2]) { return uid }
+        }
+        return nil
+    }
+
     public func logout() async {
         _ = try? await run("LOGOUT")
     }
@@ -168,7 +198,10 @@ public actor IMAPSession {
             }
             if response.text.hasPrefix("\(tag) ") {
                 let status = response.text.dropFirst(tag.count + 1)
-                if status.uppercased().hasPrefix("OK") { return untagged }
+                if status.uppercased().hasPrefix("OK") {
+                    lastCompletion = String(status)
+                    return untagged
+                }
                 let name = display ?? String(command.prefix { $0 != " " })
                 throw IMAPError.commandFailed(command: name, response: String(status))
             }

@@ -28,9 +28,10 @@ final class ScriptedIMAPServer: IMAPTransport, @unchecked Sendable {
                 continuationTag = nil
             }
             commands.append(command)
-            if answer(command).hasPrefix("+") { continuationTag = tag }
+            let reply = answer(command)  // once: a stateful server changes on each answer
+            if reply.hasPrefix("+") { continuationTag = tag }
             // Split long responses in two chunks to exercise buffering.
-            let response = Data(answer(command).replacingOccurrences(of: "TAG", with: tag).utf8)
+            let response = Data(reply.replacingOccurrences(of: "TAG", with: tag).utf8)
             let half = response.count / 2
             pending.append(response.prefix(half))
             pending.append(response.dropFirst(half))
@@ -47,13 +48,14 @@ struct IMAPSessionTests {
     static let account = MailAccount(isEnabled: true, address: "archief@icloud.example", username: "archief")
     static let message = "From: a@example.com\r\nSubject: Bon\r\n\r\nBedrag 12,50\r\n"
 
+    /// A server without UIDPLUS: one device only, emails are moved straight to Processed.
     static func server(move: Bool = true, failFetchOf failing: UInt32? = nil) -> ScriptedIMAPServer {
         ScriptedIMAPServer { command in
             switch command {
             case let c where c.hasPrefix("LOGIN"):
                 c == #"LOGIN "archief" "abcd-efgh-ijkl-mnop""# ? "TAG OK logged in\r\n" : "TAG NO [AUTHENTICATIONFAILED] Invalid credentials\r\n"
             case "CAPABILITY":
-                "* CAPABILITY IMAP4rev1 UIDPLUS\(move ? " MOVE" : "")\r\nTAG OK\r\n"
+                "* CAPABILITY IMAP4rev1\(move ? " MOVE" : "")\r\nTAG OK\r\n"
             case #"CREATE "Paper Trail Processed""#:
                 "TAG NO [ALREADYEXISTS] Mailbox exists\r\n"
             case #"LIST "" "Paper Trail Processed""#:
@@ -91,7 +93,7 @@ struct IMAPSessionTests {
         _ = try await MailboxProcessor.run(session: IMAPSession(transport: server), account: Self.account, password: "abcd-efgh-ijkl-mnop") { _ in }
         #expect(server.commands.contains(#"UID COPY 7 "Paper Trail Processed""#))
         #expect(server.commands.contains(#"UID STORE 7 +FLAGS.SILENT (\Deleted)"#))
-        #expect(server.commands.contains("UID EXPUNGE 7"))
+        #expect(server.commands.contains("EXPUNGE"))
     }
 
     @Test func failedEmailStaysInInbox() async throws {
