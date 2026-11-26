@@ -58,6 +58,8 @@ public struct IndexExport: Codable, Sendable, Equatable {
         /// Ledger code and its description as chosen; nil when none (and in older exports).
         public var ledgerCode: String?
         public var ledgerDescription: String?
+        /// True when the IBAN differs from the sender's known ones and wasn't confirmed.
+        public var ibanUnconfirmed: Bool?
     }
 
     public struct ExpenseClaim: Codable, Sendable, Equatable {
@@ -89,6 +91,7 @@ public struct IndexExport: Codable, Sendable, Equatable {
         public var reimbursedBy: String?
         /// nil in exports made before ledger codes.
         public var ledgerCodes: [LedgerChoice]?
+        public var paymentHosts: [String]?
         public var updatedAt: Date
     }
 
@@ -200,7 +203,8 @@ extension DocumentRecord {
             iban: iban, paymentReference: paymentReference, isPaid: isPaid, paidAt: paidAt, reminderID: reminderExternalID,
             exportedToSEPAAt: exportedAt, reimbursedBy: reimbursedBy, claimID: claimID, reimbursedAt: reimbursedAt,
             vat: vatInfo, paymentCode: paymentCode, recognizedText: extractedText,
-            ledgerCode: ledgerCode.isEmpty ? nil : ledgerCode, ledgerDescription: ledgerDescription.isEmpty ? nil : ledgerDescription
+            ledgerCode: ledgerCode.isEmpty ? nil : ledgerCode, ledgerDescription: ledgerDescription.isEmpty ? nil : ledgerDescription,
+            ibanUnconfirmed: ibanUnconfirmed ? true : nil
         )
     }
 
@@ -227,6 +231,7 @@ extension DocumentRecord {
         paymentCode = document.paymentCode
         ledgerCode = document.ledgerCode ?? ""
         ledgerDescription = document.ledgerDescription ?? ""
+        ibanUnconfirmed = document.ibanUnconfirmed ?? false
     }
 }
 
@@ -258,12 +263,13 @@ extension IndexExport.Rule {
     public init(_ rule: SenderRule) {
         self.init(id: rule.id, senderName: rule.senderName, aliases: rule.aliases, ibans: rule.ibans, owner: rule.owner,
                   category: rule.category, reimbursedBy: rule.reimbursedBy,
-                  ledgerCodes: rule.ledgerCodes.isEmpty ? nil : rule.ledgerCodes, updatedAt: rule.updatedAt)
+                  ledgerCodes: rule.ledgerCodes.isEmpty ? nil : rule.ledgerCodes,
+                  paymentHosts: rule.paymentHosts.isEmpty ? nil : rule.paymentHosts, updatedAt: rule.updatedAt)
     }
 
     public var rule: SenderRule {
         SenderRule(id: id, senderName: senderName, aliases: aliases, ibans: ibans, owner: owner, category: category,
-                   reimbursedBy: reimbursedBy, ledgerCodes: ledgerCodes ?? [], updatedAt: updatedAt)
+                   reimbursedBy: reimbursedBy, ledgerCodes: ledgerCodes ?? [], paymentHosts: paymentHosts ?? [], updatedAt: updatedAt)
     }
 }
 

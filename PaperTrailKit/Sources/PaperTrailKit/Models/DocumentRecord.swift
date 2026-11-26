@@ -65,6 +65,10 @@ public final class DocumentRecord {
         set { vatInfoText = newValue?.encoded ?? "" }
     }
 
+    /// The pay-to IBAN differs from the ones known for the sender and the user hasn't confirmed
+    /// it yet: shown as a warning until checked.
+    public var ibanUnconfirmed: Bool = false
+
     // Ledger code (grootboekrekening) the document is booked on; empty when none. The
     // description is kept as it was when chosen, so exports stay readable if the list changes.
     public var ledgerCode: String = ""

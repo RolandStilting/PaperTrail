@@ -17,10 +17,14 @@ public struct SenderRule: Sendable, Hashable, Identifiable {
     /// The ledger code last chosen for this sender, per owner (each company has its own codes;
     /// a sender's invoices and receipts share one).
     public var ledgerCodes: [LedgerChoice]
+    /// Hosts of payment pages (links and QR codes) this sender's bills used and the user
+    /// accepted, e.g. "pay.example-psp.test". A new host gets a warning.
+    public var paymentHosts: [String]
     public var updatedAt: Date
 
     public init(id: UUID = UUID(), senderName: String, aliases: [String] = [], ibans: [String] = [],
-                owner: String, category: String, reimbursedBy: String? = nil, ledgerCodes: [LedgerChoice] = [], updatedAt: Date = .now) {
+                owner: String, category: String, reimbursedBy: String? = nil, ledgerCodes: [LedgerChoice] = [],
+                paymentHosts: [String] = [], updatedAt: Date = .now) {
         self.id = id
         self.senderName = senderName
         self.aliases = aliases
@@ -29,6 +33,7 @@ public struct SenderRule: Sendable, Hashable, Identifiable {
         self.category = category
         self.reimbursedBy = reimbursedBy
         self.ledgerCodes = ledgerCodes
+        self.paymentHosts = paymentHosts
         self.updatedAt = updatedAt
     }
 
@@ -68,6 +73,9 @@ public struct ConfirmedFiling: Sendable, Hashable {
     public var payToIban: String
     /// The company the user chose to reimburse this expense; nil when not reimbursable.
     public var reimbursedBy: String?
+    /// The user confirmed a pay-to IBAN that differs from the ones known for this sender; only
+    /// then is it learned. (A sender's first IBAN is learned without asking.)
+    public var ibanConfirmed: Bool = false
     /// The ledger code chosen; "" when the user left it empty (forget the learned one), nil
     /// when no code could be chosen (no codes, or a category without them): leave the rule alone.
     public var ledgerCode: String?
@@ -165,7 +173,69 @@ public enum SenderRules {
         }
         rule.updatedAt = now
         for name in names where !rule.aliases.contains(name) { rule.aliases.append(name) }
-        if !payTo.isEmpty, !rule.ibans.contains(payTo) { rule.ibans.append(payTo) }
+        // A changed IBAN is how invoice fraud works: learn it only once the user confirmed it.
+        if !payTo.isEmpty, !rule.ibans.contains(payTo), rule.ibans.isEmpty || filing.ibanConfirmed { rule.ibans.append(payTo) }
+        return rule
+    }
+}
+
+// MARK: Fraud checks
+
+/// How a bill's pay-to IBAN compares with what Paper Trail knows about the sender.
+public enum IBANCheck: Equatable, Sendable {
+    /// No rule for this sender yet, or no IBAN to check.
+    case nothingKnown
+    case known
+    /// The sender is known with other IBANs: the classic sign of invoice fraud.
+    case changed(known: [String])
+}
+
+/// How a payment page's host compares with the hosts this sender's bills used before.
+public enum PaymentHostCheck: Equatable, Sendable {
+    case nothingKnown
+    case known
+    case new(known: [String])
+}
+
+extension SenderRules {
+    /// The rule for a sender by name (as confirmed by the user), the most recent one first.
+    public static func rule(forSender name: String, in rules: [SenderRule]) -> SenderRule? {
+        let key = alias(name)
+        guard key.count >= minimumAliasLength else { return nil }
+        return rules.filter { $0.aliases.contains(key) || alias($0.senderName) == key }.max { $0.updatedAt < $1.updatedAt }
+    }
+
+    public static func checkIBAN(_ value: String, rule: SenderRule?) -> IBANCheck {
+        let iban = iban(value)
+        guard let rule, !iban.isEmpty, !rule.ibans.isEmpty else { return .nothingKnown }
+        return rule.ibans.contains(iban) ? .known : .changed(known: rule.ibans)
+    }
+
+    /// Adds a confirmed IBAN to the rule.
+    public static func confirming(iban value: String, in rule: SenderRule, now: Date = .now) -> SenderRule {
+        var rule = rule
+        let iban = iban(value)
+        if !iban.isEmpty, !rule.ibans.contains(iban) { rule.ibans.append(iban); rule.updatedAt = now }
+        return rule
+    }
+
+    static func host(_ value: String) -> String {
+        var host = value.lowercased().trimmingCharacters(in: .whitespaces)
+        if host.hasPrefix("www.") { host.removeFirst(4) }
+        return host
+    }
+
+    public static func checkPaymentHost(_ value: String, rule: SenderRule?) -> PaymentHostCheck {
+        let host = host(value)
+        guard let rule, !host.isEmpty, !rule.paymentHosts.isEmpty else { return .nothingKnown }
+        return rule.paymentHosts.contains(host) ? .known : .new(known: rule.paymentHosts)
+    }
+
+    /// Adds a payment host the user accepted (opened the page, or paid the bill with its code).
+    public static func accepting(paymentHost value: String, in rule: SenderRule, now: Date = .now) -> SenderRule {
+        var rule = rule
+        let host = host(value)
+        if !host.isEmpty, !rule.paymentHosts.contains(host) { rule.paymentHosts.append(host); rule.updatedAt = now }
         return rule
     }
 }

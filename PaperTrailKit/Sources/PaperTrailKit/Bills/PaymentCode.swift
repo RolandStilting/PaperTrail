@@ -40,10 +40,12 @@ public struct PaymentCode: Codable, Hashable, Sendable {
 
     // MARK: Finding codes
 
-    /// Words in a link's host or path that mark it as a payment page.
+    /// Words in a link's host or path that mark it as a payment page. Bank names are left out:
+    /// banks don't host invoice payment pages, and "rabo-verify.example" is a typical lookalike.
+    /// A payment word is no proof the page is genuine; the app shows the host and asks first.
     static let paymentWords = [
         "ideal", "tikkie", "betaal", "betalen", "pay", "mollie", "adyen", "buckaroo", "multisafepay",
-        "rabo", "abnamro", "asnbank", "ing.nl", "bunq", "knab", "sepa", "wero", "factuur", "invoice",
+        "sepa", "wero", "factuur", "invoice",
     ]
 
     /// Pages about the sender rather than about paying: never a payment link, even when the

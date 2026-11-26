@@ -16,6 +16,8 @@ public final class FilingRuleRecord {
     /// One line per ledger code: owner and code separated by a tab. Lines from the first
     /// version also have a category in between (owner, category, code); the last one per owner wins.
     public var ledgerCodesText: String = ""
+    /// Accepted payment page hosts, newline-separated.
+    public var paymentHostsText: String = ""
     public var updatedAt: Date = Date.distantPast
 
     public init(_ rule: SenderRule) {
@@ -30,6 +32,7 @@ public final class FilingRuleRecord {
         ownerName = rule.owner
         categoryName = rule.category
         reimbursedByName = rule.reimbursedBy ?? ""
+        paymentHostsText = rule.paymentHosts.joined(separator: "\n")
         ledgerCodesText = rule.ledgerCodes.map { [$0.owner, $0.code].joined(separator: "\t") }.joined(separator: "\n")
         updatedAt = rule.updatedAt
     }
@@ -47,6 +50,7 @@ public final class FilingRuleRecord {
                 choices.removeAll { $0.owner == parts[0] }
                 choices.append(LedgerChoice(owner: parts[0], code: code))
             },
+            paymentHosts: paymentHostsText.split(separator: "\n").map(String.init),
             updatedAt: updatedAt
         )
     }
