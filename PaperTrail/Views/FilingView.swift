@@ -557,7 +557,7 @@ struct FilingView: View {
         } message: { match in
             Text("\(match.reason.message) An earlier document is in your archive:\n\(match.existing.relativePath)")
         }
-        .alert(editing == nil ? "Filed, but no reminder" : "Saved, but the reminder wasn't updated", isPresented: Binding(get: { reminderProblem != nil }, set: { if !$0 { reminderProblem = nil; onDone() } })) {
+        .alert(editing == nil ? "Filed, but something needs attention" : "Saved, but the reminder wasn't updated", isPresented: Binding(get: { reminderProblem != nil }, set: { if !$0 { reminderProblem = nil; onDone() } })) {
             Button("OK", role: .cancel) {}
         } message: {
             Text(reminderProblem ?? "")
@@ -815,7 +815,8 @@ struct FilingView: View {
         let change = DocumentEdit.reminderChange(before: before, after: record.reminderFacts, wasUnpaidBill: wasUnpaidBill,
                                                  isUnpaidBill: record.isUnpaidBill, isPaid: record.isPaid, hasReminder: hadReminder)
         do {
-            try await billService.updateReminder(for: record, change: change, context: modelContext)
+            try await billService.updateReminder(for: record, change: change, createsReminders: settingsStore.settings.createsBillReminders,
+                                                 context: modelContext)
         } catch {
             // The changes are saved; only the reminder is out of date.
             reminderProblem = error.localizedDescription
@@ -830,14 +831,23 @@ struct FilingView: View {
         do {
             let record = try await filingService.file(document, request: request, extractedText: extractedText, textLayer: recognizedLines,
                                                       suggestedSender: suggestedSender, context: modelContext)
-            do {
-                try await billService.addReminder(for: record, context: modelContext)
-            } catch {
-                // The document is safely filed; only the reminder is missing.
-                reminderProblem = error.localizedDescription
-                return
+            // The document is safely filed from here on; problems after this are only reported.
+            var problems: [String] = []
+            if let queued = document.reviewItemURL, FileManager.default.fileExists(atPath: queued.path(percentEncoded: false)) {
+                problems.append(String(localized: "Its copy in Needs Review could not be removed. Delete it there, so it isn't filed twice."))
             }
-            onDone()
+            do {
+                if settingsStore.settings.createsBillReminders {
+                    try await billService.addReminder(for: record, context: modelContext)
+                }
+            } catch {
+                problems.append(error.localizedDescription)
+            }
+            if problems.isEmpty {
+                onDone()
+            } else {
+                reminderProblem = problems.joined(separator: "\n\n")
+            }
         } catch {
             errorMessage = error.localizedDescription
         }

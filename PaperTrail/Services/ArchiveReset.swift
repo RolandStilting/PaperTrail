@@ -19,6 +19,9 @@ struct ArchiveResetOptions {
     var forgetRules = false
     /// Removes the reminders Paper Trail created for bills.
     var deleteReminders = true
+    /// Keeps `Export/` (the index export and its backups): the way back if the reset was a
+    /// mistake. Off: it goes to the Trash with the rest, since it holds all document details.
+    var keepExport = true
 }
 
 struct ArchiveResetReport {
@@ -46,6 +49,7 @@ struct ArchiveReset {
         let entries = (try? fileManager.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)) ?? []
         var failures: [String] = []
         for item in entries where !item.lastPathComponent.hasPrefix(".") {
+            if options.keepExport, item.lastPathComponent.lowercased() == ArchivePaths.exportFolderName.lowercased() { continue }
             var coordinationError: NSError?
             var trashError: Error?
             NSFileCoordinator(filePresenter: nil).coordinate(writingItemAt: item, options: .forDeleting, error: &coordinationError) { url in

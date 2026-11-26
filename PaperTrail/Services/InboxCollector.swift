@@ -10,6 +10,19 @@ nonisolated struct InboxReport: Sendable, Equatable {
     var failures: [String] = []
 }
 
+/// An image was converted and is in Needs Review, but its original could not be removed
+/// from the hidden claim folder.
+nonisolated enum InboxLeftover: LocalizedError {
+    case imageKept(String, String)
+
+    var errorDescription: String? {
+        switch self {
+        case .imageKept(let name, let reason):
+            String(localized: "\"\(name)\" is in Needs Review, but the original image could not be removed (\(reason)). It is in Needs Review/.claimed; you can delete it there.")
+        }
+    }
+}
+
 /// Moves documents from `Paper Trail/Inbox/` into Needs Review, converting images to PDF.
 ///
 /// Moving a file is the claim: only one device can move it, so two devices never pick up
@@ -43,6 +56,9 @@ nonisolated struct InboxCollector: Sendable {
         // Creating the folder makes the drop zone visible in iCloud Drive.
         try? fileManager.createDirectory(at: inbox, withIntermediateDirectories: true)
 
+        if let sharedFolder {
+            SharedIncoming.removeStalePartials(in: sharedFolder)
+        }
         if let sharedFolder, let shared = try? fileManager.contentsOfDirectory(atPath: sharedFolder.path(percentEncoded: false)) {
             for name in shared.sorted() where !name.hasPrefix(".") {
                 do {
@@ -60,7 +76,20 @@ nonisolated struct InboxCollector: Sendable {
 
         for entry in entries.sorted() {
             let url = inbox.appending(path: entry)
-            switch InboxEntry(directoryEntry: entry) {
+            var kind = InboxEntry(directoryEntry: entry)
+            // Only plain files: a symbolic link or a folder named "x.pdf" could make Paper Trail
+            // read something outside Inbox. They stay where they are and are reported.
+            switch kind {
+            case .pdf(let name), .image(let name):
+                let values = try? url.resourceValues(forKeys: [.isRegularFileKey, .isSymbolicLinkKey])
+                if values?.isRegularFile != true || values?.isSymbolicLink == true {
+                    report.failures.append(String(localized: "\"\(name)\" in Inbox is not a plain file (a link or a folder) and was skipped. Put the document itself in Inbox."))
+                    kind = .ignored
+                }
+            default:
+                break
+            }
+            switch kind {
             case .ignored:
                 continue
             case .notDownloaded(let name):
@@ -102,8 +131,14 @@ nonisolated struct InboxCollector: Sendable {
                 folderComponents: [ArchivePaths.needsReviewFolderName],
                 fileName: ReviewQueueNames.fileName(savedAt: added, originalName: name)
             )
-            _ = try await store.store(pdf, plan: plan, root: root, removingSource: claimed)
+            let stored = try await store.store(pdf, plan: plan, root: root, removingSource: claimed)
+            if let problem = stored.sourceNotRemoved {
+                // The PDF is in Needs Review; putting the image back in Inbox would add it twice.
+                throw InboxLeftover.imageKept(name, problem)
+            }
             return true
+        } catch let leftover as InboxLeftover {
+            throw leftover
         } catch {
             // Put the original back so nothing is lost.
             _ = try? Self.coordinatedMove(claimed, toFolder: Self.inbox(in: root), preferredName: name)

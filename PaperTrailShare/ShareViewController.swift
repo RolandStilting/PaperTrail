@@ -62,8 +62,11 @@ final class ShareModel {
         let folder = SharedIncoming.folder(in: container)
         var saved = 0
         var problems: [String] = []
-        for provider in providers {
-            guard let type = Self.supportedType(of: provider) else { continue }
+        let supported = providers.compactMap { provider in Self.supportedType(of: provider).map { (provider, $0) } }
+        if supported.count > SharedIncoming.maxDocuments {
+            problems.append(String(localized: "Only the first \(SharedIncoming.maxDocuments) documents are saved; share the rest separately."))
+        }
+        for (provider, type) in supported.prefix(SharedIncoming.maxDocuments) {
             do {
                 try await Self.copy(provider, type: type, into: folder)
                 saved += 1
@@ -71,8 +74,10 @@ final class ShareModel {
                 problems.append(error.localizedDescription)
             }
         }
-        if saved > 0 {
+        if saved > 0, problems.isEmpty {
             state = .saved(saved)
+        } else if saved > 0 {
+            state = .failed(String(localized: "\(saved) saved. Not saved: \(problems.joined(separator: " "))"))
         } else if let problem = problems.first {
             state = .failed(String(localized: "Could not save the document: \(problem) Try again, or save it to the Paper Trail Inbox folder in Files."))
         } else {
@@ -96,7 +101,8 @@ final class ShareModel {
                     return
                 }
                 do {
-                    _ = try SharedIncoming.save(url, preferredName: name, into: folder)
+                    try SharedIncoming.check(url, isPDF: type == UTType.pdf.identifier)
+                    _ = try SharedIncoming.save(url, preferredName: name, fileExtension: UTType(type)?.preferredFilenameExtension, into: folder)
                     continuation.resume()
                 } catch {
                     continuation.resume(throwing: error)

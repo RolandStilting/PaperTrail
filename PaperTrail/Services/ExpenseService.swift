@@ -63,7 +63,7 @@ struct ExpenseService {
         let pdf = try ExpenseClaim.pdf(title: title, subtitle: subtitle, lines: lines, receipts: receipts)
         let csv = ExpenseClaim.csv(lines, vatCodes: vatCodes)
 
-        let folder = FileManager.default.temporaryDirectory.appending(path: "Claims/\(claim.id.uuidString)", directoryHint: .isDirectory)
+        let folder = FileManager.default.temporaryDirectory.appending(path: "\(TemporaryFiles.claimsFolder)/\(claim.id.uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let base = FileNamer.sanitizeComponent("\(title) \(date)")
         let pdfURL = folder.appending(path: "\(base).pdf")

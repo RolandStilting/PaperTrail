@@ -16,6 +16,7 @@ struct PaperTrailApp: App {
     @Environment(\.scenePhase) private var scenePhase
 
     init() {
+        TemporaryFiles.cleanUp()
         let filingService = FilingService(location: ICloudArchiveLocation(), store: CoordinatedFileStore())
         self.filingService = filingService
         let model = AppModel(

@@ -205,7 +205,7 @@ struct VATOverviewView: View {
     }
 
     private func writeExport(_ report: VATReport, documents: [Data]) throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "VAT/\(UUID().uuidString)", directoryHint: .isDirectory)
+        let folder = FileManager.default.temporaryDirectory.appending(path: "\(TemporaryFiles.vatFolder)/\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let base = FileNamer.sanitizeComponent("VAT \(company) \(report.period.label())")
         let pdf = folder.appending(path: "\(base).pdf")
