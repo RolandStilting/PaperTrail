@@ -74,6 +74,9 @@ struct FilingView: View {
     @State private var recognizedLines: [[RecognizedLine]]?
     @State private var ocrFailed = false
     @State private var isFiling = false
+    /// The Needs Review file the user asked to delete (waits for confirmation).
+    @State private var deletingQueued: URL?
+    @Environment(AppModel.self) private var model
     @State private var errorMessage: String?
 
     private var request: FilingRequest {
@@ -425,6 +428,15 @@ struct FilingView: View {
                 }
             }
 
+            if let queued = document.reviewItemURL, editing == nil {
+                Section {
+                    Button("Delete from Needs Review", systemImage: "trash", role: .destructive) { deletingQueued = queued }
+                        .disabled(isFiling)
+                } footer: {
+                    Text("For a duplicate or something you don't need to keep. It goes to the Trash.")
+                }
+            }
+
             if document.reviewItemURL == nil, editing == nil {
                 Section {
                     Button("Review Later", systemImage: "tray.and.arrow.down") { Task { await saveForReview() } }
@@ -525,8 +537,22 @@ struct FilingView: View {
         } message: {
             Text(errorMessage ?? "")
         }
+        .confirmationDialog("Delete this document from Needs Review?", isPresented: Binding(get: { deletingQueued != nil }, set: { if !$0 { deletingQueued = nil } }),
+                            titleVisibility: .visible, presenting: deletingQueued) { url in
+            Button("Move to Trash", role: .destructive) {
+                Task { if await model.deleteReviewItem(at: url) { onDone() } }
+            }
+        } message: { _ in
+            Text("You can get it back from the Trash (Recently Deleted in Files).")
+        }
         .alert("Already filed?", isPresented: Binding(get: { duplicate != nil }, set: { if !$0 { duplicate = nil } }), presenting: duplicate) { _ in
             Button("File Anyway") { Task { await file() } }
+            if let queued = document.reviewItemURL {
+                // Already a question; the copy goes to the Trash, so no second one.
+                Button("Delete This Copy", role: .destructive) {
+                    Task { if await model.deleteReviewItem(at: queued) { onDone() } }
+                }
+            }
             Button("Cancel", role: .cancel) {}
         } message: { match in
             Text("\(match.reason.message) An earlier document is in your archive:\n\(match.existing.relativePath)")

@@ -153,6 +153,9 @@
     "%@: %@" : {
 
     },
+    "\"%@\" is not in the Needs Review folder, so Paper Trail won't delete it." : {
+
+    },
     "A dedicated mailbox that this Mac checks; its emails go to Needs Review." : {
 
     },
@@ -519,13 +522,28 @@
     "Date on document" : {
 
     },
+    "Delete" : {
+
+    },
+    "Delete \"%@\"?" : {
+
+    },
     "Delete %@?" : {
+
+    },
+    "Delete from Needs Review" : {
 
     },
     "Delete Owner" : {
 
     },
     "Delete Rule" : {
+
+    },
+    "Delete This Copy" : {
+
+    },
+    "Delete this document from Needs Review?" : {
 
     },
     "Description" : {
@@ -749,6 +767,9 @@
     "Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are set per owner." : {
 
     },
+    "For a duplicate or something you don't need to keep. It goes to the Trash." : {
+
+    },
     "For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed." : {
 
     },
@@ -828,6 +849,9 @@
 
     },
     "It may have been removed from the archive." : {
+
+    },
+    "It's removed from Needs Review on all your devices. You can get it back from the Trash (Recently Deleted in Files)." : {
 
     },
     "Its PDF and details appear here." : {
@@ -912,6 +936,9 @@
 
     },
     "Move filed emails to" : {
+
+    },
+    "Move to Trash" : {
 
     },
     "Moves all documents to the Trash and clears the lists, for example after testing. Settings stay." : {
@@ -1548,6 +1575,9 @@
 
     },
     "Yearly" : {
+
+    },
+    "You can get it back from the Trash (Recently Deleted in Files)." : {
 
     },
     "You can put files back from the Trash; deleted iCloud Drive files can usually also be recovered for a while on iCloud.com. Empty the Trash only when you're sure." : {

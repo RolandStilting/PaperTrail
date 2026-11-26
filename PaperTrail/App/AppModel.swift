@@ -47,6 +47,21 @@ final class AppModel {
     }
 
     /// Moves Inbox and shared documents to Needs Review and reads the queue.
+    /// Moves a document waiting in Needs Review to the Trash. Returns false (with the error
+    /// shown) when it couldn't.
+    @discardableResult
+    func deleteReviewItem(at url: URL) async -> Bool {
+        guard let root = archiveRoot?.url else { return false }
+        do {
+            try await filingService.reviewQueue.delete(url, root: root)
+            await refreshReviewItems()
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
     func refreshReviewItems() async {
         guard let root = archiveRoot?.url else { return }
         let report = await filingService.inboxCollector.collect(root: root)

@@ -275,6 +275,7 @@ struct DocumentActions: View {
 struct ReviewListView: View {
     @Environment(AppModel.self) private var model
     @State private var selection: URL?
+    @State private var deleting: ReviewItem?
 
     private var ids: [URL] { model.reviewItems.map(\.url) }
 
@@ -312,7 +313,21 @@ struct ReviewListView: View {
                     }
                 }
                 .tag(item.url)
+                .swipeActions {
+                    Button("Delete", systemImage: "trash", role: .destructive) { deleting = item }
+                }
+                .contextMenu {
+                    Button("Delete", systemImage: "trash", role: .destructive) { deleting = item }
+                }
             }
+        }
+        .confirmationDialog("Delete \"\(deleting?.name ?? "")\"?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
+                            titleVisibility: .visible, presenting: deleting) { item in
+            Button("Move to Trash", role: .destructive) {
+                Task { await model.deleteReviewItem(at: item.url) }
+            }
+        } message: { _ in
+            Text("It's removed from Needs Review on all your devices. You can get it back from the Trash (Recently Deleted in Files).")
         }
         .arrowKeySelection($selection, in: ids)
         .onAppear { if split, selection == nil { selection = ids.first } }
