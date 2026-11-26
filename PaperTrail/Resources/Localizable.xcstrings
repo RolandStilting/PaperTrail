@@ -159,6 +159,9 @@
     "A dedicated mailbox that this Mac checks; its emails go to Needs Review." : {
 
     },
+    "A dedicated mailbox; its emails go to Needs Review. Set it up on each device that should check it." : {
+
+    },
     "A top-level folder for each person or company. Open an owner for paying bills, VAT and ledger codes." : {
 
     },
@@ -846,6 +849,9 @@
 
     },
     "Input VAT ledger code %@" : {
+
+    },
+    "iOS doesn't let apps check mail on a schedule. This iPhone checks when you open Paper Trail, when you pull down in Needs Review, and now and then in the background when iOS allows it. A Mac with Paper Trail open checks every few minutes." : {
 
     },
     "It may have been removed from the archive." : {

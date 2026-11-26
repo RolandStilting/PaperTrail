@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Observation
 import PaperTrailKit
@@ -17,8 +16,13 @@ nonisolated enum MailIntakeError: LocalizedError {
     }
 }
 
-/// Checks the dedicated mailbox on the Mac and puts every email's documents in Needs Review.
-/// Emails are moved to "Processed" only after their documents are safely written.
+/// Checks the dedicated mailbox and puts every email's documents in Needs Review. Emails are
+/// moved to "Processed" only after their documents are safely written.
+///
+/// The Mac checks every few minutes while it runs. iOS gives apps no regular background time,
+/// so the iPhone and iPad check when the app comes to the front, on pull to refresh in Needs
+/// Review, and when iOS grants a background refresh. Settings and password are per device.
+/// Several devices only check together when the server lets them claim an email (UIDPLUS).
 @Observable @MainActor
 final class MailIntakeService {
     enum Status: Equatable {
@@ -30,11 +34,15 @@ final class MailIntakeService {
     }
 
     static let accountKey = "mailAccount.v1"
+    static let workingSeenKey = "mailWorkingSeen.v1"
+    /// iOS: identifier of the background refresh (also in Info.plist).
+    static var backgroundTaskID: String { (Bundle.main.bundleIdentifier ?? "papertrail") + ".mailcheck" }
 
     private(set) var status = Status.off
     private(set) var account: MailAccount
     /// Problems with single emails from the last check (shown in the menu).
     private(set) var problems: [String] = []
+    private(set) var lastCheck: Date?
 
     private let filingService: FilingService
     private let passwords = KeychainPasswordStore()
@@ -79,17 +87,44 @@ final class MailIntakeService {
         }
     }
 
-    func checkNow() async {
+    /// iOS: checks when the last check is longer ago than the interval (on opening the app).
+    func checkIfDue() async {
+        if let lastCheck, Date.now.timeIntervalSince(lastCheck) < Double(max(1, account.checkIntervalMinutes)) * 60 { return }
+        await checkNow()
+    }
+
+    /// Emails this device saw in the working folder, and when; abandoned ones go back after an hour.
+    private var workingSeen: [UInt32: Date] {
+        get {
+            let stored = UserDefaults.standard.dictionary(forKey: Self.workingSeenKey) as? [String: Date] ?? [:]
+            return Dictionary(uniqueKeysWithValues: stored.compactMap { key, date in UInt32(key).map { ($0, date) } })
+        }
+        set {
+            UserDefaults.standard.set(Dictionary(uniqueKeysWithValues: newValue.map { (String($0.key), $0.value) }), forKey: Self.workingSeenKey)
+        }
+    }
+
+    /// - Parameter timeLimit: Seconds for the whole check; short for an iOS background refresh.
+    func checkNow(timeLimit: Double = 300) async {
         guard account.isEnabled, account.isComplete, status != .checking else { return }
         status = .checking
+        lastCheck = .now
         do {
             guard let password = try passwords.password(account: account.username) else { throw MailIntakeError.missingPassword }
             let root = try await filingService.location.resolveRoot().url
             skipped = []
-            let report = try await Self.runPass(account: account, password: password, limit: 300, failedBefore: failedUIDs) { raw in
+            #if os(macOS)
+            let requireClaims = false
+            #else
+            // The Mac may check this mailbox too: only file emails this device has claimed.
+            let requireClaims = true
+            #endif
+            let report = try await Self.runPass(account: account, password: password, limit: timeLimit, failedBefore: failedUIDs,
+                                                requireClaims: requireClaims, workingSeen: workingSeen) { raw in
                 try await self.file(raw, root: root)
             }
             failedUIDs = report.failedUIDs
+            workingSeen = report.workingSeen
             problems = report.failures + skipped
             status = .checked(.now, filed: report.processed)
         } catch {
@@ -123,12 +158,14 @@ final class MailIntakeService {
     }
 
     private nonisolated static func runPass(account: MailAccount, password: String, limit: Double, failedBefore: Set<UInt32>,
+                                           requireClaims: Bool, workingSeen: [UInt32: Date],
                                            handle: @escaping @Sendable (Data) async throws -> Void) async throws -> MailboxReport {
         let transport = try await TLSTransport.connect(host: account.server, port: account.port)
         let watchdog = closeAfter(seconds: limit, transport)
         defer { watchdog.cancel(); transport.close() }
         return try await MailboxProcessor.run(session: IMAPSession(transport: transport), account: account, password: password,
-                                         failedBefore: failedBefore, handle: handle)
+                                         failedBefore: failedBefore, requireClaims: requireClaims,
+                                         workingSeenBefore: workingSeen, handle: handle)
     }
 
     /// Closing the connection ends any read that is still waiting, so a silent server
@@ -184,5 +221,3 @@ final class MailIntakeService {
         }
     }
 }
-
-#endif

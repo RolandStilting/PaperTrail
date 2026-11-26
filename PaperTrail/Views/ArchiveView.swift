@@ -274,6 +274,7 @@ struct DocumentActions: View {
 /// Documents waiting in Needs Review.
 struct ReviewListView: View {
     @Environment(AppModel.self) private var model
+    @Environment(MailIntakeService.self) private var mail
     @State private var selection: URL?
     @State private var deleting: ReviewItem?
 
@@ -293,7 +294,11 @@ struct ReviewListView: View {
             }
         }
         .navigationTitle("Needs Review")
-        .refreshable { await model.refreshReviewItems() }
+        .refreshable {
+            // Pull to refresh also checks the mailbox (the iPhone's main way to get new mail).
+            await mail.checkNow()
+            await model.refreshReviewItems()
+        }
         .toolbar { ToolbarItem(placement: .primaryAction) { AddDocumentMenu() } }
     }
 

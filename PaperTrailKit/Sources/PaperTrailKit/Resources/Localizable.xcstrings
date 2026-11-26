@@ -64,6 +64,9 @@
     "%lld more attachments were skipped: Paper Trail takes at most %lld from one email." : {
 
     },
+    "\"%@\" is the folder Paper Trail uses while filing. Pick other folder names." : {
+
+    },
     "A ledger code for %@ has a description but no code. Enter the code or remove the row." : {
 
     },
@@ -315,6 +318,9 @@
 
     },
     "This is exactly the same file." : {
+
+    },
+    "This mail server can't tell which device took an email (no UIDPLUS), so only one device may check it. Check email on the Mac only." : {
 
     },
     "To check (not in the total)" : {

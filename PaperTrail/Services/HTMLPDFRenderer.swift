@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import PaperTrailKit
 import WebKit
@@ -95,4 +94,3 @@ final class HTMLPDFRenderer: NSObject, WKNavigationDelegate {
         navigationAction.navigationType == .other && (navigationAction.request.url?.scheme ?? "about") == "about" ? .allow : .cancel
     }
 }
-#endif

@@ -1,9 +1,10 @@
-#if os(macOS)
 import PaperTrailKit
+#if os(macOS)
 import ServiceManagement
+#endif
 import SwiftUI
 
-/// The dedicated mailbox the Mac checks. The password goes to the Keychain only.
+/// The dedicated mailbox this device checks. The password goes to this device's Keychain only.
 struct MailSettingsView: View {
     let mail: MailIntakeService
 
@@ -11,7 +12,9 @@ struct MailSettingsView: View {
     @State private var password = ""
     @State private var message: String?
     @State private var isTesting = false
+    #if os(macOS)
     @State private var startsAtLogin = SMAppService.mainApp.status == .enabled
+    #endif
 
     var body: some View {
         Form {
@@ -24,7 +27,7 @@ struct MailSettingsView: View {
             } header: {
                 Text("Mailbox")
             } footer: {
-                Text("Sign in with your main iCloud address (an alias can't sign in) and an app-specific password from account.apple.com → Sign-In and Security; your normal password doesn't work with two-factor authentication. For iCloud, Paper Trail also tries the full @icloud.com address. The password gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this Mac's Keychain.")
+                Text("Sign in with your main iCloud address (an alias can't sign in) and an app-specific password from account.apple.com → Sign-In and Security; your normal password doesn't work with two-factor authentication. For iCloud, Paper Trail also tries the full @icloud.com address. The password gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this device's Keychain; enter it on each device that checks the mailbox.")
             }
 
             Section {
@@ -39,7 +42,7 @@ struct MailSettingsView: View {
             } header: {
                 Text("Folders")
             } footer: {
-                Text("Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into \(MailAccount.defaultFolder). Paper Trail creates the second folder if needed, and never deletes email.")
+                Text("Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into \(MailAccount.defaultFolder). Paper Trail creates the second folder if needed, and never deletes email. While a device files an email, it sits in \(MailAccount.workingFolder), so the Mac and iPhone never file the same one.")
             }
 
             Section("Server") {
@@ -48,12 +51,23 @@ struct MailSettingsView: View {
                 Stepper("Check every \(draft.checkIntervalMinutes) minutes", value: $draft.checkIntervalMinutes, in: 1...120)
             }
 
+            #if os(macOS)
             Section {
                 Toggle("Open Paper Trail at login", isOn: $startsAtLogin)
                     .onChange(of: startsAtLogin) { _, on in setLoginItem(on) }
             } footer: {
                 Text("The mailbox is checked while Paper Trail runs. It keeps running in the menu bar after you close its window.")
             }
+            #else
+            Section {
+                LabeledContent("Status", value: MailStatusText.text(mail.status))
+                ForEach(mail.problems.prefix(5), id: \.self) { Text($0).font(.callout).foregroundStyle(.orange) }
+                Button("Check Mail Now", systemImage: "arrow.clockwise") { Task { await mail.checkNow() } }
+                    .disabled(mail.status == .checking || !mail.account.isEnabled)
+            } footer: {
+                Text("iOS doesn't let apps check mail on a schedule. This iPhone checks when you open Paper Trail, when you pull down in Needs Review, and now and then in the background when iOS allows it. A Mac with Paper Trail open checks every few minutes.")
+            }
+            #endif
 
             if let message {
                 Section { Text(message) }
@@ -100,6 +114,7 @@ struct MailSettingsView: View {
         message = await mail.testConnection(draft, password: secret) ?? String(localized: "Signed in to the mailbox. Save to start checking it.")
     }
 
+    #if os(macOS)
     private func setLoginItem(_ on: Bool) {
         do {
             if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
@@ -112,8 +127,24 @@ struct MailSettingsView: View {
             startsAtLogin = SMAppService.mainApp.status == .enabled
         }
     }
+    #endif
 }
 
+/// The mailbox status in one line, for the Mac's menu bar and the iPhone's email settings.
+enum MailStatusText {
+    static func text(_ status: MailIntakeService.Status) -> String {
+        switch status {
+        case .off: String(localized: "Email: off (Settings → Email)")
+        case .idle: String(localized: "Email: waiting for the first check")
+        case .checking: String(localized: "Email: checking…")
+        case .checked(let date, let filed):
+            String(localized: "Email: checked \(date.formatted(date: .omitted, time: .shortened)), \(filed) filed")
+        case .failed(let reason): String(localized: "Email: \(reason)")
+        }
+    }
+}
+
+#if os(macOS)
 /// The menu-bar menu: mailbox status and quick actions.
 struct MailMenu: View {
     let mail: MailIntakeService
@@ -132,15 +163,6 @@ struct MailMenu: View {
         Button("Quit Paper Trail") { NSApplication.shared.terminate(nil) }
     }
 
-    private var statusText: String {
-        switch mail.status {
-        case .off: String(localized: "Email: off (Settings → Email)")
-        case .idle: String(localized: "Email: waiting for the first check")
-        case .checking: String(localized: "Email: checking…")
-        case .checked(let date, let filed):
-            String(localized: "Email: checked \(date.formatted(date: .omitted, time: .shortened)), \(filed) filed")
-        case .failed(let reason): String(localized: "Email: \(reason)")
-        }
-    }
+    private var statusText: String { MailStatusText.text(mail.status) }
 }
 #endif

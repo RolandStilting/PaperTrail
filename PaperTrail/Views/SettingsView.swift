@@ -6,9 +6,7 @@ import SwiftUI
 /// automatically a moment after the last edit, as long as the settings are valid.
 struct SettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore
-    #if os(macOS)
     @Environment(MailIntakeService.self) private var mail
-    #endif
 
     @State private var draft = ArchiveSettings.defaults
     @State private var loadedDraft = false
@@ -134,13 +132,11 @@ struct SettingsView: View {
                 Text("Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are set per owner.")
             }
 
-            #if os(macOS)
             Section {
                 NavigationLink("Email") { MailSettingsView(mail: mail) }
             } footer: {
-                Text("A dedicated mailbox that this Mac checks; its emails go to Needs Review.")
+                Text("A dedicated mailbox; its emails go to Needs Review. Set it up on each device that should check it.")
             }
-            #endif
 
             lockSection
 
