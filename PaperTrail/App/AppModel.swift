@@ -144,6 +144,7 @@ final class AppModel {
         do {
             let open = try context.fetch(FetchDescriptor<DocumentRecord>(predicate: #Predicate { $0.isUnpaidBill && !$0.isPaid }))
             try await billService.syncPaidState(bills: open, context: context)
+            await billService.refreshOldReminderTexts(bills: open)
         } catch {
             errorMessage = String(localized: "Could not check Reminders for paid bills: \(error.localizedDescription)")
         }

@@ -133,6 +133,14 @@ struct SettingsView: View {
             }
 
             Section {
+                Toggle("Create Reminders for Bills", isOn: $draft.createsBillReminders)
+            } header: {
+                Text("Bills")
+            } footer: {
+                Text("Each unpaid bill gets a reminder in the owner's To pay list in Reminders, with the due date; completing it marks the bill paid. The reminder shows only the sender and reference, not the amount or IBAN. Off: bills are only in To Pay here; reminders that already exist keep working. Applies to all your devices.")
+            }
+
+            Section {
                 NavigationLink("Email") { MailSettingsView(mail: mail) }
             } footer: {
                 Text("A dedicated mailbox; its emails go to Needs Review. Set it up on each device that should check it.")

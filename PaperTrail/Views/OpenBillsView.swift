@@ -274,7 +274,7 @@ struct BillDetailView: View {
                 if bill.reminderExternalID == nil {
                     Button("Create Reminder", systemImage: "checklist") { Task { await createReminder() } }
                         .disabled(isWorking)
-                } else if reminderMissing {
+                } else if reminderMissing, settingsStore.settings.createsBillReminders {
                     Button("Reminder Not Found – Create Again", systemImage: "checklist") { Task { await recreateReminder() } }
                         .disabled(isWorking)
                 }
@@ -283,7 +283,9 @@ struct BillDetailView: View {
                 Button("Look for Payment Code Again", systemImage: "qrcode.viewfinder") { Task { await findPaymentCode(again: true) } }
                     .disabled(isScanning)
             } footer: {
-                Text("Completing the bill's reminder in Reminders also marks it paid.")
+                if bill.reminderExternalID != nil {
+                    Text("Completing the bill's reminder in Reminders also marks it paid.")
+                }
             }
         }
         .formStyle(.grouped)

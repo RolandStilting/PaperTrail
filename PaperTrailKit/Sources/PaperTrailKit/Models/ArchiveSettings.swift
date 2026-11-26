@@ -7,18 +7,24 @@ import Foundation
 public struct ArchiveSettings: Codable, Hashable, Sendable {
     public var owners: [Owner]
     public var categories: [DocumentCategory]
+    /// Whether filing an unpaid bill creates a reminder in the owner's To pay list. Off: bills
+    /// are only in Paper Trail's To Pay list and are marked paid there; reminders that already
+    /// exist keep working.
+    public var createsBillReminders: Bool
 
-    public init(owners: [Owner], categories: [DocumentCategory]) {
+    public init(owners: [Owner], categories: [DocumentCategory], createsBillReminders: Bool = true) {
         self.owners = owners
         self.categories = categories
+        self.createsBillReminders = createsBillReminders
     }
 
-    enum CodingKeys: String, CodingKey { case owners, categories }
+    enum CodingKeys: String, CodingKey { case owners, categories, createsBillReminders }
 
     public init(from decoder: any Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         owners = try container.decode([Owner].self, forKey: .owners)
         categories = try container.decode([DocumentCategory].self, forKey: .categories)
+        createsBillReminders = try container.decodeIfPresent(Bool.self, forKey: .createsBillReminders) ?? true
         moveLegacyLedgerLists()
     }
 

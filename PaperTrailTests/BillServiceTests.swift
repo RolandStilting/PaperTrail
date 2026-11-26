@@ -26,6 +26,8 @@ final class FakeReminders: BillReminding {
     var deleted: Set<String> = []
     func reminderExists(externalID: String) async -> Bool { !deleted.contains(externalID) }
     func deleteReminder(externalID: String) async throws { deleted.insert(externalID) }
+    var refreshed: [String] = []
+    func refreshText(externalID: String, for bill: DocumentRecord) async throws { refreshed.append(externalID) }
 }
 
 @MainActor
@@ -91,5 +93,26 @@ struct BillServiceTests {
         try await service.recreateReminder(for: record, context: container.mainContext)
         #expect(reminders.created.count == 2)
         #expect(await !service.reminderIsMissing(for: record))
+    }
+
+    @Test func remindersTurnedOffMakeNoneOnEdit() async throws {
+        let record = bill()
+        try await service.updateReminder(for: record, change: .create, createsReminders: false, context: container.mainContext)
+        #expect(reminders.created.isEmpty && record.reminderExternalID == nil)
+
+        try await service.addReminder(for: record, context: container.mainContext)
+        let old = try #require(record.reminderExternalID)
+        try await service.updateReminder(for: record, change: .replace, createsReminders: false, context: container.mainContext)
+        #expect(reminders.created.count == 1)
+        #expect(reminders.deleted == [old] && record.reminderExternalID == nil)
+    }
+
+    @Test func oldReminderTextsAreRewrittenOnce() async throws {
+        let defaults = try #require(UserDefaults(suiteName: "BillServiceTests-\(UUID().uuidString)"))
+        let record = bill()
+        try await service.addReminder(for: record, context: container.mainContext)
+        await service.refreshOldReminderTexts(bills: [record], defaults: defaults)
+        await service.refreshOldReminderTexts(bills: [record], defaults: defaults)
+        #expect(reminders.refreshed == [record.reminderExternalID!])
     }
 }
