@@ -4,6 +4,19 @@
     "›" : {
 
     },
+    "\"%@\" in Inbox is not a plain file (a link or a folder) and was skipped. Put the document itself in Inbox." : {
+
+    },
+    "\"%@\" is in Needs Review, but the original image could not be removed (%@). It is in Needs Review/.claimed; you can delete it there." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "\"%1$@\" is in Needs Review, but the original image could not be removed (%2$@). It is in Needs Review/.claimed; you can delete it there."
+          }
+        }
+      }
+    },
     "\"%@\" is no longer in Needs Review. It was probably filed on another device. Pull down to refresh the list." : {
 
     },
@@ -11,6 +24,9 @@
 
     },
     "\"%@\" is not a PDF or image. Paper Trail can import PDFs and images." : {
+
+    },
+    "\"%@\" is not in the Needs Review folder, so Paper Trail won't delete it." : {
 
     },
     "\"%@\" was written but could not be verified. The document was not removed from its source. Check iCloud Drive and try again." : {
@@ -75,10 +91,16 @@
     "%@ Try again." : {
 
     },
+    "%@: %@" : {
+
+    },
     "%lld documents" : {
 
     },
     "%lld documents are already in the index and stay as they are." : {
+
+    },
+    "%lld documents are skipped because their path in the export isn't a place in the archive. The export may have been changed." : {
 
     },
     "%lld documents are skipped because their PDF is no longer in iCloud Drive." : {
@@ -148,15 +170,6 @@
 
     },
     "4300" : {
-
-    },
-    "%@: %@" : {
-
-    },
-    "\"%@\" is not in the Needs Review folder, so Paper Trail won't delete it." : {
-
-    },
-    "A dedicated mailbox that this Mac checks; its emails go to Needs Review." : {
 
     },
     "A dedicated mailbox; its emails go to Needs Review. Set it up on each device that should check it." : {
@@ -522,6 +535,9 @@
     "Create Reminder" : {
 
     },
+    "Create Reminders for Bills" : {
+
+    },
     "Date on document" : {
 
     },
@@ -616,6 +632,9 @@
     "Each code once. Empty rows are ignored." : {
 
     },
+    "Each unpaid bill gets a reminder in the owner's To pay list in Reminders, with the due date; completing it marks the bill paid. The reminder shows only the sender and reference, not the amount or IBAN. Off: bills are only in To Pay here; reminders that already exist keep working. Applies to all your devices." : {
+
+    },
     "Earlier bills from %@ used %@. Check that this address belongs to %@ or their payment provider before paying." : {
 
     },
@@ -668,8 +687,15 @@
     "Enter the app-specific password first." : {
 
     },
-    "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email." : {
-
+    "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email. While a device files an email, it sits in %@, so the Mac and iPhone never file the same one." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %1$@. Paper Trail creates the second folder if needed, and never deletes email. While a device files an email, it sits in %2$@, so the Mac and iPhone never file the same one."
+          }
+        }
+      }
     },
     "Every week Paper Trail writes everything that isn't in the PDFs (amounts, VAT, paid bills, expense claims, learned rules) to Paper Trail/Export in iCloud Drive, as JSON and as a CSV for Excel or Numbers. The last 8 weeks are kept in Export/Backups. Import adds back documents and records that are missing from the index; it never changes or removes anything." : {
 
@@ -746,7 +772,7 @@
     "Filed under" : {
 
     },
-    "Filed, but no reminder" : {
+    "Filed, but something needs attention" : {
 
     },
     "Files it under %@ as an expense %@ reimburses. Its VAT and ledger code stay with %@." : {
@@ -860,6 +886,9 @@
     "It's removed from Needs Review on all your devices. You can get it back from the Trash (Recently Deleted in Files)." : {
 
     },
+    "Its copy in Needs Review could not be removed. Delete it there, so it isn't filed twice." : {
+
+    },
     "Its PDF and details appear here." : {
 
     },
@@ -870,6 +899,9 @@
 
     },
     "Its settings and ledger codes are removed. Filed documents and their folders stay where they are." : {
+
+    },
+    "Keep the index export" : {
 
     },
     "Kept: owners, categories, payment and email settings. Emails in your mailbox are not touched." : {
@@ -959,10 +991,10 @@
     "Needs Review" : {
 
     },
-    "New IBAN for %@" : {
+    "New IBAN – not checked yet" : {
 
     },
-    "New IBAN – not checked yet" : {
+    "New IBAN for %@" : {
 
     },
     "New IBAN, not checked yet" : {
@@ -1361,7 +1393,7 @@
     "Sign in with" : {
 
     },
-    "Sign in with your main iCloud address (an alias can't sign in) and an app-specific password from account.apple.com → Sign-In and Security; your normal password doesn't work with two-factor authentication. For iCloud, Paper Trail also tries the full @icloud.com address. The password gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this Mac's Keychain." : {
+    "Sign in with your main iCloud address (an alias can't sign in) and an app-specific password from account.apple.com → Sign-In and Security; your normal password doesn't work with two-factor authentication. For iCloud, Paper Trail also tries the full @icloud.com address. The password gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this device's Keychain; enter it on each device that checks the mailbox." : {
 
     },
     "Signed in to the mailbox. Save to start checking it." : {
@@ -1425,6 +1457,9 @@
 
     },
     "The file was saved, but Paper Trail could not note the export: %@" : {
+
+    },
+    "The index export (the Export folder) holds every document's details and recognised text. Keep it to restore the list later with Import; turn this off to move it to the Trash too." : {
 
     },
     "The mail server did not answer in time. Paper Trail will try again at the next check." : {

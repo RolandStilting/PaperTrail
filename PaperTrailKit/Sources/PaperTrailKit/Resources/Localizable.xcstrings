@@ -4,6 +4,21 @@
     "\"%@\" is a reserved folder name. Rename the owner in Settings." : {
 
     },
+    "\"%@\" is larger than 30 MB." : {
+
+    },
+    "\"%@\" is larger than 50 MB." : {
+
+    },
+    "\"%@\" is not a valid PDF." : {
+
+    },
+    "\"%@\" is the folder Paper Trail uses while filing. Pick other folder names." : {
+
+    },
+    "\"%@\" is too large (PDFs up to 50 MB, images up to 30 MB)." : {
+
+    },
     "\"Inbox\" and \"Needs Review\" are reserved folder names. Pick another owner name." : {
 
     },
@@ -46,25 +61,13 @@
     "%lld days overdue" : {
 
     },
+    "%lld more attachments were skipped: Paper Trail takes at most %lld from one email." : {
+
+    },
     "1 bill to pay, %@." : {
 
     },
     "1 day overdue" : {
-
-    },
-    "\"%@\" is not a valid PDF." : {
-
-    },
-    "\"%@\" is larger than 50 MB." : {
-
-    },
-    "\"%@\" is larger than 30 MB." : {
-
-    },
-    "%lld more attachments were skipped: Paper Trail takes at most %lld from one email." : {
-
-    },
-    "\"%@\" is the folder Paper Trail uses while filing. Pick other folder names." : {
 
     },
     "A ledger code for %@ has a description but no code. Enter the code or remove the row." : {
@@ -83,9 +86,6 @@
 
     },
     "amount missing" : {
-
-    },
-    "Amount: %@" : {
 
     },
     "Apple Intelligence is not available right now (%@). Fill in the details yourself." : {
@@ -167,9 +167,6 @@
     "Foreign VAT (not in the total)" : {
 
     },
-    "IBAN: %@" : {
-
-    },
     "Incl. VAT" : {
 
     },
@@ -218,16 +215,6 @@
     },
     "Pay %@" : {
 
-    },
-    "Pay %@ · %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Pay %1$@ · %2$@"
-          }
-        }
-      }
     },
     "Rate" : {
 
