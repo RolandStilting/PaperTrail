@@ -146,6 +146,12 @@ struct RootView: View {
                 try? await Task.sleep(for: .seconds(60))
             }
         }
+        .task(id: WatchKey(active: scenePhase == .active, root: model.archiveRoot)) {
+            // While the app is in front, follow iCloud's changes to Inbox and Needs Review, so
+            // documents added on another device show up within seconds (the minute check stays).
+            guard scenePhase == .active, let root = model.archiveRoot else { return }
+            await ICloudFolderWatcher.watch(root: root) { await model.refreshReviewItems() }
+        }
     }
 
     // MARK: iPhone
@@ -295,4 +301,10 @@ struct MoneyView: View {
         }
         .navigationTitle("Money")
     }
+}
+
+/// Restarts the iCloud folder watch when the app comes to the front or the archive is found.
+private struct WatchKey: Equatable {
+    var active: Bool
+    var root: ArchiveRoot?
 }

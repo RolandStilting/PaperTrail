@@ -62,7 +62,31 @@ final class AppModel {
         }
     }
 
+    /// The refresh that is running, if any. Another request meanwhile waits for it and makes it
+    /// read once more, so the minute check, the iCloud watch and the screens never collect Inbox
+    /// twice at once, and every caller sees a list read after its request.
+    private var reviewRefresh: Task<Void, Never>?
+    private var reviewRefreshRequested = false
+
     func refreshReviewItems() async {
+        if let running = reviewRefresh {
+            reviewRefreshRequested = true
+            await running.value
+            return
+        }
+        let task = Task {
+            repeat {
+                reviewRefreshRequested = false
+                await refreshReviewItemsOnce()
+            } while reviewRefreshRequested
+            // Cleared in the same step as the last check, so a request can't slip in between.
+            reviewRefresh = nil
+        }
+        reviewRefresh = task
+        await task.value
+    }
+
+    private func refreshReviewItemsOnce() async {
         guard let root = archiveRoot?.url else { return }
         let report = await filingService.inboxCollector.collect(root: root)
         unreadableInboxFiles = report.unsupported
