@@ -31,14 +31,15 @@ struct VATReportTests {
         VATReportItem(date: day(3, 9), sender: "Schildersbedrijf Testkwast", description: "Factuur", amount: 853.66,
                       vat: VATInfo(lines: [VATLine(rate: 21, base: 705.50, amount: 148.16)]), isReimbursedExpense: false, relativePath: "a.pdf"),
         VATReportItem(date: day(3, 21), sender: "Drogisterij Voorbeeld", description: "Kassabon", amount: 17.39,
-                      vat: VATInfo(lines: [VATLine(rate: 9, base: 4.49, amount: 0.40), VATLine(rate: 21, base: 10.33, amount: 2.17)]), isReimbursedExpense: true, relativePath: "b.pdf"),
+                      vat: VATInfo(lines: [VATLine(rate: 9, base: 4.49, amount: 0.40), VATLine(rate: 21, base: 10.33, amount: 2.17)]), isReimbursedExpense: true, relativePath: "b.pdf",
+                      ledgerCode: "4510", ledgerDescription: "Kantoorbenodigdheden"),
         VATReportItem(date: day(2, 2), sender: "Gasthof Beispiel", description: "Rechnung", amount: 204,
                       vat: VATInfo(lines: [VATLine(rate: 7, base: 168.22, amount: 11.78)], isForeign: true), isReimbursedExpense: false, relativePath: "c.pdf"),
         VATReportItem(date: day(2, 4), sender: "Example Software", description: "Licence", amount: 600,
                       vat: VATInfo(lines: [VATLine(rate: 0, base: 600, amount: 0)], isReverseCharge: true), isReimbursedExpense: false, relativePath: "d.pdf"),
         VATReportItem(date: day(1, 15), sender: "Proefzorg", description: "Polis", amount: 148.5,
                       vat: VATInfo(), isReimbursedExpense: false, relativePath: "e.pdf"),
-    ])
+    ], vatLedgerCodes: [VATLedgerCode(rate: 21, code: "1510"), VATLedgerCode(rate: 9, code: "1511")])
 
     @Test func totalsPerRateAndGroups() {
         let report = Self.report
@@ -51,12 +52,14 @@ struct VATReportTests {
     @Test func csvHasALinePerRateAndTotals() {
         let text = String(decoding: Self.report.csv(locale: Locale(identifier: "nl_NL"), calendar: Self.calendar).dropFirst(3), as: UTF8.self)
         let rows = text.components(separatedBy: "\r\n")
-        #expect(rows[0] == "Date;Sender;Description;Rate;Excl. VAT;VAT;Incl. VAT;Status;Document")
-        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;9%;4,49;0,40;4,89;Reclaim (reimbursed expense);b.pdf"))
-        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;21%;10,33;2,17;12,50;Reclaim (reimbursed expense);b.pdf"))
-        #expect(rows.contains("2026-01-15;Proefzorg;Polis;;;;148,50;No VAT found – check;e.pdf"))
-        #expect(rows.contains(";VAT to reclaim;;;;150,73;;;"))
-        #expect(rows.contains(";Foreign VAT (not in the total);;;;11,78;;;"))
+        #expect(rows[0] == "Date;Sender;Description;Rate;Excl. VAT;VAT;Incl. VAT;Status;Ledger code;Ledger description;VAT ledger code;Document")
+        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;9%;4,49;0,40;4,89;Reclaim (reimbursed expense);4510;Kantoorbenodigdheden;1511;b.pdf"))
+        #expect(rows.contains("2026-03-21;Drogisterij Voorbeeld;Kassabon;21%;10,33;2,17;12,50;Reclaim (reimbursed expense);4510;Kantoorbenodigdheden;1510;b.pdf"))
+        #expect(rows.contains("2026-01-15;Proefzorg;Polis;;;;148,50;No VAT found – check;;;;e.pdf"))
+        #expect(rows.contains(";VAT to reclaim;;;;150,73;;;;;;"))
+        #expect(rows.contains(";Foreign VAT (not in the total);;;;11,78;;;;;;"))
+        #expect(rows.contains { $0.hasPrefix("2026-02-02;Gasthof Beispiel;Rechnung;7%;") && $0.hasSuffix(";Foreign VAT;;;;c.pdf") })
+        #expect(rows.contains { $0.hasPrefix(";Total 21%;;21%;") && $0.hasSuffix(";1510;") })
     }
 
     @Test func pdfRenders() throws {

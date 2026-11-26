@@ -4,6 +4,19 @@
     "›" : {
 
     },
+    "\"%@\" in Inbox is not a plain file (a link or a folder) and was skipped. Put the document itself in Inbox." : {
+
+    },
+    "\"%@\" is in Needs Review, but the original image could not be removed (%@). It is in Needs Review/.claimed; you can delete it there." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "\"%1$@\" is in Needs Review, but the original image could not be removed (%2$@). It is in Needs Review/.claimed; you can delete it there."
+          }
+        }
+      }
+    },
     "\"%@\" is no longer in Needs Review. It was probably filed on another device. Pull down to refresh the list." : {
 
     },
@@ -11,6 +24,9 @@
 
     },
     "\"%@\" is not a PDF or image. Paper Trail can import PDFs and images." : {
+
+    },
+    "\"%@\" is not in the Needs Review folder, so Paper Trail won't delete it." : {
 
     },
     "\"%@\" was written but could not be verified. The document was not removed from its source. Check iCloud Drive and try again." : {
@@ -75,10 +91,16 @@
     "%@ Try again." : {
 
     },
+    "%@: %@" : {
+
+    },
     "%lld documents" : {
 
     },
     "%lld documents are already in the index and stay as they are." : {
+
+    },
+    "%lld documents are skipped because their path in the export isn't a place in the archive. The export may have been changed." : {
 
     },
     "%lld documents are skipped because their PDF is no longer in iCloud Drive." : {
@@ -147,7 +169,13 @@
     "1 open bill" : {
 
     },
-    "A dedicated mailbox that this Mac checks; its emails go to Needs Review." : {
+    "4300" : {
+
+    },
+    "A dedicated mailbox; its emails go to Needs Review. Set it up on each device that should check it." : {
+
+    },
+    "A top-level folder for each person or company. Open an owner for paying bills, VAT and ledger codes." : {
 
     },
     "Account name" : {
@@ -166,6 +194,9 @@
 
     },
     "Add category" : {
+
+    },
+    "Add Code" : {
 
     },
     "Add Document…" : {
@@ -286,6 +317,9 @@
     "Bills" : {
 
     },
+    "Bills get a reminder in this owner's To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself." : {
+
+    },
     "Bills to Pay" : {
 
     },
@@ -358,10 +392,13 @@
     "Clear Filters" : {
 
     },
-    "Colour" : {
+    "Code" : {
 
     },
-    "Colour for %@" : {
+    "Code goes to" : {
+
+    },
+    "Colour" : {
 
     },
     "Company" : {
@@ -498,10 +535,34 @@
     "Create Reminder" : {
 
     },
+    "Create Reminders for Bills" : {
+
+    },
     "Date on document" : {
 
     },
+    "Delete" : {
+
+    },
+    "Delete \"%@\"?" : {
+
+    },
+    "Delete %@?" : {
+
+    },
+    "Delete from Needs Review" : {
+
+    },
+    "Delete Owner" : {
+
+    },
     "Delete Rule" : {
+
+    },
+    "Delete This Copy" : {
+
+    },
+    "Delete this document from Needs Review?" : {
 
     },
     "Description" : {
@@ -562,7 +623,25 @@
     "e.g. Acme Energy" : {
 
     },
-    "Each owner gets a top-level folder and a colour in lists. Renaming only affects documents filed afterwards." : {
+    "e.g. Private or a company name" : {
+
+    },
+    "e.g. Telephone and internet" : {
+
+    },
+    "Each code once. Empty rows are ignored." : {
+
+    },
+    "Each unpaid bill gets a reminder in the owner's To pay list in Reminders, with the due date; completing it marks the bill paid. The reminder shows only the sender and reference, not the amount or IBAN. Off: bills are only in To Pay here; reminders that already exist keep working. Applies to all your devices." : {
+
+    },
+    "Earlier bills from %@ used %@. Check that this address belongs to %@ or their payment provider before paying." : {
+
+    },
+    "Earlier bills from %@ were paid to %@. Fraudsters often send a familiar-looking invoice with only the IBAN changed. Before paying, check the new account with %@ using a phone number or website you already know, not the details on this invoice." : {
+
+    },
+    "Earlier bills from %@ were paid to another account. Fraudsters often send a familiar-looking invoice with only the IBAN changed. Check the new account with %@ using a phone number or website you already know, not the details on this invoice." : {
 
     },
     "Edit" : {
@@ -608,8 +687,15 @@
     "Enter the app-specific password first." : {
 
     },
-    "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email." : {
-
+    "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %@. Paper Trail creates the second folder if needed, and never deletes email. While a device files an email, it sits in %@, so the Mac and iPhone never file the same one." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Every email in the first folder is filed and then moved to the second. With an iCloud alias, add a rule on icloud.com (Mail → Settings → Rules) that moves emails sent to the alias into %1$@. Paper Trail creates the second folder if needed, and never deletes email. While a device files an email, it sits in %2$@, so the Mac and iPhone never file the same one."
+          }
+        }
+      }
     },
     "Every week Paper Trail writes everything that isn't in the PDFs (amounts, VAT, paid bills, expense claims, learned rules) to Paper Trail/Export in iCloud Drive, as JSON and as a CSV for Excel or Numbers. The last 8 weeks are kept in Export/Backups. Import adds back documents and records that are missing from the index; it never changes or removes anything." : {
 
@@ -677,13 +763,19 @@
     "File name" : {
 
     },
+    "Filed documents and their folders stay where they are." : {
+
+    },
     "Filed like earlier documents from %@. Change owner or category to update this rule." : {
 
     },
     "Filed under" : {
 
     },
-    "Filed, but no reminder" : {
+    "Filed, but something needs attention" : {
+
+    },
+    "Files it under %@ as an expense %@ reimburses. Its VAT and ledger code stay with %@." : {
 
     },
     "Find Documents" : {
@@ -701,7 +793,10 @@
     "Folders" : {
 
     },
-    "Folders inside each owner's year folder." : {
+    "Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are set per owner." : {
+
+    },
+    "For a duplicate or something you don't need to keep. It goes to the Trash." : {
 
     },
     "For a personal expense a company pays back. It appears under Expenses until it's claimed and reimbursed." : {
@@ -735,6 +830,12 @@
 
     },
     "Hide Sidebar" : {
+
+    },
+    "I Checked This IBAN" : {
+
+    },
+    "I checked this IBAN with %@" : {
 
     },
     "IBAN" : {
@@ -773,7 +874,19 @@
     "In iCloud Drive" : {
 
     },
+    "Input VAT ledger code %@" : {
+
+    },
+    "iOS doesn't let apps check mail on a schedule. This iPhone checks when you open Paper Trail, when you pull down in Needs Review, and now and then in the background when iOS allows it. A Mac with Paper Trail open checks every few minutes." : {
+
+    },
     "It may have been removed from the archive." : {
+
+    },
+    "It's removed from Needs Review on all your devices. You can get it back from the Trash (Recently Deleted in Files)." : {
+
+    },
+    "Its copy in Needs Review could not be removed. Delete it there, so it isn't filed twice." : {
 
     },
     "Its PDF and details appear here." : {
@@ -785,6 +898,12 @@
     "Its reminder is completed too." : {
 
     },
+    "Its settings and ledger codes are removed. Filed documents and their folders stay where they are." : {
+
+    },
+    "Keep the index export" : {
+
+    },
     "Kept: owners, categories, payment and email settings. Emails in your mailbox are not touched." : {
 
     },
@@ -792,6 +911,24 @@
 
     },
     "Learned rules" : {
+
+    },
+    "Ledger code" : {
+
+    },
+    "Ledger codes" : {
+
+    },
+    "Ledger codes %@" : {
+
+    },
+    "Ledger codes for %@" : {
+
+    },
+    "Ledger codes: %lld" : {
+
+    },
+    "Link goes to" : {
 
     },
     "Lock" : {
@@ -821,6 +958,9 @@
     "Mark Reimbursed" : {
 
     },
+    "Mark the IBAN as checked?" : {
+
+    },
     "Mark this bill as paid?" : {
 
     },
@@ -836,13 +976,28 @@
     "Move filed emails to" : {
 
     },
+    "Move to Trash" : {
+
+    },
     "Moves all documents to the Trash and clears the lists, for example after testing. Settings stay." : {
+
+    },
+    "Name" : {
 
     },
     "Name on the paying account" : {
 
     },
     "Needs Review" : {
+
+    },
+    "New IBAN – not checked yet" : {
+
+    },
+    "New IBAN for %@" : {
+
+    },
+    "New IBAN, not checked yet" : {
 
     },
     "New owner" : {
@@ -899,6 +1054,9 @@
     "None" : {
 
     },
+    "Not saved" : {
+
+    },
     "Not yet" : {
 
     },
@@ -918,6 +1076,12 @@
 
     },
     "OK" : {
+
+    },
+    "Open %@" : {
+
+    },
+    "Open %@?" : {
 
     },
     "Open Bills" : {
@@ -947,6 +1111,12 @@
     "Opens the next document waiting in Needs Review so you can file it." : {
 
     },
+    "Optional" : {
+
+    },
+    "Optional. The codes this owner's administration books on, offered when filing documents in categories with ledger codes. Paper Trail remembers the code per sender and suggests one for new senders." : {
+
+    },
     "Orange" : {
 
     },
@@ -959,16 +1129,13 @@
     "Owner" : {
 
     },
-    "Owner name" : {
-
-    },
     "Owners" : {
 
     },
-    "Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud." : {
+    "Paid" : {
 
     },
-    "Paid" : {
+    "Paid Privately – Claim from %@" : {
 
     },
     "Paper Trail" : {
@@ -990,6 +1157,9 @@
 
     },
     "Paper Trail remembers owner and category for each sender you file." : {
+
+    },
+    "Paper Trail then remembers %@ as an account of %@." : {
 
     },
     "Passcode" : {
@@ -1016,7 +1186,7 @@
     "Paying account" : {
 
     },
-    "Paying bills and VAT" : {
+    "Paying bills" : {
 
     },
     "Payment" : {
@@ -1026,6 +1196,12 @@
 
     },
     "Payment reference" : {
+
+    },
+    "Personal" : {
+
+    },
+    "Personal (not a company)" : {
 
     },
     "Pink" : {
@@ -1172,6 +1348,9 @@
     "SEPA batch file" : {
 
     },
+    "SEPA file" : {
+
+    },
     "SEPA file for %@" : {
 
     },
@@ -1185,9 +1364,6 @@
 
     },
     "Settings (⌘,)" : {
-
-    },
-    "Settings saved" : {
 
     },
     "Share Again" : {
@@ -1217,7 +1393,7 @@
     "Sign in with" : {
 
     },
-    "Sign in with your main iCloud address (an alias can't sign in) and an app-specific password from account.apple.com → Sign-In and Security; your normal password doesn't work with two-factor authentication. For iCloud, Paper Trail also tries the full @icloud.com address. The password gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this Mac's Keychain." : {
+    "Sign in with your main iCloud address (an alias can't sign in) and an app-specific password from account.apple.com → Sign-In and Security; your normal password doesn't work with two-factor authentication. For iCloud, Paper Trail also tries the full @icloud.com address. The password gives access to the whole mailbox; Paper Trail only reads the folder below and keeps the password in this device's Keychain; enter it on each device that checks the mailbox." : {
 
     },
     "Signed in to the mailbox. Save to start checking it." : {
@@ -1277,13 +1453,22 @@
     "The email \"%@\" has no PDF, image or text to file. It stays in the mailbox; move it out yourself." : {
 
     },
+    "The email couldn't be displayed to turn it into a PDF. It stays in the mailbox; save it as a PDF yourself if it keeps failing." : {
+
+    },
     "The file was saved, but Paper Trail could not note the export: %@" : {
+
+    },
+    "The index export (the Export folder) holds every document's details and recognised text. Keep it to restore the list later with Import; turn this off to move it to the Trash too." : {
 
     },
     "The mail server did not answer in time. Paper Trail will try again at the next check." : {
 
     },
     "The mailbox is checked while Paper Trail runs. It keeps running in the menu bar after you close its window." : {
+
+    },
+    "The owner's top-level folder and colour in lists. Renaming only affects documents filed afterwards. Personal: the owner you file expenses under that a company pays back." : {
 
     },
     "The PDF has a summary page and all receipts; the CSV opens in Excel or Numbers. The expenses are now marked as submitted." : {
@@ -1301,6 +1486,9 @@
     "These documents are not in Paper Trail anymore (moved or renamed?): %@. Put them back and export again." : {
 
     },
+    "This address comes from the invoice: %@\n\nOnly continue if it belongs to %@ or their payment provider. Check the payee and amount on the page before you pay." : {
+
+    },
     "This document is in a VAT return marked as submitted. Its owner, dates, amount and VAT can't be changed; use Undo Submitted in the VAT overview first." : {
 
     },
@@ -1308,6 +1496,9 @@
 
     },
     "This invoice has no payment code or link. Use the copy buttons below." : {
+
+    },
+    "this owner" : {
 
     },
     "This whole account is only for Paper Trail" : {
@@ -1346,6 +1537,9 @@
     "Turn on the lock for Paper Trail." : {
 
     },
+    "Turning the email into a PDF took too long, so it was stopped. The email stays in the mailbox; save it as a PDF yourself if it keeps failing." : {
+
+    },
     "Type %@ to confirm" : {
 
     },
@@ -1379,7 +1573,13 @@
     "VAT lines you corrected by hand in this period are replaced by what Paper Trail reads from the text." : {
 
     },
+    "VAT monthly" : {
+
+    },
     "VAT Overview Ready" : {
+
+    },
+    "VAT quarterly" : {
 
     },
     "VAT return" : {
@@ -1388,16 +1588,22 @@
     "VAT to reclaim" : {
 
     },
+    "VAT yearly" : {
+
+    },
     "Waiting for you to file" : {
 
     },
     "What happens" : {
 
     },
-    "When you file a document, Paper Trail remembers where documents from that sender go." : {
+    "When you file a document, Paper Trail remembers where documents from that sender go, and their ledger code." : {
 
     },
     "Where" : {
+
+    },
+    "With a VAT return, documents get VAT lines and the owner gets a VAT overview. The input VAT ledger codes go into the VAT, claim and index exports." : {
 
     },
     "With VAT" : {
@@ -1412,7 +1618,13 @@
     "Yearly" : {
 
     },
+    "You can get it back from the Trash (Recently Deleted in Files)." : {
+
+    },
     "You can put files back from the Trash; deleted iCloud Drive files can usually also be recovered for a while on iCloud.com. Empty the Trash only when you're sure." : {
+
+    },
+    "Your changes stay here and are saved as soon as this is fixed." : {
 
     },
     "Your main iCloud address, not the alias" : {

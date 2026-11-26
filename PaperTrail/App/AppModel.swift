@@ -47,7 +47,46 @@ final class AppModel {
     }
 
     /// Moves Inbox and shared documents to Needs Review and reads the queue.
+    /// Moves a document waiting in Needs Review to the Trash. Returns false (with the error
+    /// shown) when it couldn't.
+    @discardableResult
+    func deleteReviewItem(at url: URL) async -> Bool {
+        guard let root = archiveRoot?.url else { return false }
+        do {
+            try await filingService.reviewQueue.delete(url, root: root)
+            await refreshReviewItems()
+            return true
+        } catch {
+            errorMessage = error.localizedDescription
+            return false
+        }
+    }
+
+    /// The refresh that is running, if any. Another request meanwhile waits for it and makes it
+    /// read once more, so the minute check, the iCloud watch and the screens never collect Inbox
+    /// twice at once, and every caller sees a list read after its request.
+    private var reviewRefresh: Task<Void, Never>?
+    private var reviewRefreshRequested = false
+
     func refreshReviewItems() async {
+        if let running = reviewRefresh {
+            reviewRefreshRequested = true
+            await running.value
+            return
+        }
+        let task = Task {
+            repeat {
+                reviewRefreshRequested = false
+                await refreshReviewItemsOnce()
+            } while reviewRefreshRequested
+            // Cleared in the same step as the last check, so a request can't slip in between.
+            reviewRefresh = nil
+        }
+        reviewRefresh = task
+        await task.value
+    }
+
+    private func refreshReviewItemsOnce() async {
         guard let root = archiveRoot?.url else { return }
         let report = await filingService.inboxCollector.collect(root: root)
         unreadableInboxFiles = report.unsupported
@@ -129,6 +168,7 @@ final class AppModel {
         do {
             let open = try context.fetch(FetchDescriptor<DocumentRecord>(predicate: #Predicate { $0.isUnpaidBill && !$0.isPaid }))
             try await billService.syncPaidState(bills: open, context: context)
+            await billService.refreshOldReminderTexts(bills: open)
         } catch {
             errorMessage = String(localized: "Could not check Reminders for paid bills: \(error.localizedDescription)")
         }

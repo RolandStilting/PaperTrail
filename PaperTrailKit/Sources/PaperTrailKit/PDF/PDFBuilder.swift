@@ -7,11 +7,14 @@ public enum PDFBuilderError: LocalizedError, Equatable, Sendable {
     case noPages
     case couldNotCreateContext
     case couldNotEncodeImage(page: Int)
+    case tooManyPages(Int)
 
     public var errorDescription: String? {
         switch self {
         case .noPages:
             String(localized: "The scan has no pages. Scan the document again.", bundle: .module)
+        case .tooManyPages(let limit):
+            String(localized: "The document would have more than \(limit) pages, so Paper Trail didn't convert it. Save it as a PDF yourself and add it.", bundle: .module)
         case .couldNotCreateContext, .couldNotEncodeImage:
             String(localized: "Could not create the PDF. Try scanning again; if it keeps failing, restart the app.", bundle: .module)
         }
@@ -56,11 +59,30 @@ public enum PDFBuilder {
         return CGImage(jpegDataProviderSource: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent)
     }
 
-    /// Decodes image file data (JPEG, PNG, HEIC, ...) into page images. Multi-page TIFFs give several.
+    /// Images larger than this (pixels on the long side) are scaled down while decoding; about
+    /// 350 dpi on A4, plenty for reading and text recognition.
+    public static let maxImagePixels = 4096
+    /// Images with more pixels than this are refused (decompression bombs).
+    static let maxSourcePixels = 200_000_000
+    public static let maxImageFrames = 20
+
+    /// Decodes image file data (JPEG, PNG, HEIC, ...) into page images. Multi-page TIFFs give
+    /// several (at most `maxImageFrames`). Large images are scaled down while decoding, so a
+    /// small file that claims huge dimensions can't exhaust memory.
     public static func images(fromImageData data: Data) -> [CGImage] {
         guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return [] }
-        let options = [kCGImageSourceCreateThumbnailWithTransform: true] as CFDictionary
-        return (0..<CGImageSourceGetCount(source)).compactMap { CGImageSourceCreateImageAtIndex(source, $0, options) }
+        let options = [
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxImagePixels,
+            kCGImageSourceShouldCacheImmediately: true,
+        ] as CFDictionary
+        return (0..<min(CGImageSourceGetCount(source), maxImageFrames)).compactMap { index in
+            guard let properties = CGImageSourceCopyPropertiesAtIndex(source, index, nil) as? [CFString: Any],
+                  let width = properties[kCGImagePropertyPixelWidth] as? Int, let height = properties[kCGImagePropertyPixelHeight] as? Int,
+                  width > 0, height > 0, width * height <= maxSourcePixels else { return nil }
+            return CGImageSourceCreateThumbnailAtIndex(source, index, options)
+        }
     }
 }
 
@@ -102,9 +124,18 @@ public enum PDFPageRenderer {
 public enum PDFPaginator {
     public static let a4Height: CGFloat = 841.89
 
-    public static func paginate(_ pdfData: Data, pageHeight: CGFloat = a4Height) throws(PDFBuilderError) -> Data {
+    /// An email body longer than this is refused rather than turned into a huge PDF.
+    public static let maxPages = 50
+
+    public static func paginate(_ pdfData: Data, pageHeight: CGFloat = a4Height, maxPages: Int = maxPages) throws(PDFBuilderError) -> Data {
         guard let provider = CGDataProvider(data: pdfData as CFData),
               let document = CGPDFDocument(provider), document.numberOfPages > 0 else { throw .noPages }
+        var total = 0
+        for number in 1...document.numberOfPages {
+            guard let page = document.page(at: number) else { continue }
+            total += max(1, Int((page.getBoxRect(.mediaBox).height / pageHeight).rounded(.up)))
+        }
+        guard total <= maxPages else { throw .tooManyPages(maxPages) }
         let output = NSMutableData()
         guard let consumer = CGDataConsumer(data: output as CFMutableData),
               let context = CGContext(consumer: consumer, mediaBox: nil, nil) else { throw .couldNotCreateContext }

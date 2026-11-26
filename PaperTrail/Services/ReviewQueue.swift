@@ -13,11 +13,14 @@ nonisolated struct ReviewItem: Identifiable, Hashable, Sendable {
 
 nonisolated enum ReviewQueueError: LocalizedError {
     case alreadyHandled(String)
+    case notInQueue(String)
 
     var errorDescription: String? {
         switch self {
         case .alreadyHandled(let name):
             String(localized: "\"\(name)\" is no longer in Needs Review. It was probably filed on another device. Pull down to refresh the list.")
+        case .notInQueue(let name):
+            String(localized: "\"\(name)\" is not in the Needs Review folder, so Paper Trail won't delete it.")
         }
     }
 }
@@ -60,6 +63,35 @@ nonisolated struct ReviewQueue: Sendable {
             fileName: ReviewQueueNames.fileName(savedAt: now, originalName: document.originalName)
         )
         return try await store.store(document.pdfData, plan: plan, root: root, removingSource: nil)
+    }
+
+    /// Moves a queued document to the Trash (on iCloud Drive: Recently Deleted in Files), for
+    /// a duplicate or something that doesn't need filing. Only files directly in the Needs
+    /// Review folder can be deleted this way.
+    @concurrent
+    func delete(_ url: URL, root: URL) async throws {
+        let folder = Self.folder(in: root).standardizedFileURL.resolvingSymlinksInPath()
+        let target = url.standardizedFileURL
+        guard target.deletingLastPathComponent().resolvingSymlinksInPath() == folder,
+              ReviewQueueNames.itemName(forDirectoryEntry: target.lastPathComponent) != nil else {
+            throw ReviewQueueError.notInQueue(url.lastPathComponent)
+        }
+        guard FileManager.default.fileExists(atPath: target.path(percentEncoded: false)) else {
+            throw ReviewQueueError.alreadyHandled(url.lastPathComponent)
+        }
+        var coordinationError: NSError?
+        var failure: Error?
+        NSFileCoordinator(filePresenter: nil).coordinate(writingItemAt: target, options: .forDeleting, error: &coordinationError) { url in
+            do {
+                try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+            } catch CocoaError.featureUnsupported {
+                // A volume without a Trash (e.g. the local folder a debug build uses without iCloud).
+                do { try FileManager.default.removeItem(at: url) } catch { failure = error }
+            } catch {
+                failure = error
+            }
+        }
+        if let error = coordinationError ?? failure { throw error }
     }
 
     /// Reads a queued document for the filing screen, downloading it from iCloud if needed.

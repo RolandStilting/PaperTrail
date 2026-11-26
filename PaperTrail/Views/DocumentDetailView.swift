@@ -68,6 +68,9 @@ struct DocumentDetailView: View {
                     .lineLimit(1)
                     .foregroundStyle(.secondary)
                 }
+                if !record.ledgerCode.isEmpty {
+                    LabeledContent("Ledger code", value: LedgerCode(code: record.ledgerCode, description: record.ledgerDescription).label)
+                }
                 LabeledContent("Received", value: record.receivedDate.formatted(date: .long, time: .omitted))
                 if let date = record.documentDate {
                     LabeledContent("Date on document", value: date.formatted(date: .long, time: .omitted))

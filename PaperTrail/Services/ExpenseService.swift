@@ -29,12 +29,14 @@ struct ExpenseService {
     var location: any ArchiveLocating
 
     /// Builds the PDF and CSV, then records the claim. Nothing is recorded if a receipt can't be read.
-    func createClaim(company: String, expenses: [DocumentRecord], context: ModelContext, now: Date = .now) async throws -> ClaimPackage {
+    /// - Parameter vatCodes: The company's input VAT ledger codes, shown with the VAT per receipt.
+    func createClaim(company: String, expenses: [DocumentRecord], vatCodes: [VATLedgerCode] = [], context: ModelContext,
+                     now: Date = .now) async throws -> ClaimPackage {
         guard !expenses.isEmpty else { throw ExpenseClaimError.nothingSelected }
         let sorted = Self.sorted(expenses)
         let claim = ExpenseClaimRecord(ownerName: company, createdAt: now, expenseCount: sorted.count,
-                                       total: ExpenseClaim.total(sorted.map(Self.line)))
-        let package = try await files(for: claim, expenses: sorted)
+                                       total: ExpenseClaim.total(sorted.map { Self.line($0) }))
+        let package = try await files(for: claim, expenses: sorted, vatCodes: vatCodes)
         context.insert(claim)
         for expense in sorted { expense.claimID = claim.id }
         try context.save()
@@ -42,7 +44,7 @@ struct ExpenseService {
     }
 
     /// The claim's files again, e.g. to send them a second time.
-    func files(for claim: ExpenseClaimRecord, expenses: [DocumentRecord]) async throws -> ClaimPackage {
+    func files(for claim: ExpenseClaimRecord, expenses: [DocumentRecord], vatCodes: [VATLedgerCode] = []) async throws -> ClaimPackage {
         let sorted = Self.sorted(expenses)
         let root = try await location.resolveRoot().url
         var receipts: [Data] = []
@@ -57,11 +59,11 @@ struct ExpenseService {
         let date = claim.createdAt.formatted(.iso8601.year().month().day())
         let title = String(localized: "Expense claim \(claim.ownerName)")
         let subtitle = String(localized: "\(sorted.count) expenses, created \(claim.createdAt.formatted(date: .long, time: .omitted))")
-        let lines = sorted.map(Self.line)
+        let lines = sorted.map { Self.line($0, vatCodes: vatCodes) }
         let pdf = try ExpenseClaim.pdf(title: title, subtitle: subtitle, lines: lines, receipts: receipts)
-        let csv = ExpenseClaim.csv(lines)
+        let csv = ExpenseClaim.csv(lines, vatCodes: vatCodes)
 
-        let folder = FileManager.default.temporaryDirectory.appending(path: "Claims/\(claim.id.uuidString)", directoryHint: .isDirectory)
+        let folder = FileManager.default.temporaryDirectory.appending(path: "\(TemporaryFiles.claimsFolder)/\(claim.id.uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let base = FileNamer.sanitizeComponent("\(title) \(date)")
         let pdfURL = folder.appending(path: "\(base).pdf")
@@ -95,9 +97,11 @@ struct ExpenseService {
         try context.save()
     }
 
-    static func line(_ expense: DocumentRecord) -> ClaimLine {
+    static func line(_ expense: DocumentRecord, vatCodes: [VATLedgerCode] = []) -> ClaimLine {
         ClaimLine(date: expense.documentDate ?? expense.receivedDate, sender: expense.sender,
-                  description: expense.documentDescription, amount: expense.amount, relativePath: expense.relativePath)
+                  description: expense.documentDescription, amount: expense.amount, relativePath: expense.relativePath,
+                  ledgerCode: expense.ledgerCode, ledgerDescription: expense.ledgerDescription,
+                  vat: ClaimVATLine.reclaimable(expense.vatInfo, codes: vatCodes))
     }
 
     static func sorted(_ expenses: [DocumentRecord]) -> [DocumentRecord] {

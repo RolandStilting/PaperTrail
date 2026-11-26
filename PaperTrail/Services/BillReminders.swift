@@ -31,6 +31,8 @@ protocol BillReminding {
     func reminderExists(externalID: String) async -> Bool
     /// Removes the reminder (Clear All Documents, or an edited document that is no longer a bill).
     func deleteReminder(externalID: String) async throws
+    /// Rewrites the title and notes of an open reminder in the current form (no amount or IBAN).
+    func refreshText(externalID: String, for bill: DocumentRecord) async throws
 }
 
 /// Apple Reminders via EventKit. Each owner has a list "To pay – <Owner>".
@@ -83,8 +85,8 @@ final class EventKitBillReminders: BillReminding {
         try await ensureAccess()
         let reminder = EKReminder(eventStore: store)
         reminder.calendar = try list(for: bill.ownerName)
-        reminder.title = BillReminderText.title(sender: bill.sender, amount: bill.amount)
-        reminder.notes = BillReminderText.notes(amount: bill.amount, iban: bill.iban, reference: bill.paymentReference, relativePath: bill.relativePath)
+        reminder.title = BillReminderText.title(sender: bill.sender)
+        reminder.notes = BillReminderText.notes(reference: bill.paymentReference, relativePath: bill.relativePath)
         reminder.url = bill.billURL
         if let due = bill.dueDate {
             var gregorian = Calendar(identifier: .gregorian)
@@ -139,6 +141,21 @@ final class EventKitBillReminders: BillReminding {
         }
     }
 
+    func refreshText(externalID: String, for bill: DocumentRecord) async throws {
+        guard EKEventStore.authorizationStatus(for: .reminder) == .fullAccess else { return }
+        let title = BillReminderText.title(sender: bill.sender)
+        let notes = BillReminderText.notes(reference: bill.paymentReference, relativePath: bill.relativePath)
+        for reminder in reminders(withExternalID: externalID) where !reminder.isCompleted && (reminder.title != title || reminder.notes != notes) {
+            reminder.title = title
+            reminder.notes = notes
+            do {
+                try store.save(reminder, commit: true)
+            } catch {
+                throw BillReminderError.saveFailed(error.localizedDescription)
+            }
+        }
+    }
+
     func completeReminder(externalID: String) async throws {
         try await ensureAccess()
         for reminder in reminders(withExternalID: externalID) where !reminder.isCompleted {
@@ -173,7 +190,17 @@ struct BillService {
 
     /// After a document's details were edited: adds, replaces or removes its reminder. A new
     /// reminder is made before the old one is removed, so a failure never leaves the bill without one.
-    func updateReminder(for bill: DocumentRecord, change: DocumentEdit.ReminderChange, context: ModelContextSaving) async throws {
+    /// With reminders turned off (`createsReminders` false) none is made; an outdated one is removed.
+    func updateReminder(for bill: DocumentRecord, change: DocumentEdit.ReminderChange, createsReminders: Bool = true,
+                        context: ModelContextSaving) async throws {
+        var change = change
+        if !createsReminders {
+            switch change {
+            case .create: return
+            case .replace: change = .remove
+            case .keep, .remove: break
+            }
+        }
         switch change {
         case .keep:
             return
@@ -212,6 +239,21 @@ struct BillService {
             }
         }
         if changed { try context.save() }
+    }
+
+    /// Reminders made by earlier versions show the amount and IBAN, also on the lock screen.
+    /// Rewrites the open ones once per device; afterwards only new reminders are made.
+    func refreshOldReminderTexts(bills: [DocumentRecord], defaults: UserDefaults = .standard) async {
+        let key = "billReminderTextVersion"
+        guard defaults.integer(forKey: key) < 2 else { return }
+        do {
+            for bill in bills where bill.isOpenBill {
+                if let id = bill.reminderExternalID { try await reminders.refreshText(externalID: id, for: bill) }
+            }
+            defaults.set(2, forKey: key)
+        } catch {
+            // Tried again next time.
+        }
     }
 
     /// "Mark as paid" in the app completes the reminder too, so both stay the same.

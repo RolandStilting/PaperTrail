@@ -14,9 +14,18 @@ public struct FilingRequest: Sendable, Hashable {
     public var reimbursedBy: String?
     /// VAT lines, for documents of VAT-registered owners (or expenses they reimburse).
     public var vat: VATInfo?
+    /// The ledger code to book on, if the owner has codes for the category and one was chosen.
+    public var ledger: LedgerCode?
+    /// True when the owner has ledger codes for the category: then an empty `ledger` means the
+    /// user chose none, and the learned code for the sender is forgotten.
+    public var offersLedgerCodes: Bool = false
+    /// The pay-to IBAN differs from the sender's known IBANs (`IBANCheck.changed`).
+    public var ibanChanged: Bool = false
+    /// The user confirmed that changed IBAN; it is then learned and no warning stays.
+    public var ibanConfirmed: Bool = false
 
     public init(owner: String, category: String, receivedDate: Date, documentDate: Date? = nil, sender: String, description: String,
-                bill: BillDetails? = nil, reimbursedBy: String? = nil, vat: VATInfo? = nil) {
+                bill: BillDetails? = nil, reimbursedBy: String? = nil, vat: VATInfo? = nil, ledger: LedgerCode? = nil) {
         self.owner = owner
         self.category = category
         self.receivedDate = receivedDate
@@ -26,6 +35,7 @@ public struct FilingRequest: Sendable, Hashable {
         self.bill = bill
         self.reimbursedBy = reimbursedBy
         self.vat = vat
+        self.ledger = ledger
     }
 }
 

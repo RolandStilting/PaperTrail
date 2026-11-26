@@ -25,4 +25,19 @@ public enum ArchivePaths {
     public static func relativePath(components: [String], fileName: String) -> String {
         (components + [fileName]).joined(separator: "/")
     }
+
+    /// Whether `path` can be a filed document's place in the archive: a PDF inside an owner's
+    /// folder (`Owner/YYYY/Category/name.pdf`), relative, without `.`/`..` steps, empty parts or control characters, and not in
+    /// Inbox, Needs Review or Export. Used for paths read from an index import, which could
+    /// have been edited to point at files outside the archive.
+    public static func isDocumentPath(_ path: String) -> Bool {
+        guard !path.isEmpty, path.utf8.count <= 1024, !path.hasPrefix("/"), !path.hasPrefix("~"),
+              !path.contains("\\"), path.lowercased().hasSuffix(".pdf"),
+              !path.unicodeScalars.contains(where: { $0.properties.generalCategory == .control }) else { return false }
+        // Owner/YYYY/Category/name.pdf, as FilingPlanner makes them.
+        let parts = path.split(separator: "/", omittingEmptySubsequences: false)
+        guard parts.count == 4, !parts.contains(where: { $0.isEmpty || $0 == "." || $0 == ".." || $0.hasPrefix(".") }),
+              parts[1].count == 4, parts[1].allSatisfy(\.isASCII), parts[1].allSatisfy(\.isNumber) else { return false }
+        return !reservedTopLevelNames.contains(parts[0].lowercased())
+    }
 }

@@ -29,6 +29,34 @@ struct PaymentCodeTests {
         #expect(fromText?.payload == "https://tikkie.example.test/abc123")
     }
 
+    @Test func anyWebQRCodeBeatsALink() {
+        let code = PaymentCode.find(qrPayloads: ["BCD\n002\n1\nSCT", "https://example.test/q/Ab12Cd"],
+                                    links: [URL(string: "https://example.test/betalen")!], text: "")
+        #expect(code == PaymentCode(source: .qrCode, payload: "https://example.test/q/Ab12Cd"))
+        // Without a web QR code, the payment link is used.
+        #expect(PaymentCode.find(qrPayloads: ["Klantnummer 12345"], links: [URL(string: "https://example.test/betalen")!], text: "")?.source == .link)
+    }
+
+    @Test func informationPagesAreNoPaymentLinks() {
+        #expect(!PaymentCode.isPaymentLink("https://www.example.test/betaalvoorwaarden"))
+        #expect(!PaymentCode.isPaymentLink("https://www.example.test/factuur-uitleg"))
+        #expect(!PaymentCode.isPaymentLink("https://pay.example.test/terms"))
+        #expect(PaymentCode.isPaymentLink("https://www.example.test/factuur/betalen?id=9"))
+        let text = "Lees onze voorwaarden op https://www.example.test/betaalvoorwaarden."
+        #expect(PaymentCode.find(qrPayloads: [], links: [], text: text) == nil)
+    }
+
+    @Test func searchedAgainOnceAfterTheRulesChanged() {
+        let before = PaymentCode.rulesChangedAt.addingTimeInterval(-60), after = PaymentCode.rulesChangedAt.addingTimeInterval(60)
+        let link = PaymentCode(source: .link, payload: "https://example.test/betalen")
+        let qr = PaymentCode(source: .qrCode, payload: "https://example.test/q/1")
+        #expect(PaymentCode.needsSearch(checkedAt: nil, found: nil))
+        #expect(PaymentCode.needsSearch(checkedAt: before, found: link))
+        #expect(PaymentCode.needsSearch(checkedAt: before, found: nil))
+        #expect(!PaymentCode.needsSearch(checkedAt: before, found: qr))
+        #expect(!PaymentCode.needsSearch(checkedAt: after, found: link))
+    }
+
     @Test func nothingFound() {
         #expect(PaymentCode.find(qrPayloads: [], links: [], text: "Zie www.example.test voor onze voorwaarden.") == nil)
     }

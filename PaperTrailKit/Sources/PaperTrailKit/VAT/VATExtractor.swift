@@ -82,6 +82,11 @@ public enum VATExtractor {
 
             var line: VATLine?
             if let (rate, rest) = percent {
+                let own = moneyAmounts(in: rest)
+                // A table row with only zeros ("Btw 0%  € 0,00  € 0,00  € 0,00"): nothing to find,
+                // and the neighbours belong to other rows.
+                // (A single 0,00 stays: "BTW 0% € 0,00" on a reverse-charge invoice.)
+                if own.count >= 2, !own.contains(where: { $0 > 0 }) { continue }
                 line = vatLine(rate: rate, amounts: moneyAmounts(in: rest), total: total, allowLoneAmount: !underHeading)
                 // PDF text often splits table cells over lines: look at the lines around it, but
                 // only accept amounts that check out against the rate or the total.

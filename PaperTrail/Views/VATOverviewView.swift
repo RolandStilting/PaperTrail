@@ -38,8 +38,8 @@ struct VATOverviewView: View {
         return VATReport(company: company, period: period, items: records.map { record in
             VATReportItem(date: record.vatDate, sender: record.sender, description: record.documentDescription, amount: record.amount,
                           vat: record.vatInfo ?? VATInfo(), isReimbursedExpense: record.reimbursedBy == company && record.ownerName != company,
-                          relativePath: record.relativePath)
-        })
+                          relativePath: record.relativePath, ledgerCode: record.ledgerCode, ledgerDescription: record.ledgerDescription)
+        }, vatLedgerCodes: settingsStore.settings.owners.first { $0.name == company }?.vatLedgerCodes ?? [])
     }
 
     private var submitted: VATReturnRecord? {
@@ -205,7 +205,7 @@ struct VATOverviewView: View {
     }
 
     private func writeExport(_ report: VATReport, documents: [Data]) throws {
-        let folder = FileManager.default.temporaryDirectory.appending(path: "VAT/\(UUID().uuidString)", directoryHint: .isDirectory)
+        let folder = FileManager.default.temporaryDirectory.appending(path: "\(TemporaryFiles.vatFolder)/\(UUID().uuidString)", directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let base = FileNamer.sanitizeComponent("VAT \(company) \(report.period.label())")
         let pdf = folder.appending(path: "\(base).pdf")

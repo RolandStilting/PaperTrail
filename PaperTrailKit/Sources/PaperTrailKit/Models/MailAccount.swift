@@ -9,6 +9,8 @@ import Foundation
 public struct MailAccount: Codable, Hashable, Sendable {
     public static let defaultFolder = "Paper Trail"
     public static let defaultProcessedFolder = "Paper Trail Processed"
+    /// Where a device puts an email while it files it, so no other device takes it too.
+    public static let workingFolder = "Paper Trail Working"
 
     public var isEnabled: Bool
     /// The address emails are sent to (for iCloud: the alias). Only informational.
@@ -83,11 +85,17 @@ public struct MailAccount: Codable, Hashable, Sendable {
         if folder.isEmpty || processed.isEmpty {
             errors.append(String(localized: "Enter both mailbox folders.", bundle: .module))
         }
+        if [folder, processed].contains(where: { $0.caseInsensitiveCompare(Self.workingFolder) == .orderedSame }) {
+            errors.append(String(localized: "\"\(Self.workingFolder)\" is the folder Paper Trail uses while filing. Pick other folder names.", bundle: .module))
+        }
         if !folder.isEmpty, folder.caseInsensitiveCompare(processed) == .orderedSame {
             errors.append(String(localized: "The folder to check and the Processed folder must be different.", bundle: .module))
         }
         if watchesInbox, !accountIsDedicated {
             errors.append(String(localized: "Paper Trail won't check the Inbox of an account you also use for other mail: it would file and move every email. Use a mail rule that moves the Paper Trail address's emails to their own folder, and enter that folder.", bundle: .module))
+        }
+        if [username, folder, processed].contains(where: { $0.unicodeScalars.contains { CharacterSet.controlCharacters.contains($0) } }) {
+            errors.append(String(localized: "Remove line breaks and tabs from the user name and folder names.", bundle: .module))
         }
         // IMAP folder names outside ASCII need modified UTF-7, which Paper Trail doesn't do.
         if !(folder + processed).allSatisfy(\.isASCII) {

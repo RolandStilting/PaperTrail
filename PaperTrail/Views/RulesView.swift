@@ -15,7 +15,7 @@ struct RulesView: View {
                 ContentUnavailableView(
                     "No rules yet",
                     systemImage: "arrow.triangle.branch",
-                    description: Text("When you file a document, Paper Trail remembers where documents from that sender go.")
+                    description: Text("When you file a document, Paper Trail remembers where documents from that sender go, and their ledger code.")
                 )
             }
             ForEach(rules) { rule in
@@ -25,6 +25,12 @@ struct RulesView: View {
                     Text("\(rule.ownerName) › \(rule.categoryName)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    let codes = rule.rule.ledgerCodes
+                    if !codes.isEmpty {
+                        Text(codes.map { "\($0.owner): \($0.code)" }.joined(separator: ", "))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 .contextMenu {
                     Button("Delete Rule", systemImage: "trash", role: .destructive) { delete([rule]) }

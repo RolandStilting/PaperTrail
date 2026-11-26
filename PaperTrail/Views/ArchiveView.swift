@@ -61,7 +61,8 @@ struct ArchiveView: View {
             if let yearFilter, calendar.component(.year, from: record.receivedDate) != yearFilter { return false }
             guard statusFilter.matches(record) else { return false }
             guard !terms.isEmpty else { return true }
-            let haystack = [record.sender, record.documentDescription, record.categoryName, record.ownerName, record.extractedText ?? ""]
+            let haystack = [record.sender, record.documentDescription, record.categoryName, record.ownerName, record.ledgerCode, record.ledgerDescription,
+                            record.extractedText ?? ""]
                 .joined(separator: " ").lowercased()
             return terms.allSatisfy(haystack.contains)
         }
@@ -273,7 +274,9 @@ struct DocumentActions: View {
 /// Documents waiting in Needs Review.
 struct ReviewListView: View {
     @Environment(AppModel.self) private var model
+    @Environment(MailIntakeService.self) private var mail
     @State private var selection: URL?
+    @State private var deleting: ReviewItem?
 
     private var ids: [URL] { model.reviewItems.map(\.url) }
 
@@ -291,7 +294,11 @@ struct ReviewListView: View {
             }
         }
         .navigationTitle("Needs Review")
-        .refreshable { await model.refreshReviewItems() }
+        .refreshable {
+            // Pull to refresh also checks the mailbox (the iPhone's main way to get new mail).
+            await mail.checkNow()
+            await model.refreshReviewItems()
+        }
         .toolbar { ToolbarItem(placement: .primaryAction) { AddDocumentMenu() } }
     }
 
@@ -311,7 +318,21 @@ struct ReviewListView: View {
                     }
                 }
                 .tag(item.url)
+                .swipeActions {
+                    Button("Delete", systemImage: "trash", role: .destructive) { deleting = item }
+                }
+                .contextMenu {
+                    Button("Delete", systemImage: "trash", role: .destructive) { deleting = item }
+                }
             }
+        }
+        .confirmationDialog("Delete \"\(deleting?.name ?? "")\"?", isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }),
+                            titleVisibility: .visible, presenting: deleting) { item in
+            Button("Move to Trash", role: .destructive) {
+                Task { await model.deleteReviewItem(at: item.url) }
+            }
+        } message: { _ in
+            Text("It's removed from Needs Review on all your devices. You can get it back from the Trash (Recently Deleted in Files).")
         }
         .arrowKeySelection($selection, in: ids)
         .onAppear { if split, selection == nil { selection = ids.first } }

@@ -55,7 +55,9 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLName: $(PAPERTRAIL_BUNDLE_ID)
             CFBundleURLSchemes: [papertrail]
-        UIBackgroundModes: [remote-notification]
+        UIBackgroundModes: [remote-notification, fetch]
+        # iOS: checks the mailbox when the system gives the app background time.
+        BGTaskSchedulerPermittedIdentifiers: [$(PRODUCT_BUNDLE_IDENTIFIER).mailcheck]
         PTICloudContainerIdentifier: iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)
         PTAppGroupIdentifier: $(PAPERTRAIL_APP_GROUP)
         NSUbiquitousContainers:

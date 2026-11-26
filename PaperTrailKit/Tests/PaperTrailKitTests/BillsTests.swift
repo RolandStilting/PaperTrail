@@ -24,20 +24,17 @@ struct BillReminderTextTests {
 
     @Test func titleAndList() {
         #expect(BillReminderText.listName(owner: "Company1") == "To pay – Company1")
-        let title = BillReminderText.title(sender: "Praatnet", amount: 45.99, locale: Self.dutch)
-        #expect(title.hasPrefix("Pay Praatnet · €"))
-        #expect(title.hasSuffix("45,99"))
-        #expect(BillReminderText.title(sender: "Praatnet", amount: nil) == "Pay Praatnet")
+        #expect(BillReminderText.title(sender: "Praatnet") == "Pay Praatnet")
     }
 
-    @Test func notesListPaymentDetails() {
-        let notes = BillReminderText.notes(amount: 45.99, iban: "NL91ABNA0417164300", reference: "BD-778812",
-                                           relativePath: "Private/2026/Invoices/2026-02-20 Praatnet - Herinnering.pdf", locale: Self.dutch)
-        let lines = notes.split(separator: "\n").map(String.init)
-        #expect(lines.count == 4)
-        #expect(lines[1] == "IBAN: NL91 ABNA 0417 1643 00")
-        #expect(lines[2] == "Reference: BD-778812")
-        #expect(lines[3] == "Document: Paper Trail/Private/2026/Invoices/2026-02-20 Praatnet - Herinnering.pdf")
+    /// Reminders show on the lock screen and in notifications: no amount or IBAN.
+    @Test func notesHaveNoPaymentDetails() {
+        let notes = BillReminderText.notes(reference: "BD-778812", relativePath: "Private/2026/Invoices/2026-02-20 Praatnet - Herinnering.pdf")
+        #expect(notes.split(separator: "\n").map(String.init) == [
+            "Reference: BD-778812",
+            "Document: Paper Trail/Private/2026/Invoices/2026-02-20 Praatnet - Herinnering.pdf",
+        ])
+        #expect(BillReminderText.notes(reference: nil, relativePath: "a.pdf") == "Document: Paper Trail/a.pdf")
     }
 }
 

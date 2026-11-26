@@ -127,6 +127,9 @@ struct BackupSection: View {
         if plan.documentsAlreadyThere > 0 {
             parts.append(String(localized: "\(plan.documentsAlreadyThere) documents are already in the index and stay as they are."))
         }
+        if !plan.unsafePaths.isEmpty {
+            parts.append(String(localized: "\(plan.unsafePaths.count) documents are skipped because their path in the export isn't a place in the archive. The export may have been changed."))
+        }
         if !plan.missingFiles.isEmpty {
             parts.append(String(localized: "\(plan.missingFiles.count) documents are skipped because their PDF is no longer in iCloud Drive."))
         }

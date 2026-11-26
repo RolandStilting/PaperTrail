@@ -4,6 +4,21 @@
     "\"%@\" is a reserved folder name. Rename the owner in Settings." : {
 
     },
+    "\"%@\" is larger than 30 MB." : {
+
+    },
+    "\"%@\" is larger than 50 MB." : {
+
+    },
+    "\"%@\" is not a valid PDF." : {
+
+    },
+    "\"%@\" is the folder Paper Trail uses while filing. Pick other folder names." : {
+
+    },
+    "\"%@\" is too large (PDFs up to 50 MB, images up to 30 MB)." : {
+
+    },
     "\"Inbox\" and \"Needs Review\" are reserved folder names. Pick another owner name." : {
 
     },
@@ -46,10 +61,16 @@
     "%lld days overdue" : {
 
     },
+    "%lld more attachments were skipped: Paper Trail takes at most %lld from one email." : {
+
+    },
     "1 bill to pay, %@." : {
 
     },
     "1 day overdue" : {
+
+    },
+    "A ledger code for %@ has a description but no code. Enter the code or remove the row." : {
 
     },
     "Add at least one category." : {
@@ -67,9 +88,6 @@
     "amount missing" : {
 
     },
-    "Amount: %@" : {
-
-    },
     "Apple Intelligence is not available right now (%@). Fill in the details yourself." : {
 
     },
@@ -77,6 +95,9 @@
 
     },
     "Apple Intelligence is turned off. To get suggestions, turn it on in (System) Settings → Apple Intelligence & Siri. The device language and the Siri language must be the same supported language." : {
+
+    },
+    "attachment %lld" : {
 
     },
     "Choose a category before filing." : {
@@ -146,13 +167,19 @@
     "Foreign VAT (not in the total)" : {
 
     },
-    "IBAN: %@" : {
-
-    },
     "Incl. VAT" : {
 
     },
     "input VAT to reclaim" : {
+
+    },
+    "Ledger" : {
+
+    },
+    "Ledger code" : {
+
+    },
+    "Ledger description" : {
 
     },
     "Made by Paper Trail from the documents' VAT lines. Check deductibility with your accountant." : {
@@ -189,16 +216,6 @@
     "Pay %@" : {
 
     },
-    "Pay %@ · %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Pay %1$@ · %2$@"
-          }
-        }
-      }
-    },
     "Rate" : {
 
     },
@@ -215,6 +232,9 @@
 
     },
     "Reference: %@" : {
+
+    },
+    "Remove line breaks and tabs from the user name and folder names." : {
 
     },
     "Reverse charge – check" : {
@@ -239,6 +259,9 @@
 
     },
     "The connection to the mail server was closed. Check your internet connection and try again." : {
+
+    },
+    "The document would have more than %lld pages, so Paper Trail didn't convert it. Save it as a PDF yourself and add it." : {
 
     },
     "The documents follow on the next pages, in the order listed." : {
@@ -269,6 +292,9 @@
     "The scan has no pages. Scan the document again." : {
 
     },
+    "the user name or password contains a line break or other control character" : {
+
+    },
     "This device doesn't support Apple Intelligence, so Paper Trail can't suggest details here. Fill them in yourself." : {
 
     },
@@ -279,6 +305,9 @@
 
     },
     "This is exactly the same file." : {
+
+    },
+    "This mail server can't tell which device took an email (no UIDPLUS), so only one device may check it. Check email on the Mac only." : {
 
     },
     "To check (not in the total)" : {
@@ -293,6 +322,9 @@
     "Two categories have the same name. Make each category name unique." : {
 
     },
+    "Two ledger codes for %@ are the same. Make each code unique." : {
+
+    },
     "Two owners have the same name. Make each owner name unique." : {
 
     },
@@ -300,6 +332,27 @@
 
     },
     "VAT" : {
+
+    },
+    "VAT %@: %@" : {
+
+    },
+    "VAT %@: %@, ledger code %@" : {
+
+    },
+    "VAT 9%" : {
+
+    },
+    "VAT 9% ledger code" : {
+
+    },
+    "VAT 21%" : {
+
+    },
+    "VAT 21% ledger code" : {
+
+    },
+    "VAT ledger code" : {
 
     },
     "VAT overview %@" : {

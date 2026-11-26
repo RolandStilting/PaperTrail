@@ -40,4 +40,28 @@ struct CoordinatedFileStoreTests {
         #expect(FileManager.default.fileExists(atPath: stored.url.path(percentEncoded: false)))
         #expect(!FileManager.default.fileExists(atPath: source.path(percentEncoded: false)))
     }
+
+    /// Filed on another device at the same time: the source is gone, but this copy is written,
+    /// so it must not fail (that would leave a file without a record).
+    @Test func missingSourceAfterWritingIsNoError() async throws {
+        let source = root.appending(path: "Needs Review/gone.pdf")
+        let stored = try await CoordinatedFileStore().store(pdf, plan: plan, root: root, removingSource: source)
+        #expect(stored.sourceNotRemoved == nil)
+        #expect(FileManager.default.fileExists(atPath: stored.url.path(percentEncoded: false)))
+    }
+
+    @Test func temporaryExportsAreCleanedUp() throws {
+        let temp = root.appending(path: "tmp", directoryHint: .isDirectory)
+        let claim = temp.appending(path: "\(TemporaryFiles.claimsFolder)/x/claim.pdf")
+        try FileManager.default.createDirectory(at: claim.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try pdf.write(to: claim)
+        let staged = temp.appending(path: "\(UUID().uuidString).pdf")
+        let other = temp.appending(path: "keep.pdf")
+        try pdf.write(to: staged)
+        try pdf.write(to: other)
+        TemporaryFiles.cleanUp(in: temp, now: .now.addingTimeInterval(7200))
+        #expect(!FileManager.default.fileExists(atPath: claim.path(percentEncoded: false)))
+        #expect(!FileManager.default.fileExists(atPath: staged.path(percentEncoded: false)))
+        #expect(FileManager.default.fileExists(atPath: other.path(percentEncoded: false)))
+    }
 }

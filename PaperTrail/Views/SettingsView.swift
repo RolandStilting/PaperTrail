@@ -2,18 +2,16 @@ import PaperTrailKit
 import SwiftData
 import SwiftUI
 
-/// Edit the owners and categories that make up the folder structure.
+/// Edit the owners and categories that make up the folder structure. Changes are saved
+/// automatically a moment after the last edit, as long as the settings are valid.
 struct SettingsView: View {
-    /// In a tab or the Mac Settings window: no Cancel, and Save stays on the screen.
-    var embedded = false
     @Environment(SettingsStore.self) private var settingsStore
-    #if os(macOS)
     @Environment(MailIntakeService.self) private var mail
-    #endif
-    @Environment(\.dismiss) private var dismiss
 
     @State private var draft = ArchiveSettings.defaults
-    @State private var savedMessage = false
+    @State private var loadedDraft = false
+    /// The owner whose screen is open (also right after Add owner).
+    @State private var openedOwner: Owner.ID?
     @Environment(AppModel.self) private var model
     @Environment(\.modelContext) private var modelContext
     @State private var errors: [String] = []
@@ -69,43 +67,59 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            if !errors.isEmpty {
+                Section {
+                    ForEach(errors, id: \.self) { Text($0).foregroundStyle(.red) }
+                } header: {
+                    Label("Not saved", systemImage: "exclamationmark.triangle")
+                        .foregroundStyle(.red)
+                } footer: {
+                    Text("Your changes stay here and are saved as soon as this is fixed.")
+                }
+            }
+
             Section {
-                ForEach($draft.owners) { $owner in
-                    HStack {
-                        Menu {
-                            Picker("Colour", selection: $owner.color) {
-                                Text("Automatic").tag(OwnerColor?.none)
-                                ForEach(OwnerColor.allCases, id: \.self) { color in
-                                    Label { Text(color.title) } icon: { Image(systemName: "circle.fill").foregroundStyle(color.color) }
-                                        .tag(OwnerColor?.some(color))
-                                }
-                            }
-                        } label: {
+                ForEach(draft.owners) { owner in
+                    NavigationLink(value: OwnerRoute(id: owner.id)) {
+                        HStack(spacing: 10) {
                             Circle()
                                 .fill(draft.color(ofOwner: owner.name).color)
-                                .frame(width: 14, height: 14)
-                                .accessibilityLabel(Text("Colour for \(owner.name)"))
+                                .frame(width: 12, height: 12)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(owner.name.isEmpty ? String(localized: "New owner") : owner.name)
+                                Text(OwnerSettingsView.summary(owner))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
-                        .menuStyle(.button)
-                        .buttonStyle(.plain)
-                        .fixedSize()
-                        TextField("Owner name", text: $owner.name)
                     }
                 }
                 .onDelete { draft.owners.remove(atOffsets: $0) }
                 .onMove { draft.owners.move(fromOffsets: $0, toOffset: $1) }
                 Button("Add owner", systemImage: "plus") {
-                    draft.owners.append(Owner(name: ""))
+                    let owner = Owner(name: "")
+                    draft.owners.append(owner)
+                    openedOwner = owner.id
                 }
             } header: {
                 Text("Owners")
             } footer: {
-                Text("Each owner gets a top-level folder and a colour in lists. Renaming only affects documents filed afterwards.")
+                Text("A top-level folder for each person or company. Open an owner for paying bills, VAT and ledger codes.")
             }
 
             Section {
                 ForEach($draft.categories) { $category in
-                    TextField("Category name", text: $category.name)
+                    HStack {
+                        TextField("Category name", text: $category.name)
+                        Text("Ledger codes")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
+                        Toggle("Ledger codes", isOn: $category.usesLedgerCodes)
+                            .toggleStyle(.switch)
+                            .labelsHidden()
+                            .accessibilityLabel(Text("Ledger codes for \(category.name)"))
+                    }
                 }
                 .onDelete { draft.categories.remove(atOffsets: $0) }
                 .onMove { draft.categories.move(fromOffsets: $0, toOffset: $1) }
@@ -115,43 +129,22 @@ struct SettingsView: View {
             } header: {
                 Text("Categories")
             } footer: {
-                Text("Folders inside each owner's year folder.")
+                Text("Folders inside each owner's year folder. Switch on ledger codes for categories that are booked, such as invoices and receipts; the codes themselves are set per owner.")
             }
 
             Section {
-                ForEach($draft.owners) { $owner in
-                    DisclosureGroup(owner.name.isEmpty ? String(localized: "New owner") : owner.name) {
-                        Picker("Pay with", selection: $owner.paymentMethod) {
-                            Text("QR code and copy buttons").tag(PaymentMethod.qrCode)
-                            Text("SEPA batch file").tag(PaymentMethod.sepaFile)
-                        }
-                        Toggle("Banking app scans standard QR codes", isOn: $owner.bankScansEPCQRCode)
-                        TextField("Account name", text: $owner.payingAccount.name, prompt: Text("Name on the paying account"))
-                        TextField("IBAN", text: $owner.payingAccount.iban, prompt: Text("Paying account"))
-                            .autocorrectionDisabled()
-                        TextField("BIC (optional)", text: $owner.payingAccount.bic)
-                            .autocorrectionDisabled()
-                        Picker("VAT return", selection: $owner.vatPeriod) {
-                            Text("None").tag(VATPeriodKind?.none)
-                            Text("Monthly").tag(VATPeriodKind?.some(.month))
-                            Text("Quarterly").tag(VATPeriodKind?.some(.quarter))
-                            Text("Yearly").tag(VATPeriodKind?.some(.year))
-                        }
-                    }
-                }
+                Toggle("Create Reminders for Bills", isOn: $draft.createsBillReminders)
             } header: {
-                Text("Paying bills and VAT")
+                Text("Bills")
             } footer: {
-                Text("Owners with a VAT return get VAT lines on their documents and a VAT overview. Each owner gets its own To pay list in Reminders. A SEPA batch file needs the account it pays from; for QR codes the account is optional. Some banking apps (such as Rabobank's) don't scan standard payment QR codes: turn that off, and Paper Trail shows only a QR code or pay link from the invoice itself. Stored with your settings in iCloud.")
+                Text("Each unpaid bill gets a reminder in the owner's To pay list in Reminders, with the due date; completing it marks the bill paid. The reminder shows only the sender and reference, not the amount or IBAN. Off: bills are only in To Pay here; reminders that already exist keep working. Applies to all your devices.")
             }
 
-            #if os(macOS)
             Section {
                 NavigationLink("Email") { MailSettingsView(mail: mail) }
             } footer: {
-                Text("A dedicated mailbox that this Mac checks; its emails go to Needs Review.")
+                Text("A dedicated mailbox; its emails go to Needs Review. Set it up on each device that should check it.")
             }
-            #endif
 
             lockSection
 
@@ -194,41 +187,77 @@ struct SettingsView: View {
                 Text("Debug builds only. Files a few made-up documents to try the screens.")
             }
             #endif
-
-            if savedMessage, errors.isEmpty {
-                Section { Label("Settings saved", systemImage: "checkmark.circle").foregroundStyle(.green) }
-            }
-
-            if !errors.isEmpty {
-                Section {
-                    ForEach(errors, id: \.self) { Text($0).foregroundStyle(.red) }
-                }
-            }
         }
         .formStyle(.grouped)
         .keyboardDismissal()
         .navigationTitle("Settings")
-        .toolbar {
-            if !embedded {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
-                    for index in draft.owners.indices {
-                        draft.owners[index].payingAccount.iban = IBAN.normalize(draft.owners[index].payingAccount.iban)
-                        draft.owners[index].payingAccount.bic = IBAN.normalize(draft.owners[index].payingAccount.bic)
-                        draft.owners[index].payingAccount.name = draft.owners[index].payingAccount.name.trimmingCharacters(in: .whitespaces)
-                    }
-                    errors = settingsStore.update(draft)
-                    if errors.isEmpty {
-                        if embedded { savedMessage = true } else { dismiss() }
-                    }
-                }
-            }
+        .navigationDestination(for: OwnerRoute.self) { route in ownerScreen(route.id) }
+        .navigationDestination(item: $openedOwner) { id in ownerScreen(id) }
+        // Load the draft once: onAppear also runs when coming back from a pushed screen (such as
+        // the ledger code editor), and reloading then would throw away the edits made there.
+        .onAppear {
+            guard !loadedDraft else { return }
+            draft = settingsStore.settings
+            loadedDraft = true
         }
-        .onAppear { draft = settingsStore.settings }
-        .onChange(of: draft) { _, _ in savedMessage = false }
+        // Settings changed on another device: take them over while nothing here is unsaved.
+        .onChange(of: settingsStore.settings) { old, new in
+            if Self.saveable(draft) == old { draft = new }
+        }
+        // Save a moment after the last change, so a half-typed name doesn't sync to other devices.
+        .task(id: draft) {
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            save()
+        }
+        // Leaving the screen (or opening a sub-screen) saves at once.
+        .onDisappear { save() }
     }
+
+    private func ownerScreen(_ id: Owner.ID) -> some View {
+        OwnerSettingsView(owner: ownerBinding(id), automaticColor: automaticColor(of: id), errors: errors, save: save) {
+            draft.owners.removeAll { $0.id == id }
+            openedOwner = nil
+            save()
+        }
+    }
+
+    /// The owner with `id` in the draft; by ID, so a deleted owner can't crash an open screen.
+    private func ownerBinding(_ id: Owner.ID) -> Binding<Owner> {
+        Binding(get: { draft.owners.first { $0.id == id } ?? Owner(id: id, name: "") },
+                set: { new in
+                    if let index = draft.owners.firstIndex(where: { $0.id == id }) { draft.owners[index] = new }
+                })
+    }
+
+    private func automaticColor(of id: Owner.ID) -> OwnerColor {
+        .automatic(index: draft.owners.firstIndex { $0.id == id } ?? 0)
+    }
+
+    /// The draft as it is saved: IBAN and BIC without spaces, names trimmed, empty ledger code
+    /// rows dropped. The draft itself keeps what was typed, so fields don't change while typing.
+    private static func saveable(_ draft: ArchiveSettings) -> ArchiveSettings {
+        var settings = draft
+        for index in settings.owners.indices {
+            settings.owners[index].payingAccount.iban = IBAN.normalize(settings.owners[index].payingAccount.iban)
+            settings.owners[index].payingAccount.bic = IBAN.normalize(settings.owners[index].payingAccount.bic)
+            settings.owners[index].payingAccount.name = settings.owners[index].payingAccount.name.trimmingCharacters(in: .whitespaces)
+        }
+        return settings.cleaningLedgerCodes()
+    }
+
+    private func save() {
+        guard loadedDraft else { return }
+        let settings = Self.saveable(draft)
+        guard settings != settingsStore.settings else {
+            errors = []
+            return
+        }
+        errors = settingsStore.update(settings)
+    }
+}
+
+/// A link to one owner's screen in Settings.
+struct OwnerRoute: Hashable {
+    let id: Owner.ID
 }

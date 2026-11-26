@@ -12,21 +12,16 @@ public enum BillReminderText {
         amount.formatted(.currency(code: "EUR").locale(locale))
     }
 
-    /// "Pay KPN · € 45,99", or "Pay KPN" without an amount.
-    public static func title(sender: String, amount: Double?, locale: Locale = .current) -> String {
-        guard let amount, amount > 0 else { return String(localized: "Pay \(sender)", bundle: .module) }
-        return String(localized: "Pay \(sender) · \(Self.amount(amount, locale: locale))", bundle: .module)
+    /// "Pay KPN". Amount and IBAN are left out on purpose: reminders show on the lock screen
+    /// and in notifications, and the payment details are in Paper Trail itself.
+    public static func title(sender: String) -> String {
+        String(localized: "Pay \(sender)", bundle: .module)
     }
 
-    /// Payment details and where the document is, one per line. Empty details are left out.
-    public static func notes(amount: Double?, iban: String?, reference: String?, relativePath: String, locale: Locale = .current) -> String {
+    /// The payment reference and where the document is, one per line; an empty reference is
+    /// left out. No amount or IBAN (see `title(sender:)`).
+    public static func notes(reference: String?, relativePath: String) -> String {
         var lines: [String] = []
-        if let amount, amount > 0 {
-            lines.append(String(localized: "Amount: \(Self.amount(amount, locale: locale))", bundle: .module))
-        }
-        if let iban, !iban.isEmpty {
-            lines.append(String(localized: "IBAN: \(IBAN.formatted(iban))", bundle: .module))
-        }
         if let reference, !reference.isEmpty {
             lines.append(String(localized: "Reference: \(reference)", bundle: .module))
         }

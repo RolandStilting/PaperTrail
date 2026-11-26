@@ -55,6 +55,11 @@ public struct IndexExport: Codable, Sendable, Equatable {
         public var vat: VATInfo?
         public var paymentCode: PaymentCode?
         public var recognizedText: String?
+        /// Ledger code and its description as chosen; nil when none (and in older exports).
+        public var ledgerCode: String?
+        public var ledgerDescription: String?
+        /// True when the IBAN differs from the sender's known ones and wasn't confirmed.
+        public var ibanUnconfirmed: Bool?
     }
 
     public struct ExpenseClaim: Codable, Sendable, Equatable {
@@ -84,6 +89,9 @@ public struct IndexExport: Codable, Sendable, Equatable {
         public var owner: String
         public var category: String
         public var reimbursedBy: String?
+        /// nil in exports made before ledger codes.
+        public var ledgerCodes: [LedgerChoice]?
+        public var paymentHosts: [String]?
         public var updatedAt: Date
     }
 
@@ -143,34 +151,39 @@ public struct IndexExport: Codable, Sendable, Equatable {
             return String(format: "%.2f", value).replacingOccurrences(of: ".", with: decimal)
         }
         func date(_ value: Date?) -> String { value.map(namer.dateString) ?? "" }
-        func field(_ text: String) -> String {
-            let needsQuotes = text.contains(";") || text.contains("\"") || text.contains("\n") || text.contains("\r")
-            return needsQuotes ? "\"" + text.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : text
-        }
         func vat(_ info: VATInfo?, rate: Double) -> String {
             guard let lines = info?.lines.filter({ abs($0.rate - rate) < 0.001 }), !lines.isEmpty else { return "" }
             return amount(lines.map(\.amount).reduce(0, +))
         }
+        /// The booking company's input VAT code, for reclaimable VAT at `rate` on the document.
+        func vatCode(_ document: Document, rate: Double) -> String {
+            guard let info = document.vat, !info.isForeign, !info.isReverseCharge,
+                  info.lines.contains(where: { abs($0.rate - rate) < 0.001 }) else { return "" }
+            let booking = ArchiveSettings.bookingOwner(owner: document.owner, reimbursedBy: document.reimbursedBy)
+            return settings?.vatLedgerCode(owner: booking, rate: rate) ?? ""
+        }
         let yes = String(localized: "yes", bundle: .module)
-        var rows = [[
-            "Received", "Document date", "Owner", "Category", "Sender", "Description", "Amount (EUR)",
-            "VAT 21%", "VAT 9%", "VAT 0%", "VAT total", "Foreign VAT", "Reverse charge",
+        var rows: [[String]] = [[
+            "Received", "Document date", "Owner", "Category", "Ledger code", "Ledger description", "Sender", "Description", "Amount (EUR)",
+            "VAT 21%", "VAT 9%", "VAT 0%", "VAT total", "VAT 21% ledger code", "VAT 9% ledger code", "Foreign VAT", "Reverse charge",
             "Unpaid bill", "Due date", "Paid", "Paid on", "IBAN", "Payment reference",
             "Reimbursed by", "Reimbursed on", "File", "ID",
         ].map { String(localized: String.LocalizationValue($0), bundle: .module) }]
         for document in documents.sorted(by: { ($0.receivedDate, $0.relativePath) < ($1.receivedDate, $1.relativePath) }) {
             rows.append([
                 date(document.receivedDate), date(document.documentDate), document.owner, document.category,
+                document.ledgerCode ?? "", document.ledgerDescription ?? "",
                 document.sender, document.description, amount(document.amount),
                 vat(document.vat, rate: 21), vat(document.vat, rate: 9), vat(document.vat, rate: 0),
                 document.vat.map { amount($0.total) } ?? "",
+                vatCode(document, rate: 21), vatCode(document, rate: 9),
                 document.vat?.isForeign == true ? yes : "", document.vat?.isReverseCharge == true ? yes : "",
                 document.isUnpaidBill ? yes : "", date(document.dueDate), document.isPaid ? yes : "", date(document.paidAt),
                 document.iban ?? "", document.paymentReference ?? "",
                 document.reimbursedBy ?? "", date(document.reimbursedAt), document.relativePath, document.id.uuidString,
             ])
         }
-        let text = rows.map { $0.map(field).joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
+        let text = rows.map { (row: [String]) -> String in row.map { CSVField.escape($0) }.joined(separator: ";") }.joined(separator: "\r\n") + "\r\n"
         return Data([0xEF, 0xBB, 0xBF]) + Data(text.utf8)
     }
 }
@@ -185,7 +198,9 @@ extension DocumentRecord {
             source: sourceRaw, contentHash: contentHash, isUnpaidBill: isUnpaidBill, amount: amount, dueDate: dueDate,
             iban: iban, paymentReference: paymentReference, isPaid: isPaid, paidAt: paidAt, reminderID: reminderExternalID,
             exportedToSEPAAt: exportedAt, reimbursedBy: reimbursedBy, claimID: claimID, reimbursedAt: reimbursedAt,
-            vat: vatInfo, paymentCode: paymentCode, recognizedText: extractedText
+            vat: vatInfo, paymentCode: paymentCode, recognizedText: extractedText,
+            ledgerCode: ledgerCode.isEmpty ? nil : ledgerCode, ledgerDescription: ledgerDescription.isEmpty ? nil : ledgerDescription,
+            ibanUnconfirmed: ibanUnconfirmed ? true : nil
         )
     }
 
@@ -210,6 +225,9 @@ extension DocumentRecord {
         reimbursedAt = document.reimbursedAt
         vatInfo = document.vat
         paymentCode = document.paymentCode
+        ledgerCode = document.ledgerCode ?? ""
+        ledgerDescription = document.ledgerDescription ?? ""
+        ibanUnconfirmed = document.ibanUnconfirmed ?? false
     }
 }
 
@@ -240,12 +258,14 @@ extension VATReturnRecord {
 extension IndexExport.Rule {
     public init(_ rule: SenderRule) {
         self.init(id: rule.id, senderName: rule.senderName, aliases: rule.aliases, ibans: rule.ibans, owner: rule.owner,
-                  category: rule.category, reimbursedBy: rule.reimbursedBy, updatedAt: rule.updatedAt)
+                  category: rule.category, reimbursedBy: rule.reimbursedBy,
+                  ledgerCodes: rule.ledgerCodes.isEmpty ? nil : rule.ledgerCodes,
+                  paymentHosts: rule.paymentHosts.isEmpty ? nil : rule.paymentHosts, updatedAt: rule.updatedAt)
     }
 
     public var rule: SenderRule {
         SenderRule(id: id, senderName: senderName, aliases: aliases, ibans: ibans, owner: owner, category: category,
-                   reimbursedBy: reimbursedBy, updatedAt: updatedAt)
+                   reimbursedBy: reimbursedBy, ledgerCodes: ledgerCodes ?? [], paymentHosts: paymentHosts ?? [], updatedAt: updatedAt)
     }
 }
 
@@ -262,6 +282,9 @@ public struct IndexImportPlan: Sendable, Equatable {
     public var documentsAlreadyThere = 0
     /// In the export, but their PDF is no longer in iCloud Drive; not added.
     public var missingFiles: [String] = []
+    /// In the export with a path that isn't a place in the archive (outside it, or in Inbox,
+    /// Needs Review or Export); not added and never looked up.
+    public var unsafePaths: [String] = []
 
     public var isEmpty: Bool { documents.isEmpty && expenseClaims.isEmpty && vatReturns.isEmpty && senderRules.isEmpty }
 
@@ -269,7 +292,9 @@ public struct IndexImportPlan: Sendable, Equatable {
                 vatReturns existingReturns: [(owner: String, start: Date)], ruleIDs: Set<UUID>, fileExists: (String) -> Bool) {
         let paths = Set(documentPaths.map { $0.lowercased() })
         for document in export.documents {
-            if documentIDs.contains(document.id) || paths.contains(document.relativePath.lowercased()) {
+            if !ArchivePaths.isDocumentPath(document.relativePath) {
+                unsafePaths.append(document.relativePath)
+            } else if documentIDs.contains(document.id) || paths.contains(document.relativePath.lowercased()) {
                 documentsAlreadyThere += 1
             } else if !fileExists(document.relativePath) {
                 missingFiles.append(document.relativePath)
@@ -283,5 +308,31 @@ public struct IndexImportPlan: Sendable, Equatable {
             !existingReturns.contains { $0.owner == vatReturn.owner && $0.start == vatReturn.periodStart }
         }
         senderRules = export.senderRules.filter { !ruleIDs.contains($0.id) }
+    }
+}
+
+// MARK: CSV cells
+
+/// One cell of the semicolon CSVs (index, VAT, expense claim).
+///
+/// Text from documents (sender, description, reference) can be chosen by whoever sent the
+/// document. A cell that starts with `=`, `+`, `-`, `@`, a tab or a carriage return is run as a
+/// formula by Excel and Numbers ("CSV injection"), so such a cell gets a leading apostrophe and
+/// is shown as text. Plain numbers such as `-12,50` stay numbers.
+public enum CSVField {
+    static let formulaStarts: Set<Character> = ["=", "+", "-", "@", "\t", "\r"]
+
+    public static func escape(_ text: String) -> String {
+        var text = text
+        if let first = text.first, formulaStarts.contains(first), !isPlainNumber(text) {
+            text = "'" + text
+        }
+        let needsQuotes = text.contains(";") || text.contains("\"") || text.contains("\n") || text.contains("\r")
+        return needsQuotes ? "\"" + text.replacingOccurrences(of: "\"", with: "\"\"") + "\"" : text
+    }
+
+    /// "-12,50", "+3.5", "-21%": a number as the exports write it, safe to leave as is.
+    static func isPlainNumber(_ text: String) -> Bool {
+        text.wholeMatch(of: /[-+]?[0-9]+([.,][0-9]+)?%?/) != nil
     }
 }

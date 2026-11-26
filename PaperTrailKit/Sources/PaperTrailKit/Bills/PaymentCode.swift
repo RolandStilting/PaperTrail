@@ -40,13 +40,34 @@ public struct PaymentCode: Codable, Hashable, Sendable {
 
     // MARK: Finding codes
 
-    /// Words in a link's host or path that mark it as a payment page.
+    /// Words in a link's host or path that mark it as a payment page. Bank names are left out:
+    /// banks don't host invoice payment pages, and "rabo-verify.example" is a typical lookalike.
+    /// A payment word is no proof the page is genuine; the app shows the host and asks first.
     static let paymentWords = [
-        "ideal", "tikkie", "betaal", "pay", "mollie", "adyen", "buckaroo", "multisafepay",
-        "rabo", "abnamro", "asnbank", "ing.nl", "bunq", "knab", "sepa", "wero", "factuur", "invoice",
+        "ideal", "tikkie", "betaal", "betalen", "pay", "mollie", "adyen", "buckaroo", "multisafepay",
+        "sepa", "wero", "factuur", "invoice",
     ]
 
-    /// Picks the payment code from what was found on a document: a QR code first, then a link.
+    /// Pages about the sender rather than about paying: never a payment link, even when the
+    /// address has a payment word ("/betaalvoorwaarden", "/factuur-uitleg").
+    static let informationWords = [
+        "voorwaarden", "terms", "conditions", "privacy", "cookie", "disclaimer", "faq", "veelgestelde",
+        "uitleg", "explain", "contact", "klantenservice", "help", "support", "over-ons", "about",
+    ]
+
+    /// When these rules last changed: codes found earlier (or none) are searched for again once.
+    public static let rulesChangedAt = Date(timeIntervalSince1970: 1_795_600_000)  // 2026-11-25
+
+    /// Whether a bill should be searched (again): never searched, or searched before the rules
+    /// changed without finding a QR code.
+    public static func needsSearch(checkedAt: Date?, found: PaymentCode?) -> Bool {
+        guard let checkedAt else { return true }
+        return checkedAt < rulesChangedAt && found?.source != .qrCode
+    }
+
+    /// Picks the payment code from what was found on a document: a QR code first (one that
+    /// links to a payment page, else any web link: on a bill a QR code is almost always for
+    /// paying), then a link to a payment page.
     /// - Parameters:
     ///   - qrPayloads: Contents of the QR codes on the pages.
     ///   - links: Link annotations in the PDF.
@@ -54,6 +75,10 @@ public struct PaymentCode: Codable, Hashable, Sendable {
     public static func find(qrPayloads: [String], links: [URL], text: String) -> PaymentCode? {
         for payload in qrPayloads {
             if let code = fromQRCode(payload) { return code }
+        }
+        for payload in qrPayloads {
+            let payload = payload.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !payload.hasPrefix("BCD"), webURL(payload) != nil { return PaymentCode(source: .qrCode, payload: payload) }
         }
         let candidates = links.map(\.absoluteString) + linksInText(text)
         for link in candidates where isPaymentLink(link) {
@@ -70,10 +95,12 @@ public struct PaymentCode: Codable, Hashable, Sendable {
         return PaymentCode(source: .qrCode, payload: payload)
     }
 
-    /// An https link whose host or path suggests paying.
+    /// An https link whose host or path suggests paying, and isn't an information page.
     public static func isPaymentLink(_ text: String) -> Bool {
         guard let url = webURL(text), let host = url.host()?.lowercased() else { return false }
-        let checked = host + url.path().lowercased()
+        let path = url.path().lowercased()
+        guard !informationWords.contains(where: path.contains) else { return false }
+        let checked = host + path
         return paymentWords.contains { checked.contains($0) }
     }
 

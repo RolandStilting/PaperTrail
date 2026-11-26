@@ -54,7 +54,24 @@ public enum MIMEParser {
         )
     }
 
+    /// Emails come from anyone: nesting deeper than this, or more parts than this, is not
+    /// parsed further (those parts stay empty and are ignored), so a crafted email can't
+    /// overflow the stack or take all memory.
+    public static let maxDepth = 20
+    public static let maxParts = 500
+
+    /// Counts parts across the whole message while parsing.
+    final class PartBudget {
+        var used = 0
+    }
+
     static func parsePart(_ raw: String) -> MIMEPart {
+        parsePart(raw, depth: 0, budget: PartBudget())
+    }
+
+    static func parsePart(_ raw: String, depth: Int, budget: PartBudget) -> MIMEPart {
+        budget.used += 1
+        let canNest = depth < maxDepth && budget.used < maxParts
         let (headerText, bodyText) = splitHeaderAndBody(raw)
         let headers = parseHeaders(headerText)
         func header(_ name: String) -> String? { headers.first { $0.name == name }?.value }
@@ -66,10 +83,15 @@ public enum MIMEParser {
         var part = MIMEPart(headers: headers, contentType: type.isEmpty ? "text/plain" : type, parameters: parameters,
                             disposition: disposition, filename: filename, body: Data(), children: [])
 
-        if part.contentType.hasPrefix("multipart/"), let boundary = parameters["boundary"], !boundary.isEmpty {
-            part.children = splitMultipart(bodyText, boundary: boundary).map(parsePart)
-        } else if part.contentType == "message/rfc822" {
-            part.children = [parsePart(bodyText)]
+        if part.contentType.hasPrefix("multipart/") || part.contentType == "message/rfc822" {
+            guard canNest else { return part }
+            if part.contentType == "message/rfc822" {
+                part.children = [parsePart(bodyText, depth: depth + 1, budget: budget)]
+            } else if let boundary = parameters["boundary"], !boundary.isEmpty {
+                for section in splitMultipart(bodyText, boundary: boundary) where budget.used < maxParts {
+                    part.children.append(parsePart(section, depth: depth + 1, budget: budget))
+                }
+            }
         } else {
             let encoding = (header("content-transfer-encoding") ?? "7bit").lowercased().trimmingCharacters(in: .whitespaces)
             part.body = decodeTransfer(bodyText, encoding: encoding)

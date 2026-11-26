@@ -1,4 +1,3 @@
-#if os(macOS)
 import Foundation
 import Observation
 import PaperTrailKit
@@ -17,8 +16,13 @@ nonisolated enum MailIntakeError: LocalizedError {
     }
 }
 
-/// Checks the dedicated mailbox on the Mac and puts every email's documents in Needs Review.
-/// Emails are moved to "Processed" only after their documents are safely written.
+/// Checks the dedicated mailbox and puts every email's documents in Needs Review. Emails are
+/// moved to "Processed" only after their documents are safely written.
+///
+/// The Mac checks every few minutes while it runs. iOS gives apps no regular background time,
+/// so the iPhone and iPad check when the app comes to the front, on pull to refresh in Needs
+/// Review, and when iOS grants a background refresh. Settings and password are per device.
+/// Several devices only check together when the server lets them claim an email (UIDPLUS).
 @Observable @MainActor
 final class MailIntakeService {
     enum Status: Equatable {
@@ -30,15 +34,23 @@ final class MailIntakeService {
     }
 
     static let accountKey = "mailAccount.v1"
+    static let workingSeenKey = "mailWorkingSeen.v1"
+    /// iOS: identifier of the background refresh (also in Info.plist).
+    static var backgroundTaskID: String { (Bundle.main.bundleIdentifier ?? "papertrail") + ".mailcheck" }
 
     private(set) var status = Status.off
     private(set) var account: MailAccount
     /// Problems with single emails from the last check (shown in the menu).
     private(set) var problems: [String] = []
+    private(set) var lastCheck: Date?
 
     private let filingService: FilingService
     private let passwords = KeychainPasswordStore()
     private var timer: Task<Void, Never>?
+    /// Emails that failed in the last check; the next check handles them last.
+    private var failedUIDs: Set<UInt32> = []
+    /// Attachments skipped during the current check (too large, not a PDF, too many).
+    private var skipped: [String] = []
 
     init(filingService: FilingService) {
         self.filingService = filingService
@@ -75,16 +87,45 @@ final class MailIntakeService {
         }
     }
 
-    func checkNow() async {
+    /// iOS: checks when the last check is longer ago than the interval (on opening the app).
+    func checkIfDue() async {
+        if let lastCheck, Date.now.timeIntervalSince(lastCheck) < Double(max(1, account.checkIntervalMinutes)) * 60 { return }
+        await checkNow()
+    }
+
+    /// Emails this device saw in the working folder, and when; abandoned ones go back after an hour.
+    private var workingSeen: [UInt32: Date] {
+        get {
+            let stored = UserDefaults.standard.dictionary(forKey: Self.workingSeenKey) as? [String: Date] ?? [:]
+            return Dictionary(uniqueKeysWithValues: stored.compactMap { key, date in UInt32(key).map { ($0, date) } })
+        }
+        set {
+            UserDefaults.standard.set(Dictionary(uniqueKeysWithValues: newValue.map { (String($0.key), $0.value) }), forKey: Self.workingSeenKey)
+        }
+    }
+
+    /// - Parameter timeLimit: Seconds for the whole check; short for an iOS background refresh.
+    func checkNow(timeLimit: Double = 300) async {
         guard account.isEnabled, account.isComplete, status != .checking else { return }
         status = .checking
+        lastCheck = .now
         do {
             guard let password = try passwords.password(account: account.username) else { throw MailIntakeError.missingPassword }
             let root = try await filingService.location.resolveRoot().url
-            let report = try await Self.runPass(account: account, password: password, limit: 300) { raw in
+            skipped = []
+            #if os(macOS)
+            let requireClaims = false
+            #else
+            // The Mac may check this mailbox too: only file emails this device has claimed.
+            let requireClaims = true
+            #endif
+            let report = try await Self.runPass(account: account, password: password, limit: timeLimit, failedBefore: failedUIDs,
+                                                requireClaims: requireClaims, workingSeen: workingSeen) { raw in
                 try await self.file(raw, root: root)
             }
-            problems = report.failures
+            failedUIDs = report.failedUIDs
+            workingSeen = report.workingSeen
+            problems = report.failures + skipped
             status = .checked(.now, filed: report.processed)
         } catch {
             status = .failed(error.localizedDescription)
@@ -116,12 +157,15 @@ final class MailIntakeService {
         }
     }
 
-    private nonisolated static func runPass(account: MailAccount, password: String, limit: Double,
+    private nonisolated static func runPass(account: MailAccount, password: String, limit: Double, failedBefore: Set<UInt32>,
+                                           requireClaims: Bool, workingSeen: [UInt32: Date],
                                            handle: @escaping @Sendable (Data) async throws -> Void) async throws -> MailboxReport {
         let transport = try await TLSTransport.connect(host: account.server, port: account.port)
         let watchdog = closeAfter(seconds: limit, transport)
         defer { watchdog.cancel(); transport.close() }
-        return try await MailboxProcessor.run(session: IMAPSession(transport: transport), account: account, password: password, handle: handle)
+        return try await MailboxProcessor.run(session: IMAPSession(transport: transport), account: account, password: password,
+                                         failedBefore: failedBefore, requireClaims: requireClaims,
+                                         workingSeenBefore: workingSeen, handle: handle)
     }
 
     /// Closing the connection ends any read that is still waiting, so a silent server
@@ -133,30 +177,47 @@ final class MailIntakeService {
         }
     }
 
-    /// Writes one email's documents to Needs Review. Throws if nothing could be filed, so the
-    /// email stays in the mailbox.
+    /// Writes one email's documents to Needs Review. All documents are made first and only
+    /// then written, so an email that fails halfway doesn't leave copies behind that come back
+    /// on every check. A document that can't be converted is skipped and reported; if none
+    /// can, this throws and the email stays in the mailbox.
     private func file(_ raw: Data, root: URL) async throws {
-        let message = MIMEParser.parse(raw)
-        let documents = EmailIntake.documents(in: message)
-        guard !documents.isEmpty else { throw MailIntakeError.nothingToFile(message.subject) }
-        let received = message.date ?? .now
+        // Parsing can be heavy for a large email: off the main actor.
+        let (message, selection) = await Task.detached(priority: .utility) {
+            let message = MIMEParser.parse(raw)
+            return (message, EmailIntake.select(in: message))
+        }.value
+        let subject = message.subject.isEmpty ? message.from : message.subject
+        skipped += selection.skipped.map { String(localized: "\(subject): \($0)") }
+        guard !selection.documents.isEmpty else { throw MailIntakeError.nothingToFile(message.subject) }
+        let received = EmailIntake.receivedDate(header: message.date)
         let label = EmailIntake.label(for: message)
         let renderer = HTMLPDFRenderer()
-        for document in documents {
-            let pending: PendingDocument
-            switch document {
-            case .pdf(let name, let data):
-                pending = PendingDocument(pdfData: data, source: .email, originalName: name)
-            case .image(let name, let data):
-                pending = PendingDocument(pdfData: try PDFBuilder.makePDF(from: PDFBuilder.images(fromImageData: data)), source: .email, originalName: name)
-            case .html(let html):
-                pending = PendingDocument(pdfData: try await renderer.pdf(html: html), source: .email, originalName: label)
-            case .text(let text):
-                pending = PendingDocument(pdfData: try await renderer.pdf(text: text), source: .email, originalName: label)
+        var pendings: [PendingDocument] = []
+        var firstError: Error?
+        for document in selection.documents {
+            do {
+                switch document {
+                case .pdf(let name, let data):
+                    pendings.append(PendingDocument(pdfData: data, source: .email, originalName: name))
+                case .image(let name, let data):
+                    let pdf = try await Task.detached(priority: .utility) {
+                        try PDFBuilder.makePDF(from: PDFBuilder.images(fromImageData: data))
+                    }.value
+                    pendings.append(PendingDocument(pdfData: pdf, source: .email, originalName: name))
+                case .html(let html):
+                    pendings.append(PendingDocument(pdfData: try await renderer.pdf(html: html), source: .email, originalName: label))
+                case .text(let text):
+                    pendings.append(PendingDocument(pdfData: try await renderer.pdf(text: text), source: .email, originalName: label))
+                }
+            } catch {
+                firstError = firstError ?? error
+                skipped.append(String(localized: "\(subject): \(error.localizedDescription)"))
             }
+        }
+        guard !pendings.isEmpty else { throw firstError ?? MailIntakeError.nothingToFile(message.subject) }
+        for pending in pendings {
             _ = try await filingService.reviewQueue.add(pending, root: root, now: received)
         }
     }
 }
-
-#endif

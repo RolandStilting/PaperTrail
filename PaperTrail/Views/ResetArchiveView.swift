@@ -29,6 +29,9 @@ struct ResetArchiveView: View {
             Section {
                 Toggle("Also forget learned rules", isOn: $options.forgetRules)
                 Toggle("Also delete the bills' reminders", isOn: $options.deleteReminders)
+                Toggle("Keep the index export", isOn: $options.keepExport)
+            } footer: {
+                Text("The index export (the Export folder) holds every document's details and recognised text. Keep it to restore the list later with Import; turn this off to move it to the Trash too.")
             }
 
             Section {

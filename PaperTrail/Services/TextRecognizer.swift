@@ -25,7 +25,7 @@ extension TextRecognizing {
     }
 
     nonisolated static func text(of pages: [[RecognizedLine]]) -> String {
-        pages.map { $0.map(\.text).joined(separator: "\n") }.joined(separator: "\n\n")
+        pages.map(RecognizedLine.readingOrderText).joined(separator: "\n\n")
     }
 }
 

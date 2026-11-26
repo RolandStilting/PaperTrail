@@ -5,17 +5,24 @@ import Foundation
 /// unpaid bills and takes the recipient's own IBAN. These checks only keep values that
 /// can be found in the text and override the model where a keyword rule is more reliable.
 public enum ExtractionChecks {
-    /// Labels before a payment deadline, strongest first. "vervaldatum" comes last because
-    /// reminders often mention the old due date with it.
+    /// Labels before a payment deadline, strongest first. "vervaldatum" comes after the phrases
+    /// because reminders often mention the old due date with it. A bare "voor" or "before" is
+    /// no label: it also means "for" ("behandeling voor 23-06-2026", a date of treatment).
     static let deadlineLabels = [
-        "uiterlijk", "vóór", "voor", "no later than", "before", "betalen voor", "due by", "pay by",
-        "vervaldatum", "due date", "payment due",
+        "uiterlijk", "vóór", "no later than",
+        "te betalen voor", "betalen voor", "betaal voor", "betaald voor", "overmaken voor", "over te maken voor",
+        "voldoen voor", "voldaan voor", "betaling voor", "pay before", "paid before", "payment before",
+        "due by", "pay by", "vervaldatum", "due date", "payment due",
     ]
     static let documentDateLabels = [
-        "factuurdatum", "invoice date", "dagtekening", "notadatum", "datum", "date",
+        "factuurdatum", "invoice date", "dagtekening", "notadatum", "aangemaakt", "datum", "date",
     ]
+    /// Not a bare "incasso": "incassotraject", "incassokosten" and "incassobureau" are about
+    /// collecting a late payment, on invoices that still have to be paid.
     static let directDebitPhrases = [
-        "automatisch af", "automatische incasso", "incasso", "afgeschreven", "direct debit",
+        "automatisch af", "automatische incasso", "via incasso", "per incasso", "middel van incasso",
+        "sepa-incasso", "sepa incasso", "europese incasso", "wordt geïncasseerd", "worden geïncasseerd",
+        "doorlopende machtiging", "afgeschreven", "direct debit",
         "will be debited", "collected automatically",
     ]
 

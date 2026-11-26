@@ -55,9 +55,25 @@ public struct FileNamer: Sendable {
         return cleaned.isEmpty ? Self.fallbackSender : cleaned
     }
 
+    /// File names may be at most 255 bytes; the description gets at most this many (UTF-8).
+    static let maxDescriptionBytes = 150
+
+    /// The longest start of `text` that fits in `maxBytes` UTF-8 bytes, cut between characters.
+    public static func prefix(_ text: String, maxBytes: Int) -> String {
+        var result = ""
+        var bytes = 0
+        for character in text {
+            let size = String(character).utf8.count
+            guard bytes + size <= maxBytes else { break }
+            result.append(character)
+            bytes += size
+        }
+        return result
+    }
+
     public func cleanDescription(_ description: String) -> String {
         let words = Self.sanitizeComponent(description).split(separator: " ")
-        let cleaned = Self.trimEdges(words.prefix(maxDescriptionWords).joined(separator: " "))
+        let cleaned = Self.trimEdges(Self.prefix(words.prefix(maxDescriptionWords).joined(separator: " "), maxBytes: Self.maxDescriptionBytes))
         return cleaned.isEmpty ? Self.fallbackDescription : cleaned
     }
 

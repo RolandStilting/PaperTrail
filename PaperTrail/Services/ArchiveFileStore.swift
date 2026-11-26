@@ -7,11 +7,17 @@ nonisolated struct StoredFile: Sendable, Equatable {
     var relativePath: String
     /// SHA-256 of the written bytes, hex encoded.
     var contentHash: String
+    /// Why the source could not be removed after the document was safely written. The
+    /// document is filed; the source (e.g. in Needs Review) is still there and should be
+    /// deleted by hand. nil when it was removed, or was already gone.
+    var sourceNotRemoved: String? = nil
 }
 
 nonisolated protocol ArchiveFileStoring: Sendable {
     /// Writes `pdf` to the planned location (adding ` (2)`, ` (3)` on collision), verifies it,
-    /// and only then removes `sourceToRemove` if given.
+    /// and only then removes `sourceToRemove` if given. Once the document is written, a source
+    /// that can't be removed doesn't make it fail (see `StoredFile.sourceNotRemoved`): throwing
+    /// then would leave a filed document without a record, and trying again would file it twice.
     func store(_ pdf: Data, plan: FilingPlan, root: URL, removingSource sourceToRemove: URL?) async throws -> StoredFile
     /// Moves a filed document to the planned location (adding ` (2)`, ` (3)` on collision) and
     /// returns its new path relative to `root`. A move never copies, so the file can't be lost.
@@ -61,13 +67,20 @@ nonisolated struct CoordinatedFileStore: ArchiveFileStoring {
             throw ArchiveFileStoreError.verificationFailed(destination.lastPathComponent)
         }
 
-        // 4. Only now remove the source (e.g. from Inbox).
+        // 4. Only now remove the source (e.g. from Inbox). Gone already is fine.
+        var sourceNotRemoved: String?
         if let sourceToRemove {
-            try coordinatedDelete(sourceToRemove)
+            do {
+                try coordinatedDelete(sourceToRemove)
+            } catch {
+                if fileManager.fileExists(atPath: sourceToRemove.path(percentEncoded: false)) {
+                    sourceNotRemoved = error.localizedDescription
+                }
+            }
         }
 
         let relativePath = ArchivePaths.relativePath(components: plan.folderComponents, fileName: destination.lastPathComponent)
-        return StoredFile(url: destination, relativePath: relativePath, contentHash: expectedHash)
+        return StoredFile(url: destination, relativePath: relativePath, contentHash: expectedHash, sourceNotRemoved: sourceNotRemoved)
     }
 
     @concurrent
